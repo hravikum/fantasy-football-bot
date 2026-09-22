@@ -1,0 +1,291 @@
+"""Tests for the waiver report. Run: python3 test_waivers.py"""
+import sys
+
+import waivers
+from espn import BENCH, IR
+from test_lineup import GAMES, SLOTS, full_roster, player
+from lineup import plan
+
+
+def free_agent(position, projection, season=None, status="ACTIVE", owned=12.0, change=0.0):
+    person = player(position, BENCH, projection, status=status, season=season)
+    person.update({"percent_owned": owned, "percent_change": change})
+    return person
+
+
+def test_candidate_gain_is_what_he_adds_to_the_starting_lineup():
+    roster = list(full_roster().values())          # weakest starter projects 10.0
+    pool = [free_agent("WR", 14.0), free_agent("WR", 4.0)]
+    ranked = waivers.candidates(roster, pool, SLOTS, GAMES)
+    assert round(ranked[0]["gain"], 1) == 4.0 and ranked[0]["would_start"]
+    assert ranked[1]["gain"] == 0.0 and not ranked[1]["would_start"], "a bench-quality add gains nothing"
+
+
+def test_backup_quarterbacks_do_not_crowd_out_the_list():
+    """The bug from the first live run: with every gain at zero, QBs won on raw season points."""
+    roster = list(full_roster().values())          # starting QB projects 20.0 a week, 340 a season
+    pool = [free_agent("QB", 17.0, season=290.0 - i) for i in range(6)]
+    pool += [free_agent("WR", 9.5, season=200.0), free_agent("RB", 9.0, season=190.0)]
+    ranked = waivers.candidates(roster, pool, SLOTS, GAMES)
+    assert sum(1 for c in ranked if c["position"] == "QB") <= waivers.PER_POSITION
+    assert ranked[0]["position"] in ("WR", "RB"), "a startable flex piece outranks a backup QB"
+
+
+def test_season_gain_ignores_points_you_would_never_start():
+    roster = list(full_roster().values())
+    backup_qb = free_agent("QB", 17.0, season=300.0)   # huge season total, still behind your starter
+    flex_help = free_agent("WR", 9.5, season=200.0)    # behind your flex this week, ahead of him all season
+    ranked = {c["position"]: c for c in waivers.candidates(roster, [backup_qb, flex_help], SLOTS, GAMES)}
+    assert ranked["QB"]["season_gain"] == 0, "a season total is not an upgrade if he never starts"
+    assert ranked["WR"]["season_gain"] > 0
+
+
+def test_kicker_who_beats_your_kicker_still_counts():
+    roster = list(full_roster().values())          # kicker projects 8.0
+    ranked = waivers.candidates(roster, [free_agent("K", 11.0)], SLOTS, GAMES)
+    assert round(ranked[0]["gain"], 1) == 3.0
+
+
+def test_injured_free_agents_are_skipped():
+    pool = [free_agent("RB", 0.0, status="OUT"), free_agent("RB", 0.0, status="INJURY_RESERVE")]
+    assert waivers.candidates(list(full_roster().values()), pool, SLOTS, GAMES) == []
+
+
+def test_bid_scales_with_what_is_left():
+    starter = {"gain": 4.0, "season_gain": 60}
+    assert waivers.suggest_bid(starter, 100, 0) == (20, 35)
+    assert waivers.suggest_bid(starter, 40, 0) == (8, 14), "same player, less budget, smaller bid"
+
+
+def test_bid_tiers_separate_a_starter_from_a_stash():
+    useful = waivers.suggest_bid({"gain": 2.0, "season_gain": 10}, 100, 0)
+    speculative = waivers.suggest_bid({"gain": 0.0, "season_gain": 40}, 100, 0)
+    nothing = waivers.suggest_bid({"gain": 0.0, "season_gain": 2}, 100, 0)
+    assert useful == (8, 15) and speculative == (2, 5) and nothing == (0, 1)
+    assert waivers.suggest_bid({"gain": 0.0, "season_gain": 2}, 100, 1) == (1, 1), "minimum bid is respected"
+
+
+def test_a_confident_jev_score_can_raise_the_bid():
+    nothing_on_the_numbers = {"gain": 0.0, "season_gain": 0}
+    assert waivers.suggest_bid(nothing_on_the_numbers, 100, 0) == (0, 1)
+    confident = dict(nothing_on_the_numbers, jev=0.94, jev_confidence=0.88)
+    assert waivers.suggest_bid(confident, 100, 0) == (20, 35), "Jev rates him a starter, so bid like it"
+    unsure = dict(nothing_on_the_numbers, jev=0.94, jev_confidence=0.4)
+    assert waivers.suggest_bid(unsure, 100, 0) == (0, 1), "a coin-flip judgment does not move money"
+
+
+def test_projection_band_still_wins_when_it_rates_him_higher():
+    clear_upgrade = {"gain": 4.0, "season_gain": 60, "jev": 0.1, "jev_confidence": 0.9}
+    assert waivers.suggest_bid(clear_upgrade, 100, 0) == (20, 35)
+
+
+def test_an_unsure_jev_leaves_the_projection_order_alone():
+    """The first live Jev run: every confidence under 0.55, so the order was noise near 0.5."""
+    pool = [dict(math_rank=i, jev=0.5 + (0.01 if i % 2 else -0.01), jev_confidence=0.3) for i in range(1, 7)]
+    assert [c["math_rank"] for c in sorted(pool, key=waivers.jev_order)] == [1, 2, 3, 4, 5, 6]
+
+
+def test_a_confident_jev_pick_moves_up_and_nobody_moves_down():
+    pool = [dict(math_rank=i, jev=0.5, jev_confidence=0.3) for i in range(1, 6)]
+    pool[3].update(jev=0.93, jev_confidence=0.85)          # projection rank 4, Jev is sure about him
+    order = [c["math_rank"] for c in sorted(pool, key=waivers.jev_order)]
+    assert order == [4, 1, 2, 3, 5]
+
+
+def test_claude_retries_a_dropped_connection_once():
+    import requests
+    calls = []
+    def flaky(url, json=None, headers=None, timeout=None):
+        calls.append(1)
+        if len(calls) == 1:
+            raise requests.exceptions.ConnectionError("connection reset")
+        class Reply:
+            status_code = 200
+            def json(self):
+                return {"content": [{"type": "text", "text": "Bid $3 on Somebody."}]}
+        return Reply()
+    saved_post, saved_sleep = waivers.requests.post, waivers.time.sleep
+    waivers.requests.post, waivers.time.sleep = flaky, lambda seconds: None
+    import os
+    os.environ["ANTHROPIC_API_KEY"] = "test-key"
+    try:
+        assert waivers.ask_claude({"week": 2}) == "Bid $3 on Somebody." and len(calls) == 2
+    finally:
+        waivers.requests.post, waivers.time.sleep = saved_post, saved_sleep
+        os.environ["ANTHROPIC_API_KEY"] = ""
+
+
+def _with_replies(replies):
+    """Swap in a fake Messages API that returns the given bodies in order, recording requests."""
+    sent = []
+    def fake(url, json=None, headers=None, timeout=None):
+        sent.append(json)
+        body = replies[len(sent) - 1]
+        class Reply:
+            status_code = 200
+            def json(self):
+                return body
+        return Reply()
+    return fake, sent
+
+
+def _ask_with(replies):
+    import os
+    fake, sent = _with_replies(replies)
+    saved = waivers.requests.post
+    waivers.requests.post = fake
+    os.environ["ANTHROPIC_API_KEY"] = "test-key"
+    try:
+        return waivers.ask_claude({"week": 2}), sent
+    finally:
+        waivers.requests.post = saved
+        os.environ["ANTHROPIC_API_KEY"] = ""
+
+
+def test_cited_passages_are_joined_as_one_sentence():
+    """The early reports broke sentences in two wherever Claude cited a source."""
+    cite = {"type": "web_search_result_location", "url": "https://example.com/allen", "title": "Allen news"}
+    text, _ = _ask_with([{"stop_reason": "end_turn", "content": [
+        {"type": "text", "text": "Skip Allen: he "},
+        {"type": "text", "text": "faces a deferred suspension", "citations": [cite]},
+        {"type": "text", "text": ", but plays until October."}]}])
+    assert text.startswith("Skip Allen: he faces a deferred suspension, but plays until October.")
+
+
+def test_sources_are_listed_once_each():
+    cite = {"type": "web_search_result_location", "url": "https://example.com/a", "title": "Story A"}
+    text, _ = _ask_with([{"stop_reason": "end_turn", "content": [
+        {"type": "text", "text": "One claim.", "citations": [cite]},
+        {"type": "text", "text": " Same source again.", "citations": [cite]}]}])
+    assert text.count("https://example.com/a") == 1 and "Sources:" in text and "Story A" in text
+
+
+def test_a_paused_search_turn_is_resumed_not_truncated():
+    """Unhandled, pause_turn is how "working behind Egbuka/Godw" happened."""
+    first = {"stop_reason": "pause_turn", "content": [
+        {"type": "server_tool_use", "id": "srvtoolu_1", "name": "web_search", "input": {"query": "x"}},
+        {"type": "text", "text": "McMillan is working behind Egbuka and Godw"}]}
+    rest = {"stop_reason": "end_turn", "content": [{"type": "text", "text": "in, so skip him."}]}
+    text, sent = _ask_with([first, rest])
+    assert len(sent) == 2, "the paused turn is sent back to continue"
+    assert sent[1]["messages"][-1] == {"role": "assistant", "content": first["content"]}
+    assert text == "McMillan is working behind Egbuka and Godwin, so skip him."
+
+
+def test_a_cut_off_write_up_says_so():
+    text, _ = _ask_with([{"stop_reason": "max_tokens", "content": [{"type": "text", "text": "Bid $4 on"}]}])
+    assert text.endswith("[Cut off: the write-up hit the 16,000-token output limit.]")
+
+
+def test_jev_log_writes_a_header_once_and_appends_after_it():
+    import csv, tempfile
+    from pathlib import Path
+    path = Path(tempfile.mkdtemp()) / "logs" / "jev_scores.csv"
+    judged = [dict(free_agent("WR", 9.0, season=150.0), math_rank=3, jev=0.71, jev_confidence=0.64,
+                   usage={"per_game": 7.5, "trend": "rising"})]
+    unjudged = [dict(free_agent("RB", 8.0), math_rank=4)]            # its Jev call failed
+    assert waivers.log_jev(2, judged + unjudged, path) == 1
+    assert waivers.log_jev(3, judged, path) == 1
+    rows = list(csv.DictReader(open(path)))
+    assert len(rows) == 2 and open(path).read().count("logged_at") == 1
+    assert rows[0]["week"] == "2" and rows[0]["jev"] == "0.71" and rows[0]["usage_trend"] == "rising"
+
+
+def test_nothing_is_logged_when_jev_scored_nobody():
+    import tempfile
+    from pathlib import Path
+    path = Path(tempfile.mkdtemp()) / "jev_scores.csv"
+    assert waivers.log_jev(2, [dict(free_agent("WR", 9.0), math_rank=1)], path) == 0 and not path.exists()
+
+
+def test_command_line_picks_the_ranker():
+    assert waivers.ranker_from(["waivers.py", "--email"]) == "math"
+    assert waivers.ranker_from(["waivers.py", "--ranker", "jev"]) == "jev"
+    assert waivers.ranker_from(["waivers.py", "--email", "--jev-shadow"]) == "shadow"
+
+
+def test_claude_sees_the_same_numbers_for_the_bench_as_for_free_agents():
+    """The Jaguars-vs-Broncos error: the bench had season numbers only, so Claude guessed the rest."""
+    roster = list(full_roster().values())
+    target, _ = plan(roster, SLOTS, GAMES)
+    ranked = waivers.candidates(roster, [free_agent("WR", 14.0)], SLOTS, GAMES)
+    ranked[0]["bid"] = (0, 1)
+    brief = waivers.brief_for_claude({"week": 2, "budget_left": 100, "rivals": [], "gaps": [],
+                                      "candidates": ranked, "drops": [], "roster": roster, "target": target})
+    for group in ("my_starters", "my_bench"):
+        assert brief[group] and all({"week_projection", "season_projection"} <= set(p) for p in brief[group])
+    assert {"week_projection", "season_projection"} <= set(brief["available"][0])
+
+
+def test_a_paused_turn_that_never_finishes_says_so():
+    paused = {"stop_reason": "pause_turn", "content": [{"type": "text", "text": "Still searching"}]}
+    text, sent = _ask_with([paused] * (1 + waivers.MAX_CONTINUATIONS))
+    assert len(sent) == 1 + waivers.MAX_CONTINUATIONS
+    assert text.endswith("[Cut off: the web search was still running after the last resume.]")
+
+
+def test_drop_list_is_bench_only_and_cheapest_first():
+    roster = full_roster(bench_wr=player("WR", BENCH, 3.0, season=30.0),
+                         bench_rb=player("RB", BENCH, 2.0, season=200.0))
+    target, _ = plan(list(roster.values()), SLOTS, GAMES)
+    drops = waivers.drop_candidates(list(roster.values()), target, SLOTS, GAMES)
+    assert drops[0]["name"] == roster["bench_wr"]["name"], "the 30-point season projection goes first"
+    assert all(target[p["id"]] == BENCH for p in drops), "never suggests dropping a starter"
+
+
+def test_never_drops_your_only_kicker():
+    roster = full_roster(k=player("K", 17, 8.0, season=5.0))   # cheapest player on the roster by far
+    players = list(roster.values())
+    target, _ = plan(players, SLOTS, GAMES)
+    names = [p["name"] for p in waivers.drop_candidates(players, target, SLOTS, GAMES)]
+    assert roster["k"]["name"] not in names, "dropping him would leave the K slot unfillable"
+
+
+def test_bye_gaps_only_fire_when_the_bench_cannot_cover():
+    roster = full_roster()
+    for pro_team, person in enumerate(roster.values(), start=1):
+        person["pro_team"] = pro_team   # the shared fixture puts everyone on one NFL team
+    players = list(roster.values())
+    target, _ = plan(players, SLOTS, GAMES)
+    byes = {roster["qb"]["pro_team"]: {3}}   # the only QB is off in week 3
+    gaps = waivers.bye_gaps(players, target, byes, week=2)
+    assert len(gaps) == 1 and "1 QB on bye" in gaps[0] and "0 on the bench" in gaps[0]
+    assert waivers.bye_gaps(players, target, {}, week=2) == []
+
+
+def test_claude_is_optional(monkey_key=None):
+    import os
+    saved = os.environ.pop("ANTHROPIC_API_KEY", None)
+    os.environ["ANTHROPIC_API_KEY"] = ""
+    try:
+        assert waivers.ask_claude({"week": 2}) is None, "no key means no write-up, not a crash"
+    finally:
+        if saved:
+            os.environ["ANTHROPIC_API_KEY"] = saved
+
+
+def test_report_reads_correctly_without_advice():
+    roster = list(full_roster().values())
+    ranked = waivers.candidates(roster, [free_agent("WR", 14.0, season=190.0, owned=41.0)], SLOTS, GAMES)
+    ranked[0]["bid"] = waivers.suggest_bid(ranked[0], 100, 0)
+    target, _ = plan(roster, SLOTS, GAMES)
+    report = waivers.build_report({
+        "week": 3, "budget": 100, "budget_left": 100, "minimum_bid": 0, "rivals": [100, 88, 100],
+        "last_runs": [], "gaps": [], "candidates": ranked, "drops": waivers.drop_candidates(roster, target, SLOTS, GAMES),
+        "advice": None, "roster": roster, "target": target})
+    assert "Waiver report" in report and "$20-35" in report
+    assert "Place claims yourself" in report, "the report must never imply it bid for you"
+
+
+if __name__ == "__main__":
+    tests = [(name, fn) for name, fn in sorted(vars().items()) if name.startswith("test_")]
+    failures = 0
+    for name, fn in tests:
+        try:
+            fn()
+            print(f"pass  {name}")
+        except AssertionError as e:
+            failures += 1
+            print(f"FAIL  {name}: {e}")
+    print(f"\n{len(tests) - failures}/{len(tests)} passed")
+    sys.exit(1 if failures else 0)

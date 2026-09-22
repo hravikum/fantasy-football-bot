@@ -1,16 +1,9 @@
-# Virtual environment
-venv/
-
-# Python cache
-__pycache__/
-*.pyc
-
-# Environment variables
 .env
-
-# VS Code settings
-.vscode/
-
-# macOS files
+.venv/
+fantasy_football_venv/
+__pycache__/
+# macOS
 .DS_Store
 
+# Logs
+logs/
