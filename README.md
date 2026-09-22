@@ -84,6 +84,11 @@ So:
 - Bid bands in `waivers.py` (`suggest_bid`): shares of your remaining FAAB. These are a
   first cut. Watch what claims actually cost in your league and adjust.
 - `SHORTLIST` and `POOL_SIZE` in `waivers.py`: how many free agents get scored and shown.
+- `LOOKAHEAD` in `waivers.py` (4): weeks past this one that the ranking, the lineup-holes
+  section and the drop list plan for, with byes applied to your players and the free agents
+  alike. Beyond this week each player counts at his season per-game average, since ESPN only
+  projects the current week in detail. A player whose value falls in a single week, like a bye
+  rental, is capped at the cheap bid band.
 
 ## The Jev ranker (experimental)
 

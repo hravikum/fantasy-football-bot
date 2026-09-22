@@ -228,7 +228,7 @@ def test_drop_list_is_bench_only_and_cheapest_first():
     roster = full_roster(bench_wr=player("WR", BENCH, 3.0, season=30.0),
                          bench_rb=player("RB", BENCH, 2.0, season=200.0))
     target, _ = plan(list(roster.values()), SLOTS, GAMES)
-    drops = waivers.drop_candidates(list(roster.values()), target, SLOTS, GAMES)
+    drops = waivers.drop_candidates(list(roster.values()), target, SLOTS, [(2, GAMES)], 2)
     assert drops[0]["name"] == roster["bench_wr"]["name"], "the 30-point season projection goes first"
     assert all(target[p["id"]] == BENCH for p in drops), "never suggests dropping a starter"
 
@@ -237,20 +237,79 @@ def test_never_drops_your_only_kicker():
     roster = full_roster(k=player("K", 17, 8.0, season=5.0))   # cheapest player on the roster by far
     players = list(roster.values())
     target, _ = plan(players, SLOTS, GAMES)
-    names = [p["name"] for p in waivers.drop_candidates(players, target, SLOTS, GAMES)]
+    names = [p["name"] for p in waivers.drop_candidates(players, target, SLOTS, [(2, GAMES)], 2)]
     assert roster["k"]["name"] not in names, "dropping him would leave the K slot unfillable"
 
 
-def test_bye_gaps_only_fire_when_the_bench_cannot_cover():
-    roster = full_roster()
+def spread(roster):
+    """The shared fixture puts everyone on one NFL team; byes need them on different ones."""
     for pro_team, person in enumerate(roster.values(), start=1):
-        person["pro_team"] = pro_team   # the shared fixture puts everyone on one NFL team
+        person["pro_team"] = pro_team
+    return roster
+
+
+def on_team(person, pro_team):
+    person["pro_team"] = pro_team
+    return person
+
+
+def test_a_bye_hole_is_reported_with_who_could_fill_it():
+    roster = spread(full_roster())                       # the only QB is on NFL team 1
+    byes = {roster["qb"]["pro_team"]: {4}, 31: {4}}
+    horizon = waivers.schedule_ahead(GAMES, byes, 2)
+    pool = [on_team(free_agent("QB", 15.0, season=255.0), 30),
+            on_team(free_agent("QB", 16.0, season=270.0), 31)]   # better, but off the same week
+    gaps = waivers.bye_gaps(list(roster.values()), SLOTS, horizon, 2, pool)
+    assert len(gaps) == 1 and gaps[0].startswith("week 4: QB short by 1")
+    assert pool[0]["name"] in gaps[0] and pool[1]["name"] not in gaps[0], "he's on bye that week too"
+
+
+def test_the_flex_spot_covers_a_receiver_bye():
+    """The old check counted positions one at a time, so it reported this as a hole."""
+    roster = spread(full_roster())
+    byes = {roster["wr1"]["pro_team"]: {4}, roster["wr2"]["pro_team"]: {4}}
+    horizon = waivers.schedule_ahead(GAMES, byes, 2)
+    assert waivers.bye_gaps(list(roster.values()), SLOTS, horizon, 2) == []
+
+
+def test_covering_a_bye_outranks_a_player_who_adds_nothing():
+    roster = spread(full_roster())
+    byes = {roster["qb"]["pro_team"]: {4}}
+    cover = on_team(free_agent("QB", 15.0, season=255.0, owned=3.0), 30)
+    popular = on_team(free_agent("WR", 1.0, season=17.0, owned=60.0), 31)
+    ranked = waivers.score_pool(list(roster.values()), [popular, cover], SLOTS, GAMES, byes, 2)
+    assert ranked[0]["name"] == cover["name"], "the week-4 fill-in ranks first despite 3% rostered"
+    assert ranked[0]["gain"] == 0.0 and ranked[0]["ahead_gain"] == 15.0
+
+
+def test_a_free_agent_on_bye_that_week_gets_no_credit_for_it():
+    roster = spread(full_roster())
+    byes = {roster["qb"]["pro_team"]: {4}, 30: {4}}
+    same_bye = on_team(free_agent("QB", 15.0, season=255.0), 30)
+    ranked = waivers.score_pool(list(roster.values()), [same_bye], SLOTS, GAMES, byes, 2)
+    assert ranked[0]["ahead_gain"] == 0.0
+
+
+def test_never_drops_the_player_covering_a_bye():
+    roster = spread(full_roster(backup_qb=player("QB", BENCH, 1.0, season=10.0)))   # the cheapest player
     players = list(roster.values())
+    horizon = waivers.schedule_ahead(GAMES, {roster["qb"]["pro_team"]: {4}}, 2)
     target, _ = plan(players, SLOTS, GAMES)
-    byes = {roster["qb"]["pro_team"]: {3}}   # the only QB is off in week 3
-    gaps = waivers.bye_gaps(players, target, byes, week=2)
-    assert len(gaps) == 1 and "1 QB on bye" in gaps[0] and "0 on the bench" in gaps[0]
-    assert waivers.bye_gaps(players, target, {}, week=2) == []
+    names = [p["name"] for p in waivers.drop_candidates(players, target, SLOTS, horizon, 2)]
+    assert roster["backup_qb"]["name"] not in names, "he's the only QB playing in week 4"
+    assert names, "other bench players can still go"
+
+
+def test_repeat_value_earns_real_money_and_a_one_week_fill_does_not():
+    recurring = {"gain": 0.0, "season_gain": 0, "ahead_gain": 7.0, "weeks_helped": 3}
+    one_week = {"gain": 0.0, "season_gain": 0, "ahead_gain": 14.7, "weeks_helped": 1}
+    assert waivers.suggest_bid(recurring, 100, 0) == (8, 15)
+    assert waivers.suggest_bid(one_week, 100, 0) == (2, 5), "a bye rental: cheap, even if the week is big"
+
+
+def test_a_streamer_for_this_week_only_is_also_cheap():
+    streamer = {"gain": 2.5, "season_gain": 0, "ahead_gain": 2.5, "weeks_helped": 1}
+    assert waivers.suggest_bid(streamer, 100, 0) == (2, 5)
 
 
 def test_claude_is_optional(monkey_key=None):
@@ -271,7 +330,7 @@ def test_report_reads_correctly_without_advice():
     target, _ = plan(roster, SLOTS, GAMES)
     report = waivers.build_report({
         "week": 3, "budget": 100, "budget_left": 100, "minimum_bid": 0, "rivals": [100, 88, 100],
-        "last_runs": [], "gaps": [], "candidates": ranked, "drops": waivers.drop_candidates(roster, target, SLOTS, GAMES),
+        "last_runs": [], "gaps": [], "candidates": ranked, "drops": waivers.drop_candidates(roster, target, SLOTS, [(2, GAMES)], 2),
         "advice": None, "roster": roster, "target": target})
     assert "Waiver report" in report and "$20-35" in report
     assert "Place claims yourself" in report, "the report must never imply it bid for you"
