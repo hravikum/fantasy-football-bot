@@ -43,9 +43,13 @@ python3 waivers.py                  print the waiver report
 python3 waivers.py --email          print it and send it
 python3 waivers.py --ranker jev     rank the pool with Jev instead of projections
 python3 waivers.py --jev-shadow     score and log with Jev, but rank and email as normal
+python3 claims.py                   what waiver claims actually cost in your league
+python3 accuracy.py                 how good ESPN's projections have been, by position
 python3 test_lineup.py              optimizer and IR tests
 python3 test_waivers.py             waiver scoring tests
 python3 test_jev.py                 Jev scorer tests (needs typesafe-sdk)
+python3 test_pricing.py             claim pricing and projection accuracy tests
+python3 test_snaps.py               snap share tests
 ```
 
 ## Scheduling (launchd)
@@ -80,9 +84,20 @@ So:
 ## Tuning
 
 - `MIN_GAIN` in `lineup.py` (2.0): projected points an upgrade must be worth before the
-  bot moves anyone. A lineup that can't play, or an IR move, happens regardless.
-- Bid bands in `waivers.py` (`suggest_bid`): shares of your remaining FAAB. These are a
-  first cut. Watch what claims actually cost in your league and adjust.
+  bot moves anyone. A lineup that can't play, or an IR move, happens regardless. Measured
+  against this league (weeks 1-2), ESPN's projections track results at 0.58 for running backs
+  and 0.48 for receivers, so a 2-point edge there is real signal.
+- `STEADY_SLOTS` in `lineup.py`: kicker and defense, where the same measurement found no
+  relationship between projection and result (0.28 and -0.30). Those slots only change when
+  the player in them can't play. Re-run `accuracy.py` around week 6 and revisit both.
+- Bid bands in `waivers.py`: once this league has priced `MIN_CLAIMS` (10) claims, bids come
+  from what winning claims actually cost here, scaled by how much you want the player
+  (`TIER_PERCENTILES`). Until then they fall back to shares of your remaining FAAB. `claims.py`
+  shows the distribution behind them and writes `logs/claims.csv`.
+- `MIN_GAIN` is still one guessed number for every position. `accuracy.py` measures what it
+  should be: for each position it reports bias, the typical miss, and how closely projections
+  track results. A position whose projections barely track results has no small edges worth
+  chasing, whatever the threshold says. Give it three or four finished weeks before trusting it.
 - `SHORTLIST` and `POOL_SIZE` in `waivers.py`: how many free agents get scored and shown.
 - `LOOKAHEAD` in `waivers.py` (4): weeks past this one that the ranking, the lineup-holes
   section and the drop list plan for, with byes applied to your players and the free agents
@@ -123,6 +138,23 @@ To stop the experiment, remove `--jev-shadow` from `install_schedule.sh` and rei
 
 Fall back by dropping the flag. Missing key, missing SDK, or failed calls all fall back on
 their own and say so in the report.
+
+## Snap share
+
+ESPN doesn't publish snap counts, so `snaps.py` takes them from nflverse and matches players to
+ESPN through nflverse's id table. The report shows the last two weeks in the SNAP% column:
+`40→78` is a role growing, `72→out` means he didn't play (a missed game is shown but never read
+as a shrinking role), `-` means no snap data. The trend is computed in code; a change of
+`TREND_POINTS` (15) percentage points counts as rising or falling.
+
+Snap share goes to Claude's brief and Jev's state, but deliberately not into the ranking yet:
+first it has to show it predicts points in this league, the way `accuracy.py` tested ESPN's
+projections. The player table (7 MB) is cached in `cache/` for a week and snap counts for six
+hours; if GitHub is down, the last cached copy is used, and with none the report goes out
+without the column.
+
+Jev's inputs changed on 2026-09-23, when snap share was added. When reviewing
+`logs/jev_scores.csv`, compare judgments before and after that date separately.
 
 ## When it breaks
 

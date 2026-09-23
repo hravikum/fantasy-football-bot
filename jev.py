@@ -87,6 +87,11 @@ def player_state(candidate, roster, league):
     }
     if candidate.get("usage"):
         state["player"]["actual_usage_this_season"] = candidate["usage"]
+    if candidate.get("snaps"):
+        state["player"]["snap_share"] = {
+            "percent_by_week": candidate["snaps"]["by_week"],   # null: he didn't play that week
+            "trend": candidate["snaps"]["trend"],
+        }
     return state
 
 

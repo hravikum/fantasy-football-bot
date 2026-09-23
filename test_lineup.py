@@ -126,6 +126,32 @@ def test_upgrade_to_questionable_does_not_pull_him_off_ir():
     assert slots_of(roster, target_for(roster))["hurt"] == IR
 
 
+def test_a_kicker_who_plays_is_never_swapped_for_a_better_projection():
+    """Measured in this league: ESPN's kicker projections don't track results, so a swap is a coin flip."""
+    roster = full_roster(bench_k=player("K", BENCH, 14.0))      # your kicker projects 8.0
+    slots = slots_of(roster, target_for(roster))
+    assert slots["k"] == 17 and slots["bench_k"] == BENCH
+
+
+def test_but_a_kicker_who_cannot_play_is_replaced():
+    roster = full_roster(k=player("K", 17, 8.0, bye=True), bench_k=player("K", BENCH, 6.0))
+    slots = slots_of(roster, target_for(roster))
+    assert slots["bench_k"] == 17 and slots["k"] == BENCH
+
+
+def test_the_same_holds_for_defenses():
+    steady = full_roster(bench_dst=player("D/ST", BENCH, 12.0))
+    hurt = full_roster(dst=player("D/ST", 16, 7.0, status="OUT"), bench_dst=player("D/ST", BENCH, 4.0))
+    assert slots_of(steady, target_for(steady))["dst"] == 16
+    assert slots_of(hurt, target_for(hurt))["bench_dst"] == 16
+
+
+def test_the_rest_of_the_lineup_still_optimises_around_them():
+    roster = full_roster(bench_k=player("K", BENCH, 14.0), bench_wr=player("WR", BENCH, 18.0))
+    slots = slots_of(roster, target_for(roster))
+    assert slots["bench_k"] == BENCH and slots["bench_wr"] == 4
+
+
 def test_healed_player_comes_off_ir():
     roster = full_roster(hurt=player("RB", IR, 16.0, status="ACTIVE"))
     target, moves, gain, broken, blocked = decide(list(roster.values()), SLOTS, GAMES)

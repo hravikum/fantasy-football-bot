@@ -2,8 +2,6 @@
 .venv/
 fantasy_football_venv/
 __pycache__/
-# macOS
-.DS_Store
-
-# Logs
 logs/
+cache/
+.DS_Store

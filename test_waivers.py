@@ -40,10 +40,60 @@ def test_season_gain_ignores_points_you_would_never_start():
     assert ranked["WR"]["season_gain"] > 0
 
 
-def test_kicker_who_beats_your_kicker_still_counts():
-    roster = list(full_roster().values())          # kicker projects 8.0
-    ranked = waivers.candidates(roster, [free_agent("K", 11.0)], SLOTS, GAMES)
-    assert round(ranked[0]["gain"], 1) == 3.0
+def test_a_better_kicker_is_worth_nothing_while_yours_plays():
+    """Since the lineup won't swap kickers on a projection, adding one gains you nothing."""
+    ranked = waivers.candidates(list(full_roster().values()), [free_agent("K", 11.0)], SLOTS, GAMES)
+    assert round(ranked[0]["gain"], 1) == 0.0
+
+
+def test_but_a_kicker_is_worth_plenty_when_yours_is_on_bye():
+    roster = full_roster(k=player("K", 17, 8.0, bye=True))
+    ranked = waivers.candidates(list(roster.values()), [free_agent("K", 11.0)], SLOTS, GAMES)
+    assert round(ranked[0]["gain"], 1) == 11.0
+
+
+def roster_at_capacity(**overrides):
+    """Sixteen players, so an add has to cost a drop, the way it does in a real league."""
+    roster = full_roster(**overrides)
+    for spare in range(16 - sum(1 for p in roster.values() if p["slot"] != IR)):
+        roster[f"filler{spare}"] = player("WR", BENCH, 1.0, season=17.0)
+    return roster
+
+
+def test_an_add_costs_nobody_when_there_is_a_spare_roster_spot():
+    ranked = waivers.score_pool(list(full_roster().values()), [free_agent("WR", 14.0, season=238.0)],
+                                SLOTS, GAMES)
+    assert ranked[0]["drop"] is None and ranked[0]["gain"] == 4.0
+
+
+def test_adding_a_kicker_pairs_with_your_kicker():
+    roster = list(roster_at_capacity().values())             # your kicker projects 8.0
+    better = free_agent("K", 11.0, season=187.0)
+    ranked = waivers.score_pool(roster, [better], SLOTS, GAMES)
+    assert ranked[0]["drop"]["position"] == "K", "swap kicker for kicker, don't carry two"
+    assert ranked[0]["gain"] == 3.0
+
+
+def test_a_worse_kicker_costs_points_instead_of_taking_a_bench_spot():
+    roster = list(roster_at_capacity().values())
+    worse = free_agent("K", 6.0, season=102.0)
+    ranked = waivers.score_pool(roster, [worse], SLOTS, GAMES)
+    assert ranked[0]["drop"]["position"] == "K" and ranked[0]["ahead_gain"] < 0, "so he's never recommended"
+
+
+def test_a_starter_is_only_dropped_for_someone_better_all_season():
+    roster = roster_at_capacity()
+    hot_week = free_agent("WR", 20.0, season=85.0)           # big week, poor season
+    ranked = waivers.score_pool(list(roster.values()), [hot_week], SLOTS, GAMES)
+    dropped = ranked[0]["drop"]
+    assert dropped is not None and dropped["season_projection"] <= 85.0, "no starter is worth this much less"
+
+
+def test_an_injured_player_is_never_the_suggested_drop():
+    roster = roster_at_capacity(bench_rb=player("RB", BENCH, 0.0, status="OUT", season=1.0),
+                                stashed=player("WR", IR, 0.0, status="INJURY_RESERVE", season=1.0))
+    ranked = waivers.score_pool(list(roster.values()), [free_agent("WR", 14.0, season=238.0)], SLOTS, GAMES)
+    assert ranked[0]["drop"]["name"] != roster["bench_rb"]["name"]
 
 
 def test_injured_free_agents_are_skipped():
@@ -224,6 +274,75 @@ def test_a_paused_turn_that_never_finishes_says_so():
     assert text.endswith("[Cut off: the web search was still running after the last resume.]")
 
 
+def _sample_context(**overrides):
+    roster = list(full_roster().values())
+    target, _ = plan(roster, SLOTS, GAMES)
+    ranked = waivers.candidates(roster, [free_agent("WR", 14.0, season=190.0, owned=41.0)], SLOTS, GAMES)
+    ranked[0]["bid"] = (8, 15)
+    ranked[0]["drop"] = roster[-1]
+    context = {"week": 3, "budget": 100, "budget_left": 92, "minimum_bid": 0, "rivals": [100, 88],
+               "last_runs": [], "gaps": ["week 5: WR short by 1"], "candidates": ranked,
+               "drops": [roster[-1]], "advice": None, "ranked_by": None, "roster": roster, "target": target}
+    context.update(overrides)
+    return context
+
+
+def test_html_table_carries_the_numbers_and_the_drop():
+    html = waivers.build_html(_sample_context())
+    assert "<table" in html and "Drop for him" in html
+    assert waivers.LOOKAHEAD == 4 and "Next 5" in html
+    for piece in ("$8&ndash;15", "week 5: WR short by 1", "Place claims yourself"):
+        assert piece in html, piece
+
+
+def test_html_escapes_names_and_links_sources():
+    context = _sample_context(advice="Bid $3.\n\nSources:\n- Story\n  https://example.com/a")
+    context["candidates"][0]["name"] = "A&W <script>"
+    html = waivers.build_html(context)
+    assert "A&amp;W &lt;script&gt;" in html and "<script>" not in html
+    assert '<a href="https://example.com/a"' in html
+
+
+def test_html_shows_jev_columns_only_when_jev_ran():
+    plain = waivers.build_html(_sample_context())
+    context = _sample_context()
+    context["candidates"][0].update(jev=0.71, jev_confidence=0.64)
+    assert ">Jev<" not in plain and ">Jev<" in waivers.build_html(context)
+
+
+def test_email_carries_both_a_text_and_an_html_version():
+    import smtplib, os
+    captured = {}
+    class FakeSMTP:
+        def __init__(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def starttls(self, context=None): pass
+        def login(self, user, password): pass
+        def send_message(self, message): captured["types"] = [p.get_content_type() for p in message.walk()]
+    saved_smtp, saved_env = smtplib.SMTP, os.environ.get("GMAIL_APP_PASSWORD")
+    smtplib.SMTP = FakeSMTP
+    os.environ.update({"GMAIL_ADDRESS": "x@gmail.com", "GMAIL_APP_PASSWORD": "abcd efgh ijkl mnop"})
+    try:
+        import mailer
+        assert mailer.send("subject", "plain body", "<div>rich body</div>") is True
+        assert "text/plain" in captured["types"] and "text/html" in captured["types"]
+    finally:
+        smtplib.SMTP = saved_smtp
+        os.environ["GMAIL_APP_PASSWORD"] = saved_env or ""
+
+
+def test_faab_spend_falls_back_to_the_claims_when_espn_reports_zero():
+    """Your league: the counter said nothing was spent while 27 claims had been paid for."""
+    from collections import Counter as Tally
+    silent = {"id": 13, "transactionCounter": {"acquisitionBudgetSpent": 0}}
+    assert waivers.faab_spent(silent, Tally({13: 15})) == 15
+    assert waivers.faab_spent(silent, Tally()) == 0
+    counting = {"id": 4, "transactionCounter": {"acquisitionBudgetSpent": 30}}
+    assert waivers.faab_spent(counting, Tally({4: 22})) == 30, "trust the larger record"
+    assert waivers.faab_spent({"id": 9}, Tally({9: 7})) == 7, "no counter at all"
+
+
 def test_drop_list_is_bench_only_and_cheapest_first():
     roster = full_roster(bench_wr=player("WR", BENCH, 3.0, season=30.0),
                          bench_rb=player("RB", BENCH, 2.0, season=200.0))
@@ -231,6 +350,54 @@ def test_drop_list_is_bench_only_and_cheapest_first():
     drops = waivers.drop_candidates(list(roster.values()), target, SLOTS, [(2, GAMES)], 2)
     assert drops[0]["name"] == roster["bench_wr"]["name"], "the 30-point season projection goes first"
     assert all(target[p["id"]] == BENCH for p in drops), "never suggests dropping a starter"
+
+
+WIRE = {"K": 145.0, "D/ST": 115.0, "WR": 40.0, "RB": 30.0, "TE": 35.0, "QB": 200.0}
+
+
+def test_a_kicker_add_is_paid_for_by_your_kicker_not_a_receiver():
+    """Hari's question: adding a kicker should never cost you a bench wideout."""
+    roster = spread(full_roster())                      # kicker season 136, bench WR 51, bench RB 34
+    horizon = waivers.schedule_ahead(GAMES, {}, 2)
+    better_kicker = on_team(free_agent("K", 9.5, season=161.5), 30)
+    cut = waivers.drop_for(better_kicker, list(roster.values()), SLOTS, horizon, 2, WIRE)
+    assert cut["name"] == roster["k"]["name"], "swap like for like; the wire always has another kicker"
+
+
+def test_a_kicker_add_still_costs_a_kicker_when_the_wire_is_deep_at_receiver():
+    """Even when a bench receiver scores as the cheaper cut, two kickers is the wasted spot."""
+    roster = spread(full_roster(bench_wr=player("WR", BENCH, 5.0, season=60.0)))
+    deep_at_receiver = dict(WIRE, WR=190.0)             # a better receiver is sitting on the wire
+    horizon = waivers.schedule_ahead(GAMES, {}, 2)
+    assert waivers.surplus(roster["bench_wr"], deep_at_receiver) < waivers.surplus(roster["k"], deep_at_receiver)
+    cut = waivers.drop_for(on_team(free_agent("K", 9.5, season=161.5), 30),
+                           list(roster.values()), SLOTS, horizon, 2, deep_at_receiver)
+    assert cut["name"] == roster["k"]["name"]
+
+
+def test_a_receiver_add_never_costs_you_the_only_kicker():
+    roster = spread(full_roster())
+    horizon = waivers.schedule_ahead(GAMES, {}, 2)
+    receiver = on_team(free_agent("WR", 11.0, season=187.0), 30)
+    cut = waivers.drop_for(receiver, list(roster.values()), SLOTS, horizon, 2, WIRE)
+    assert cut["name"] != roster["k"]["name"], "dropping him would leave the K slot unfillable"
+
+
+def test_the_second_defense_goes_before_the_receiver():
+    """Raw season points said drop Jeudy (97) over the Broncos (118); replacement level says otherwise."""
+    roster = spread(full_roster(bench_wr=player("WR", BENCH, 5.0, season=97.0),
+                                spare_dst=player("D/ST", BENCH, 6.0, season=118.0)))
+    players = list(roster.values())
+    target, _ = plan(players, SLOTS, GAMES)
+    order = [p["name"] for p in waivers.drop_candidates(players, target, SLOTS, [(2, GAMES)], 2, WIRE)]
+    assert order.index(roster["spare_dst"]["name"]) < order.index(roster["bench_wr"]["name"])
+
+
+def test_surplus_measures_a_player_against_his_own_position():
+    kicker, receiver = player("K", BENCH, 8.0, season=136.0), player("WR", BENCH, 5.0, season=97.0)
+    assert waivers.surplus(kicker, WIRE) < 0 < waivers.surplus(receiver, WIRE)
+    assert waivers.replacement_level([free_agent("K", 9.0, season=150.0),
+                                      free_agent("K", 8.0, season=120.0)]) == {"K": 150.0}
 
 
 def test_never_drops_your_only_kicker():

@@ -18,8 +18,8 @@ def _tls_context():
     return context
 
 
-def send(subject, body):
-    """Send one plain-text email. Returns True if it went out."""
+def send(subject, body, html=None):
+    """Send one email, plain text with an optional HTML version. Returns True if it went out."""
     load_dotenv(Path(__file__).with_name(".env"))
     address = os.getenv("GMAIL_ADDRESS")
     password = (os.getenv("GMAIL_APP_PASSWORD") or "").replace(" ", "")  # Google shows it in groups of four
@@ -32,6 +32,8 @@ def send(subject, body):
     message["To"] = os.getenv("EMAIL_TO") or address
     message["Subject"] = subject
     message.set_content(body)
+    if html:
+        message.add_alternative(html, subtype="html")  # clients that can't render it fall back to the text
     try:
         with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as smtp:
             smtp.starttls(context=_tls_context())

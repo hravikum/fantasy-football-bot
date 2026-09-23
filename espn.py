@@ -92,41 +92,63 @@ class ESPN:
             players.append(player)
         return players
 
+    def player_cards(self, player_ids, final_week):
+        """{player_id: player payload} with per-week stat lines, fetched in batches ESPN accepts."""
+        found = {}
+        ids = list(player_ids)
+        for start in range(0, len(ids), 50):
+            rules = {"players": {"filterIds": {"value": ids[start:start + 50]},
+                                 "filterStatsForTopScoringPeriodIds": {
+                                     "value": final_week,
+                                     "additionalValue": [f"00{self.season}", f"10{self.season}"]}}}
+            data = self.league("kona_playercard", headers={"x-fantasy-filter": json.dumps(rules)})
+            for entry in data.get("players", []):
+                player = entry.get("player") or entry.get("playerPoolEntry", {}).get("player", {})
+                if player.get("id"):
+                    found[player["id"]] = player
+        return found
+
     def usage(self, player_ids, final_week):
         """{player_id: [{week, carries, targets, ...}]} of actual per-game usage this season."""
-        if not player_ids:
-            return {}
-        rules = {"players": {"filterIds": {"value": list(player_ids)},
-                             "filterStatsForTopScoringPeriodIds": {
-                                 "value": final_week,
-                                 "additionalValue": [f"00{self.season}", f"10{self.season}"]}}}
-        data = self.league("kona_playercard", headers={"x-fantasy-filter": json.dumps(rules)})
         found = {}
-        for entry in data.get("players", []):
-            player = entry.get("player") or entry.get("playerPoolEntry", {}).get("player", {})
+        for player_id, player in self.player_cards(player_ids, final_week).items():
             weeks = {}
             for line in player.get("stats", []):
                 if (line.get("statSourceId") == 0 and line.get("seasonId") == self.season
                         and line.get("scoringPeriodId") and line.get("statSplitTypeId") != 2):
                     raw = line.get("stats", {})
                     weeks[line["scoringPeriodId"]] = {name: raw.get(str(stat), 0) for name, stat in USAGE_STATS.items()}
-            found[player.get("id")] = [dict(week=week, **weeks[week]) for week in sorted(weeks)]
+            found[player_id] = [dict(week=week, **weeks[week]) for week in sorted(weeks)]
         return found
 
-    def waiver_runs(self, weeks):
-        """When claims actually processed, as local datetimes. ESPN's settings only give an hour."""
+    def waiver_claims(self, weeks):
+        """Executed waiver claims: what each winning bid cost and who it bought."""
         rules = {"transactions": {"filterType": {"value": ["WAIVER"]}}}
-        runs = []
+        claims, seen = [], set()
         for week in weeks:
             try:
                 data = self.league("mTransactions2", week=week, headers={"x-fantasy-filter": json.dumps(rules)})
             except ESPNError:
                 continue
             for transaction in data.get("transactions", []):
+                key = transaction.get("id") or id(transaction)
+                if transaction.get("status") != "EXECUTED" or key in seen:
+                    continue
+                seen.add(key)
                 stamp = transaction.get("processDate")
-                if stamp and transaction.get("status") == "EXECUTED":
-                    runs.append(datetime.fromtimestamp(stamp / 1000))
-        return sorted(set(runs))  # every claim in one run shares a timestamp
+                claims.append({
+                    "week": week,
+                    "team_id": transaction.get("teamId"),
+                    "bid": transaction.get("bidAmount") or 0,
+                    "added": [item.get("playerId") for item in transaction.get("items", [])
+                              if item.get("type") == "ADD"],
+                    "processed": datetime.fromtimestamp(stamp / 1000) if stamp else None,
+                })
+        return claims
+
+    def waiver_runs(self, weeks):
+        """When claims actually processed, as local datetimes. ESPN's settings only give an hour."""
+        return sorted({claim["processed"] for claim in self.waiver_claims(weeks) if claim["processed"]})
 
     def _pro_schedule(self):
         if self._schedule is None:
@@ -217,12 +239,15 @@ def parse_roster_entry(entry, week, season):
     """Handles both shapes ESPN uses: roster entries and free-agent search results."""
     pool = entry.get("playerPoolEntry", entry)
     player = pool["player"]
-    projection = next(
-        (s.get("appliedTotal", 0.0) for s in player.get("stats", [])
-         if s.get("seasonId") == season and s.get("scoringPeriodId") == week
-         and s.get("statSourceId") == 1 and s.get("statSplitTypeId") != 2),
-        None,
-    )
+    def points_for(source):
+        return next(
+            (s.get("appliedTotal", 0.0) for s in player.get("stats", [])
+             if s.get("seasonId") == season and s.get("scoringPeriodId") == week
+             and s.get("statSourceId") == source and s.get("statSplitTypeId") != 2),
+            None,
+        )
+
+    projection = points_for(1)
     season_points = next(
         (s.get("appliedTotal", 0.0) for s in player.get("stats", [])
          if s.get("seasonId") == season and s.get("scoringPeriodId") == 0 and s.get("statSourceId") == 1),
@@ -239,6 +264,7 @@ def parse_roster_entry(entry, week, season):
         "injury_status": player.get("injuryStatus", "ACTIVE"),
         "locked": pool.get("lineupLocked", False),
         "projection": projection,
+        "actual": points_for(0),
         "season_projection": season_points,
         "percent_owned": round(player.get("ownership", {}).get("percentOwned", 0.0), 1),
         "percent_change": round(player.get("ownership", {}).get("percentChange", 0.0), 1),

@@ -16,6 +16,11 @@ import mailer
 from espn import BENCH, ESPN, IR, SLOT_NAMES, SLOT_ORDER, ESPNError, ESPNWriteRejected, parse_roster_entry
 
 MIN_GAIN = 2.0  # points: smaller upgrades are projection noise, not worth churning the lineup
+# Measured in this league (accuracy.py, weeks 1-2): ESPN's projections track results at 0.58 for
+# running backs and 0.48 for receivers, but at 0.28 for defenses and -0.30 for kickers. Where the
+# projection doesn't predict the result, swapping is a coin flip, so these slots only change when
+# the player in them can't play.
+STEADY_SLOTS = {16, 17}  # D/ST and K
 CANT_PLAY = {"OUT", "INJURY_RESERVE", "SUSPENSION"}
 HEALTHY = {"ACTIVE", "NORMAL"}
 IR_ELIGIBLE = {"OUT", "INJURY_RESERVE"}                   # ESPN allows only the O and IR tags on IR
@@ -59,6 +64,13 @@ def plan(players, slot_counts, games):
 
     lineup = dict(reserve)
     for player in active:
+        if player["slot"] in STEADY_SLOTS and expected_points(player, games) > 0:
+            lineup[player["id"]] = player["slot"]      # he plays, so leave him alone
+            if player["slot"] in starting:
+                starting[player["slot"]] -= 1
+    for player in active:
+        if player["id"] in lineup:
+            continue
         if player["locked"]:
             lineup[player["id"]] = player["slot"]
             if player["slot"] in starting:
