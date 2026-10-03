@@ -1,11 +1,10 @@
 """How good ESPN's weekly projections have been in this league.
 
 Compares every rostered player's weekly projection against what he actually scored, by
-position. MIN_GAIN in lineup.py is currently a number I guessed; these are the numbers that
-should set it, and they say more than the average error does: a position whose projections
-barely track results has no small edges worth chasing at all.
+position. PER PROJ PT is what sets MIN_GAIN in lineup.py: what one projected point has been
+worth in real points, which prices every upgrade the bar holds back.
 
-Usage: python3 accuracy.py
+Usage: python3 accuracy.py [season]     a past season, e.g. 2025, writes its own log
 """
 import csv
 import sys
@@ -13,9 +12,10 @@ from collections import defaultdict
 from pathlib import Path
 
 from espn import ESPN, ESPNError, parse_roster_entry
+from lineup import MIN_GAIN
 
 LOG = Path(__file__).with_name("logs") / "accuracy.csv"
-FIELDS = ["week", "player", "position", "projected", "actual", "error"]
+FIELDS = ["week", "player_id", "player", "position", "projected", "actual", "error"]
 STARTABLE = 5.0   # ignore players nobody would have started; their misses aren't decisions
 
 
@@ -39,7 +39,8 @@ def collect(espn):
                     continue  # nobody starts a three-point projection, so its miss isn't a decision
                 if played in byes.get(player["pro_team"], set()):
                     continue  # the bot never starts a player on bye, so that projection means nothing
-                rows.append({"week": played, "player": player["name"], "position": player["position"],
+                rows.append({"week": played, "player_id": player["id"], "player": player["name"],
+                             "position": player["position"],
                              "projected": round(player["projection"], 1),
                              "actual": round(player["actual"], 1),
                              "error": round(player["actual"] - player["projection"], 1)})
@@ -59,6 +60,20 @@ def correlation(pairs):
     return covariance / (spread_p * spread_a) if spread_p and spread_a else None
 
 
+def slope(pairs):
+    """Real points per projected point: what a one-point projected edge has been worth.
+
+    This, not the size of the misses, prices a held upgrade. A big typical miss means any one
+    call can go wrong; it doesn't make a small edge worthless on average.
+    """
+    if len(pairs) < 3:
+        return None
+    mean_p = sum(p for p, _ in pairs) / len(pairs)
+    mean_a = sum(a for _, a in pairs) / len(pairs)
+    spread = sum((p - mean_p) ** 2 for p, _ in pairs)
+    return sum((p - mean_p) * (a - mean_a) for p, a in pairs) / spread if spread else None
+
+
 def by_position(rows):
     grouped = defaultdict(list)
     for row in rows:
@@ -71,6 +86,7 @@ def by_position(rows):
             "bias": sum(errors) / len(errors),
             "average_miss": sum(abs(error) for error in errors) / len(errors),
             "tracks": correlation([(row["projected"], row["actual"]) for row in entries]),
+            "slope": slope([(row["projected"], row["actual"]) for row in entries]),
         }
     return summary
 
@@ -80,20 +96,20 @@ def report(week, rows, summary):
              f"{len(rows)} player-weeks where the projection was {STARTABLE:.0f} or better", ""]
     if not rows:
         return "\n".join(lines + ["Nothing has finished yet."])
-    lines.append(f"{'POS':<6} {'N':>5} {'BIAS':>7} {'AVG MISS':>9} {'TRACKS':>7}  SMALLEST EDGE WORTH A MOVE")
+    lines.append(f"{'POS':<6} {'N':>5} {'BIAS':>7} {'AVG MISS':>9} {'TRACKS':>7} {'PER PROJ PT':>12}")
     for position in sorted(summary, key=lambda p: -summary[p]["n"]):
         stats = summary[position]
         tracks = "n/a" if stats["tracks"] is None else f"{stats['tracks']:.2f}"
-        # Half the typical miss: below that, a projected edge is mostly noise.
-        threshold = stats["average_miss"] / 2
-        advice = f"{threshold:.1f} pts" if (stats["tracks"] or 0) > 0.3 else "projections too weak to trust"
+        worth = "n/a" if stats["slope"] is None else f"{stats['slope']:.2f}"
         lines.append(f"{position:<6} {stats['n']:>5} {stats['bias']:>+7.1f} {stats['average_miss']:>9.1f} "
-                     f"{tracks:>7}  {advice}")
+                     f"{tracks:>7} {worth:>12}")
     lines += ["",
               "BIAS is how much players outscore the projection on average; AVG MISS is the typical",
               "gap either way; TRACKS is how closely the projection follows the result (1.0 is perfect).",
-              "", f"MIN_GAIN in lineup.py is 2.0 for every position. Three or four more weeks of this",
-              "makes these numbers solid enough to set it per position."]
+              "PER PROJ PT is what one projected point has been worth in real points: at 0.9, a",
+              "2-point projected edge is worth about 1.8 points on average, however big the misses.",
+              "", f"MIN_GAIN in lineup.py holds upgrades under {MIN_GAIN} projected points. Each one it",
+              "holds costs about PER PROJ PT times its edge."]
     return "\n".join(lines)
 
 
@@ -107,15 +123,19 @@ def write_log(rows, path=None):
     return len(rows)
 
 
-def main():
+def main(season=None):
     espn = ESPN.from_env()
+    path = LOG
+    if season:   # a past season gets its own log, so this season's stays as it is
+        espn.season = season
+        path = LOG.with_name(f"accuracy_{season}.csv")
     week, rows = collect(espn)
     print(report(week, rows, by_position(rows)))
-    print(f"\n{write_log(rows)} player-weeks written to {LOG}")
+    print(f"\n{write_log(rows, path)} player-weeks written to {path}")
 
 
 if __name__ == "__main__":
     try:
-        main()
+        main(int(sys.argv[1]) if len(sys.argv) > 1 else None)
     except ESPNError as error:
         sys.exit(f"Error: {error}")

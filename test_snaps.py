@@ -8,6 +8,7 @@ from pathlib import Path
 import requests
 
 import jev
+import snap_test
 import snaps
 
 PLAYERS = "display_name,espn_id,pfr_id\nNico Collins,4258173,CollNi00\nFloat Id,4047650.0,FlotId00\nNo Espn,,NoEsNo00\n"
@@ -88,6 +89,35 @@ def test_jev_sees_snap_share_when_there_is_some():
     assert state["player"]["snap_share"] == {"percent_by_week": [40, 78], "trend": "rising"}
     del candidate["snaps"]
     assert "snap_share" not in jev.player_state(candidate, {}, {})["player"]
+
+
+def test_backtest_labels_each_week_with_the_trend_before_it():
+    shares = {7: {1: 40, 2: 80, 3: 20}}
+    rows = [{"week": week, "player_id": 7, "position": "WR", "error": 0.0} for week in (2, 3, 4)]
+    rows.append({"week": 3, "player_id": 8, "position": "QB", "error": 0.0})
+    labelled = snap_test.label(rows, shares)
+    assert [row["trend"] for row in labelled] == [None, "rising", "falling"], \
+        "week 3 sees 40 then 80 and not its own 20; week 2 has only one game behind it"
+    assert all(row["position"] != "QB" for row in labelled), "a quarterback's snap share says nothing"
+
+
+def test_backtest_compares_rising_with_steady_and_says_how_sure_it_is():
+    rows = ([{"position": "WR", "trend": "rising", "error": e} for e in (3.0, 5.0, 4.0, 6.0)] +
+            [{"position": "WR", "trend": "steady", "error": e} for e in (-1.0, 1.0, 0.0, 0.0)] +
+            [{"position": "RB", "trend": None, "error": 9.0}])
+    stats = snap_test.by_trend(rows)
+    n, mean, error = stats[("WR", "rising")]
+    assert n == 4 and mean == 4.5 and round(error, 2) == 0.65
+    assert stats[("ALL", "steady")][0] == 4 and ("RB", None) not in stats, "no trend, no group"
+    text = snap_test.report(2025, rows, stats)
+    assert "8 of 9 player-weeks" in text and "+4.5 ±0.8" in text and "signal rather than luck" in text
+
+
+def test_a_small_noisy_gap_is_called_luck():
+    rows = ([{"position": "RB", "trend": "rising", "error": e} for e in (8.0, -6.0)] +
+            [{"position": "RB", "trend": "steady", "error": e} for e in (1.0, -1.0)])
+    assert "could be luck" in snap_test.report(2025, rows, snap_test.by_trend(rows))
+    assert "Nothing to compare yet" in snap_test.report(2026, [], {})
 
 
 if __name__ == "__main__":

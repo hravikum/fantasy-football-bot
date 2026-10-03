@@ -39,12 +39,14 @@ python3 check.py                    league settings and your roster, read-only
 python3 lineup.py                   what it would change, changes nothing
 python3 lineup.py --live            apply the moves it judges worth making
 python3 lineup.py --live --force    apply the best lineup even below the point bar
+python3 lineup.py --live --near-kickoff   the same, only if a game kicks off within 95 minutes
 python3 waivers.py                  print the waiver report
 python3 waivers.py --email          print it and send it
 python3 waivers.py --ranker jev     rank the pool with Jev instead of projections
 python3 waivers.py --jev-shadow     score and log with Jev, but rank and email as normal
 python3 claims.py                   what waiver claims actually cost in your league
-python3 accuracy.py                 how good ESPN's projections have been, by position
+python3 accuracy.py [season]        how good ESPN's projections have been, by position
+python3 snap_test.py [season]       whether a rising snap share beats ESPN's projection
 python3 test_lineup.py              optimizer and IR tests
 python3 test_waivers.py             waiver scoring tests
 python3 test_jev.py                 Jev scorer tests (needs typesafe-sdk)
@@ -58,15 +60,23 @@ python3 test_snaps.py               snap share tests
 ./install_schedule.sh
 ```
 
-Installs two jobs. `local.fantasy.waivers` emails the report daily at 6am, after the
-overnight claim run. `local.fantasy.lineup` runs `lineup.py --live` at 9am every day for
-injury and IR changes, plus repeatedly on Thursday, Sunday and Monday before kickoffs.
-Every run is idempotent and only emails when it actually changes something, so a missed
-run is covered by the next one.
+Installs three jobs. `local.fantasy.waivers` emails the report daily at 6am, after the
+overnight claim run. `local.fantasy.lineup` runs `lineup.py --live` at 9:05 every day for
+injury and IR changes. `local.fantasy.gameday` checks in every 15 minutes and runs the same
+pass whenever an NFL game kicks off within the next 95 minutes, which is when inactives come
+out. Kickoff times come from ESPN's NFL schedule, kept in `cache/kickoffs.json` and refreshed
+daily, so Thursday, Saturday and holiday games are covered without editing anything. A
+check-in with no game near prints nothing and stays out of the log. Every run is idempotent
+and only emails when it actually changes something, so a missed run is covered by the next
+one. The "roster needs you" email comes from the morning pass only, not every check-in.
+
+When two starters can trade slots at no cost, the one whose game starts later goes to FLEX,
+so a late scratch there can be replaced from any position. That move is made even though it
+gains no points, because once the earlier game kicks off the swap is locked out.
 
 ```
 launchctl kickstart -k gui/$UID/local.fantasy.waivers   # run one now
-launchctl bootout gui/$UID/local.fantasy.lineup         # stop a job
+launchctl bootout gui/$UID/local.fantasy.gameday        # stop a job
 tail -f logs/$(date +%Y-%m).log                         # watch what it does
 ```
 
@@ -77,27 +87,34 @@ So:
 - `sudo pmset repeat wakeorpoweron MTWRFSU 05:55:00` wakes it before the 6am report.
 - On game days keep it plugged in, with System Settings > Battery > Options >
   "Prevent automatic sleeping on power adapter when the display is off" turned on.
+  `pmset -g custom` should then show `sleep 0` under AC Power.
 - Closing the lid sleeps it regardless, unless it's on power with an external display.
+- `run.sh` holds the Mac awake until each run finishes (`caffeinate`; the part that stops
+  system sleep only works on power). A run launchd starts as the Mac wakes can beat Wi-Fi
+  back, so it first waits up to two minutes for the network, and the log says
+  `waited 15s for the network` when it had to.
 - macOS lists these under System Settings > General > Login Items & Extensions as
   background items. They need to stay allowed.
 
 ## Tuning
 
-- `MIN_GAIN` in `lineup.py` (2.0): projected points an upgrade must be worth before the
-  bot moves anyone. A lineup that can't play, or an IR move, happens regardless. Measured
-  against this league (weeks 1-2), ESPN's projections track results at 0.58 for running backs
-  and 0.48 for receivers, so a 2-point edge there is real signal.
-- `STEADY_SLOTS` in `lineup.py`: kicker and defense, where the same measurement found no
-  relationship between projection and result (0.28 and -0.30). Those slots only change when
-  the player in them can't play. Re-run `accuracy.py` around week 6 and revisit both.
+- `MIN_GAIN` in `lineup.py` (0.5): projected points an upgrade must be worth before the
+  bot moves anyone. A lineup that can't play, or an IR move, happens regardless. Over the
+  2025 season one projected point was worth about 0.9 real points at RB, WR and TE
+  (`python3 accuracy.py 2025`), so every upgrade held back costs nearly its whole edge. The
+  bar is only there to stop the lineup flipping back and forth.
+- Kickers and defenses follow projections like every other slot. Their projections barely
+  track results (0.08 and 0.10 over 2025), but one projected point was still worth about 1.0
+  and 0.65 real points, with wide margins, and following a projection costs nothing on average
+  even when it's useless. The waiver report bids them in the cheap range at most
+  (`STREAM_ONLY` in `waivers.py`), since there's always another one on the wire.
 - Bid bands in `waivers.py`: once this league has priced `MIN_CLAIMS` (10) claims, bids come
   from what winning claims actually cost here, scaled by how much you want the player
   (`TIER_PERCENTILES`). Until then they fall back to shares of your remaining FAAB. `claims.py`
   shows the distribution behind them and writes `logs/claims.csv`.
-- `MIN_GAIN` is still one guessed number for every position. `accuracy.py` measures what it
-  should be: for each position it reports bias, the typical miss, and how closely projections
-  track results. A position whose projections barely track results has no small edges worth
-  chasing, whatever the threshold says. Give it three or four finished weeks before trusting it.
+- `accuracy.py` reports PER PROJ PT for each position: what one projected point has been
+  worth in real points, so each upgrade `MIN_GAIN` holds back costs about that times its edge.
+  The size of the misses doesn't change that; it only means any single call can go wrong.
 - `SHORTLIST` and `POOL_SIZE` in `waivers.py`: how many free agents get scored and shown.
 - `LOOKAHEAD` in `waivers.py` (4): weeks past this one that the ranking, the lineup-holes
   section and the drop list plan for, with byes applied to your players and the free agents
@@ -149,7 +166,10 @@ as a shrinking role), `-` means no snap data. The trend is computed in code; a c
 
 Snap share goes to Claude's brief and Jev's state, but deliberately not into the ranking yet:
 first it has to show it predicts points in this league, the way `accuracy.py` tested ESPN's
-projections. The player table (7 MB) is cached in `cache/` for a week and snap counts for six
+projections; `snap_test.py` is that test. Over the 2025 season it found nothing: players whose
+snap share had just risen beat their projection by only 0.2 points a game more than steady ones
+(±0.5), so ESPN's projections already price role changes and snap share stays out of the
+ranking. The player table (7 MB) is cached in `cache/` for a week and snap counts for six
 hours; if GitHub is down, the last cached copy is used, and with none the report goes out
 without the column.
 
@@ -159,6 +179,8 @@ Jev's inputs changed on 2026-09-23, when snap share was added. When reviewing
 ## When it breaks
 
 - **Everything returns 401.** The ESPN cookies changed. Copy them again.
+- **A run fails with "Failed to resolve lm-api-reads.fantasy.espn.com".** The Mac had no
+  network for two minutes after it woke. It was almost certainly asleep on battery; see Scheduling.
 - **Emails stop.** Google revokes app passwords whenever you change your account password.
 - **A run reports a refusal.** ESPN validates a transaction as a whole and applies none of
   it on failure, so your roster is untouched. The email names the reason.

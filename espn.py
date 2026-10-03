@@ -174,6 +174,14 @@ class ESPN:
                 games[team["id"]] = (opponent, datetime.fromtimestamp(game["date"] / 1000))
         return games
 
+    def kickoffs(self):
+        """Every NFL kickoff this season as local times, earliest first."""
+        data = self._pro_schedule()
+        return sorted({datetime.fromtimestamp(game["date"] / 1000)
+                       for team in data["settings"]["proTeams"]
+                       for games in team.get("proGamesByScoringPeriod", {}).values()
+                       for game in games})
+
     def my_team(self, teams):
         """The one team owned by the SWID cookie. The bot never acts on any other team."""
         me = _norm(self.swid)

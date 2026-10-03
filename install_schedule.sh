@@ -11,8 +11,8 @@ if [ ! -x "$DIR/.venv/bin/python3" ]; then
     exit 1
 fi
 
-# Lineup: a daily injury sweep, plus repeated runs on game days. Each run is idempotent,
-# so a missed one is covered by the next, and it only emails when it actually changes something.
+# Lineup, morning pass: injuries, IR, and anything the overnight waivers changed. 9:05 so it
+# never runs alongside the 9:00 check-in below. Like every lineup run, it only emails on a change.
 cat >"$AGENTS/local.fantasy.lineup.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -26,17 +26,31 @@ cat >"$AGENTS/local.fantasy.lineup.plist" <<PLIST
   <key>StandardErrorPath</key><string>$DIR/logs/launchd.err</string>
   <key>StartCalendarInterval</key>
   <array>
-    <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
-    <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
-    <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>19</integer><key>Minute</key><integer>45</integer></dict>
-    <dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>15</integer></dict>
-    <dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>11</integer><key>Minute</key><integer>35</integer></dict>
-    <dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>12</integer><key>Minute</key><integer>45</integer></dict>
-    <dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>15</integer><key>Minute</key><integer>5</integer></dict>
-    <dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>16</integer><key>Minute</key><integer>10</integer></dict>
-    <dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>19</integer><key>Minute</key><integer>50</integer></dict>
-    <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
-    <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>19</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>5</integer></dict>
+  </array>
+</dict>
+</plist>
+PLIST
+
+# Lineup, game time: checks in every 15 minutes and acts only when a game kicks off within 95
+# minutes, by ESPN's real schedule, so Saturday and holiday games count without editing this.
+cat >"$AGENTS/local.fantasy.gameday.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>local.fantasy.gameday</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string><string>$DIR/run.sh</string><string>lineup.py</string><string>--live</string><string>--near-kickoff</string></array>
+  <key>WorkingDirectory</key><string>$DIR</string>
+  <key>StandardOutPath</key><string>$DIR/logs/launchd.out</string>
+  <key>StandardErrorPath</key><string>$DIR/logs/launchd.err</string>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Minute</key><integer>15</integer></dict>
+    <dict><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Minute</key><integer>45</integer></dict>
   </array>
 </dict>
 </plist>
@@ -63,11 +77,11 @@ cat >"$AGENTS/local.fantasy.waivers.plist" <<PLIST
 </plist>
 PLIST
 
-for job in local.fantasy.lineup local.fantasy.waivers; do
+for job in local.fantasy.lineup local.fantasy.gameday local.fantasy.waivers; do
     launchctl bootout "gui/$UID/$job" 2>/dev/null || true
     launchctl bootstrap "gui/$UID" "$AGENTS/$job.plist"
     echo "installed $job"
 done
 echo
 echo "Test one now:  launchctl kickstart -k gui/$UID/local.fantasy.waivers"
-echo "Stop them:     launchctl bootout gui/$UID/local.fantasy.lineup"
+echo "Stop one:      launchctl bootout gui/$UID/local.fantasy.gameday"

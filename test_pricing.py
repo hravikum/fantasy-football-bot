@@ -117,6 +117,26 @@ def test_claims_report_says_when_it_has_nothing():
     assert "No claims have processed yet" in claims.report("A League", 2, [])
 
 
+def test_slope_says_what_a_projected_point_is_worth():
+    calibrated = [(6.0, 6.5), (10.0, 9.0), (14.0, 14.5), (8.0, 8.0), (12.0, 12.0)]
+    assert accuracy.slope(calibrated) == 1.0, "a calibrated projection is worth a point per point"
+    assert accuracy.slope([(10.0, 3.0), (10.0, 18.0), (10.0, 7.0)]) is None, "no spread, nothing to measure"
+    assert accuracy.slope([(1.0, 2.0)]) is None
+
+
+def test_report_prices_an_edge_instead_of_guessing_a_threshold():
+    rows = [{"position": "RB", "projected": p, "actual": a, "error": a - p, "week": 1, "player": "x"}
+            for p, a in [(6.0, 6.5), (10.0, 9.0), (14.0, 14.5), (8.0, 8.0), (12.0, 12.0)]]
+    text = accuracy.report(3, rows, accuracy.by_position(rows))
+    assert "PER PROJ PT" in text and " 1.00" in text and "SMALLEST EDGE" not in text
+
+
+def test_rows_carry_the_espn_id_so_snaps_can_join_them():
+    fake = FakeLeague({1: [("Starter", "RB", 5, 14.0, 9.0)], 2: [("Starter", "RB", 5, 12.0, 20.0)]})
+    _, rows = accuracy.collect(fake)
+    assert [row["player_id"] for row in rows] == [abs(hash("Starter")) % 9999] * 2
+
+
 if __name__ == "__main__":
     tests = [(name, fn) for name, fn in sorted(vars().items()) if name.startswith("test_")]
     failures = 0

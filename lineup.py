@@ -7,24 +7,35 @@ Usage:
   python3 lineup.py           practice mode, changes nothing
   python3 lineup.py --live    apply the moves it judges worth making
   python3 lineup.py --live --force   apply the best lineup even below the point bar
+  python3 lineup.py --live --near-kickoff   the same, but only if a game kicks off within
+                                            95 minutes; silent otherwise (the 15-minute job)
 """
+import json
 import sys
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import requests
 
 import mailer
 from espn import BENCH, ESPN, IR, SLOT_NAMES, SLOT_ORDER, ESPNError, ESPNWriteRejected, parse_roster_entry
 
-MIN_GAIN = 2.0  # points: smaller upgrades are projection noise, not worth churning the lineup
-# Measured in this league (accuracy.py, weeks 1-2): ESPN's projections track results at 0.58 for
-# running backs and 0.48 for receivers, but at 0.28 for defenses and -0.30 for kickers. Where the
-# projection doesn't predict the result, swapping is a coin flip, so these slots only change when
-# the player in them can't play.
-STEADY_SLOTS = {16, 17}  # D/ST and K
+# Over the 2025 season (accuracy.py 2025), one projected point was worth about 0.9 real points at
+# RB, WR and TE, so an upgrade held back costs nearly its whole edge. The bar only stops the
+# lineup flipping back and forth as projections wobble through the week. Kicker and defense
+# projections barely track results, but a projected point was still worth 1.04 and 0.65 real
+# ones (with wide margins), and following a projection costs nothing on average even when it's
+# useless, so those slots follow projections like every other.
+MIN_GAIN = 0.5
 CANT_PLAY = {"OUT", "INJURY_RESERVE", "SUSPENSION"}
 HEALTHY = {"ACTIVE", "NORMAL"}
 IR_ELIGIBLE = {"OUT", "INJURY_RESERVE"}                   # ESPN allows only the O and IR tags on IR
 IR_MAY_STAY = IR_ELIGIBLE | {"QUESTIONABLE", "DOUBTFUL"}  # an upgrade to Q or D doesn't invalidate the roster
+FLEX = 23
+KICKOFF_WINDOW = timedelta(minutes=95)     # inactives come out 90 minutes before kickoff
+SCHEDULE = Path(__file__).with_name("cache") / "kickoffs.json"
+SCHEDULE_MAX_AGE = 24 * 3600               # kickoffs only move when the NFL flexes a game
 
 
 def expected_points(player, games):
@@ -32,6 +43,12 @@ def expected_points(player, games):
     if player["injury_status"] in CANT_PLAY or player["pro_team"] not in games:
         return 0.0
     return player["projection"] or 0.0
+
+
+def kickoff_of(player, games):
+    """When his game starts, or None if he has no game, or no time for it, this week."""
+    game = games.get(player["pro_team"])
+    return game[1] if game else None
 
 
 def plan(players, slot_counts, games):
@@ -64,13 +81,6 @@ def plan(players, slot_counts, games):
 
     lineup = dict(reserve)
     for player in active:
-        if player["slot"] in STEADY_SLOTS and expected_points(player, games) > 0:
-            lineup[player["id"]] = player["slot"]      # he plays, so leave him alone
-            if player["slot"] in starting:
-                starting[player["slot"]] -= 1
-    for player in active:
-        if player["id"] in lineup:
-            continue
         if player["locked"]:
             lineup[player["id"]] = player["slot"]
             if player["slot"] in starting:
@@ -88,7 +98,37 @@ def plan(players, slot_counts, games):
             lineup[pick["id"]] = slot
     for player in available:
         lineup[player["id"]] = BENCH
-    return lineup, blocked
+    return later_kickoffs_to_flex(players, lineup, games), blocked
+
+
+def later_kickoffs_to_flex(players, lineup, games):
+    """Same starters, same points, but later kickoffs move into FLEX wherever a swap is legal.
+
+    A late scratch in FLEX can be replaced by anyone on the bench whose game hasn't started;
+    stuck in a running back slot, only by a running back.
+    """
+    starters = [p for p in players if not p["locked"] and lineup[p["id"]] not in (BENCH, IR)
+                and kickoff_of(p, games)]
+    swapped = True
+    while swapped:
+        swapped = False
+        for flex in [p for p in starters if lineup[p["id"]] == FLEX]:
+            later = [p for p in starters if lineup[p["id"]] != FLEX and FLEX in p["eligible_slots"]
+                     and lineup[p["id"]] in flex["eligible_slots"]
+                     and kickoff_of(p, games) > kickoff_of(flex, games)]
+            if later:
+                latest = max(later, key=lambda p: kickoff_of(p, games))
+                lineup[flex["id"]], lineup[latest["id"]] = lineup[latest["id"]], FLEX
+                swapped = True
+    return lineup
+
+
+def later_in_flex(players, target, games):
+    """Whether the target lineup has later kickoffs in FLEX than the lineup as it stands."""
+    def flex_kickoffs(lineup):
+        return sorted((kickoff_of(p, games) for p in players
+                       if lineup[p["id"]] == FLEX and kickoff_of(p, games)), reverse=True)
+    return flex_kickoffs(target) > flex_kickoffs({p["id"]: p["slot"] for p in players})
 
 
 def starters_total(players, lineup, games):
@@ -106,13 +146,14 @@ def decide(players, slot_counts, games):
     return target, moves, gain, broken, blocked
 
 
-def would_act(moves, gain, broken):
-    """Fix a lineup that can't play, or an IR slot, regardless of gain. Otherwise only a real upgrade."""
+def would_act(moves, gain, broken, later_flex=False):
+    """Fix a lineup that can't play, or an IR slot, regardless of gain. Otherwise only a real
+    upgrade, or later kickoffs into FLEX, which has to happen before the early games lock."""
     if not moves:
         return False
     if broken or any(IR in (old, new) for _, old, new in moves):
         return True
-    return gain >= MIN_GAIN
+    return gain >= MIN_GAIN or later_flex
 
 
 def describe(players, target, moves, gain, broken, blocked, games, week):
@@ -128,7 +169,10 @@ def describe(players, target, moves, gain, broken, blocked, games, week):
             note = "" if player["injury_status"] in HEALTHY else f"  [{player['injury_status']}]"
             lines.append(f"  {player['name'][:24]:<24} {SLOT_NAMES[old]:>5} -> {SLOT_NAMES[new]:<5} "
                          f"{expected_points(player, games):>5.1f}{note}")
-        if not would_act(moves, gain, broken):
+        later = later_in_flex(players, target, games)
+        if later:
+            lines += ["", "Later kickoffs go to FLEX, so a late scratch there can be covered from any position."]
+        if not would_act(moves, gain, broken, later):
             lines.append("")
             lines.append(f"Holding: {gain:+.1f} is under the {MIN_GAIN} point bar.")
     locked = [p["name"] for p in players if p["locked"]]
@@ -182,8 +226,31 @@ def verify(espn, team_id, week, target):
     return [pid for pid, slot in target.items() if actual.get(pid) != slot]
 
 
-def main(live, force=False):
+def season_kickoffs(espn, path=SCHEDULE):
+    """This season's NFL kickoffs, from a copy refreshed daily: the check-in runs every 15 minutes.
+
+    A stale copy beats none if ESPN can't be reached; with no copy at all, the error surfaces.
+    """
+    if not path.exists() or time.time() - path.stat().st_mtime > SCHEDULE_MAX_AGE:
+        try:
+            times = espn.kickoffs()
+            path.parent.mkdir(exist_ok=True)
+            path.write_text(json.dumps([t.isoformat() for t in times]))
+        except (ESPNError, requests.exceptions.RequestException):
+            if not path.exists():
+                raise
+    return [datetime.fromisoformat(t) for t in json.loads(path.read_text())]
+
+
+def game_time_soon(now, kickoffs):
+    """Whether a game kicks off within KICKOFF_WINDOW, so its inactives are out or about to be."""
+    return any(now < kickoff <= now + KICKOFF_WINDOW for kickoff in kickoffs)
+
+
+def main(live, force=False, near_kickoff=False):
     espn = ESPN.from_env()
+    if near_kickoff and not game_time_soon(datetime.now(), season_kickoffs(espn)):
+        return   # nothing kicks off soon: print nothing, so run.sh leaves the log alone
     league = espn.league("mSettings", "mTeam")
     week = league["scoringPeriodId"]
     team = espn.my_team(league["teams"])
@@ -192,11 +259,12 @@ def main(live, force=False):
     games = espn.pro_games(week)
 
     target, moves, gain, broken, blocked = decide(players, slot_counts, games)
+    later = later_in_flex(players, target, games)
     report = describe(players, target, moves, gain, broken, blocked, games, week)
     print(report)
 
-    act = bool(moves) and (would_act(moves, gain, broken) or force)
-    if act and not would_act(moves, gain, broken):
+    act = bool(moves) and (would_act(moves, gain, broken, later) or force)
+    if act and not would_act(moves, gain, broken, later):
         print("\nApplying anyway (--force).")
 
     if not live:
@@ -204,7 +272,7 @@ def main(live, force=False):
             print("\nPractice mode. Add --live to apply these moves.")
         return
     if not act:
-        if blocked:
+        if blocked and not near_kickoff:   # the morning run sends this; every check-in would be a flood
             mailer.send(f"Week {week}: roster needs you", report)
         return
 
@@ -240,7 +308,7 @@ def main(live, force=False):
 
 if __name__ == "__main__":
     try:
-        main(live="--live" in sys.argv, force="--force" in sys.argv)
+        main(live="--live" in sys.argv, force="--force" in sys.argv, near_kickoff="--near-kickoff" in sys.argv)
     except ESPNError as error:
         message = f"Error: {error}"
         print(message, file=sys.stderr)

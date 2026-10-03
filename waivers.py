@@ -244,6 +244,8 @@ def suggest_bid(candidate, budget_left, minimum_bid, claim_prices=()):
     Until this league has priced enough claims, falls back to a share of the budget.
     """
     band = min(_projection_band(candidate), _jev_band(candidate))
+    if candidate.get("position") in STREAM_ONLY:
+        band = max(band, 2)   # there's always another one on the wire, so never real money
     if band == 3:
         return minimum_bid, max(minimum_bid, 1)
     if len(claim_prices) >= MIN_CLAIMS:

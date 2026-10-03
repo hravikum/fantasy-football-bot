@@ -40,13 +40,12 @@ def test_season_gain_ignores_points_you_would_never_start():
     assert ranked["WR"]["season_gain"] > 0
 
 
-def test_a_better_kicker_is_worth_nothing_while_yours_plays():
-    """Since the lineup won't swap kickers on a projection, adding one gains you nothing."""
+def test_a_better_kicker_gains_what_he_outprojects_yours_by():
     ranked = waivers.candidates(list(full_roster().values()), [free_agent("K", 11.0)], SLOTS, GAMES)
-    assert round(ranked[0]["gain"], 1) == 0.0
+    assert round(ranked[0]["gain"], 1) == 3.0      # your kicker projects 8.0
 
 
-def test_but_a_kicker_is_worth_plenty_when_yours_is_on_bye():
+def test_a_kicker_is_worth_plenty_when_yours_is_on_bye():
     roster = full_roster(k=player("K", 17, 8.0, bye=True))
     ranked = waivers.candidates(list(roster.values()), [free_agent("K", 11.0)], SLOTS, GAMES)
     assert round(ranked[0]["gain"], 1) == 11.0
@@ -477,6 +476,13 @@ def test_repeat_value_earns_real_money_and_a_one_week_fill_does_not():
 def test_a_streamer_for_this_week_only_is_also_cheap():
     streamer = {"gain": 2.5, "season_gain": 0, "ahead_gain": 2.5, "weeks_helped": 1}
     assert waivers.suggest_bid(streamer, 100, 0) == (2, 5)
+
+
+def test_a_kicker_or_defense_upgrade_is_still_bid_cheap():
+    """Now that they count as upgrades, a good matchup must not earn starter money."""
+    defense = {"position": "D/ST", "gain": 4.0, "season_gain": 20, "ahead_gain": 9.0, "weeks_helped": 3}
+    assert waivers.suggest_bid(defense, 100, 0) == (2, 5)
+    assert waivers.suggest_bid(dict(defense, position="WR"), 100, 0)[1] > 5, "the same numbers at WR do"
 
 
 def test_claude_is_optional(monkey_key=None):
