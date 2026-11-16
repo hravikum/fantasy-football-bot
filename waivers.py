@@ -26,39 +26,46 @@ from dotenv import load_dotenv
 
 import jev
 import mailer
+import roles
 import snaps
+import values
 from espn import BENCH, ESPN, IR, PRO_TEAMS, SLOT_NAMES, SLOT_ORDER, ESPNError, parse_roster_entry
 from lineup import CANT_PLAY, expected_points, plan, starters_total
+from values import GAMES_PER_SEASON, season_pace
 
 JEV_LOG = Path(__file__).with_name("logs") / "jev_scores.csv"
 JEV_LOG_FIELDS = ["logged_at", "week", "player_id", "name", "position", "jev", "jev_confidence", "math_rank",
                   "projection", "season_projection", "percent_owned", "usage_per_game", "usage_trend"]
+POOL_LOG = Path(__file__).with_name("logs") / "pool.csv"
+POOL_LOG_FIELDS = ["logged_at", "week", "player_id", "name", "position", "percent_owned", "percent_change",
+                   "projection", "band", "bid"]
 MODEL = "claude-sonnet-5"
 # Sonnet 5 thinks by default, and max_tokens caps thinking and text together, so a
 # budget sized for the text alone runs out partway through. It's a ceiling, not a spend.
 MAX_TOKENS = 16000
 MAX_CONTINUATIONS = 3  # a paused web-search turn is resumed, up to this many times
-POOL_SIZE = 75      # free agents to score, most widely rostered first
+POOL_SIZE = 200     # free agents to score, most widely rostered first. At 75 the list stopped near 3%
+                    # rostered, above players this league went on to pay $28 and $11 for.
 SHORTLIST = 8       # how many make the report
 PER_POSITION = 2    # at most this many of any one position, so the list never becomes all QBs
+ROLE_SLOTS = 3      # next men up (roles.py) listed on top of that, whatever they add to your lineup
 LOOKAHEAD = 4          # weeks after this one that ranking, holes and drops plan for, byes included
-GAMES_PER_SEASON = 17  # turns a season projection into a per-game average for later weeks
 
 
 def season_view(players):
-    """The same players scored by season projection, with nobody on a bye.
+    """The same players scored by season pace (values.py), with nobody on a bye.
 
     Used for the rest-of-season comparison: raw season totals can't be compared across
     positions, but what a player adds to your season-long lineup can.
     """
-    return [dict(p, projection=p["season_projection"] or 0.0) for p in players]
+    return [dict(p, projection=season_pace(p)) for p in players]
 
 
 def replacement_level(pool):
-    """The best freely available season projection at each position."""
+    """The best freely available season pace at each position."""
     best = {}
     for candidate in pool:
-        season = candidate["season_projection"] or 0
+        season = season_pace(candidate)
         if season > best.get(candidate["position"], 0):
             best[candidate["position"]] = season
     return best
@@ -70,26 +77,30 @@ def surplus(player, replacement):
     This is why a second kicker goes before a bench receiver. Kickers are interchangeable, so
     the incumbent's surplus is near zero even when his raw projection is the higher number.
     """
-    return (player["season_projection"] or 0) - replacement.get(player["position"], 0)
+    return season_pace(player) - replacement.get(player["position"], 0)
 
 
-def schedule_ahead(games, byes, week):
-    """[(week, teams playing)] for this week and the next LOOKAHEAD.
+def schedule_ahead(games, byes, week, lookahead=LOOKAHEAD):
+    """[(week, teams playing)] for this week and the next LOOKAHEAD (trades look further).
 
     This week uses the real schedule. For later weeks, all that matters is who is on bye.
     """
     teams = set(byes) | set(games)
     horizon = [(week, games)]
-    for future in range(week + 1, week + 1 + LOOKAHEAD):
+    for future in range(week + 1, week + 1 + lookahead):
         horizon.append((future, {team: None for team in teams if future not in byes.get(team, set())}))
     return horizon
 
 
 def projected_for(players, week, this_week):
-    """This week's real projection, or the season per-game average for a later week."""
-    if week == this_week:
-        return players
-    return [dict(p, projection=(p["season_projection"] or 0.0) / GAMES_PER_SEASON) for p in players]
+    """This week's real projection, or his level (values.py) for a later week.
+
+    A back filling in for a lead runner who is down (roles.py) counts for more in the weeks that covers.
+    """
+    if week != this_week:
+        players = [dict(p, projection=season_pace(p) / GAMES_PER_SEASON) for p in players]
+    return [dict(p, projection=max(p["projection"] or 0.0, p["fill_in"][week])) if week in p.get("fill_in", ())
+            else p for p in players]
 
 
 def lineup_value_and_holes(players, slot_counts, games):
@@ -133,7 +144,11 @@ def candidates(roster, pool, slot_counts, games):
 
 
 def shortlist_from(scored):
-    """Top of the list, capped per position so it never becomes eight of one thing."""
+    """Top of the list, capped per position so it never becomes eight of one thing.
+
+    A next man up is listed even when he adds nothing to your lineup: the league bids on him the
+    night after the game that flagged him, and by the time he looks good on paper he is gone.
+    """
     shortlist, seen = [], Counter()
     for candidate in scored:
         if seen[candidate["position"]] < PER_POSITION:
@@ -141,7 +156,10 @@ def shortlist_from(scored):
             seen[candidate["position"]] += 1
         if len(shortlist) == SHORTLIST:
             break
-    return shortlist
+    listed = {c["id"] for c in shortlist}
+    stepping_in = sorted((c for c in scored if c.get("role") and c["id"] not in listed),
+                         key=lambda c: -c["role"]["touches"])
+    return shortlist + stepping_in[:ROLE_SLOTS]
 
 
 def swap_value(roster, candidate, dropped, slot_counts, horizon, this_week, bases):
@@ -154,6 +172,21 @@ def swap_value(roster, candidate, dropped, slot_counts, horizon, this_week, base
     after = [p for p in roster if dropped is None or p["id"] != dropped["id"]] + [candidate]
     return [lineup_value_and_holes(projected_for(after, week, this_week), slot_counts, games)[0] - base
             for (week, games), (base, _) in zip(horizon, bases)]
+
+
+def _kicker_plays(players, games):
+    return any(p["position"] == "K" and p["injury_status"] not in CANT_PLAY and p["pro_team"] in games
+               for p in players)
+
+
+def kicker_weeks(by_week, roster, kicker, dropped, horizon):
+    """A kicker for a kicker is worth nothing in a week both play (STEADY_SLOTS in lineup.py).
+
+    What's left is real: a week yours can't play and he can, or a week he can't and yours could.
+    """
+    after = [p for p in roster if dropped is None or p["id"] != dropped["id"]] + [kicker]
+    return [0.0 if _kicker_plays(roster, games) and _kicker_plays(after, games) else points
+            for points, (_, games) in zip(by_week, horizon)]
 
 
 def score_pool(roster, pool, slot_counts, games, byes=None, week=0):
@@ -178,6 +211,8 @@ def score_pool(roster, pool, slot_counts, games, byes=None, week=0):
             continue
         dropped = None if spare_spot else drop_for(free_agent, roster, slot_counts, horizon, week, replacement)
         by_week = swap_value(roster, free_agent, dropped, slot_counts, horizon, week, bases)
+        if free_agent["position"] == "K":
+            by_week = kicker_weeks(by_week, roster, free_agent, dropped, horizon)
         season_gain = best_lineup_value(season_view(roster + [free_agent]), slot_counts, every_team) - season_base
         scored.append(dict(free_agent,
                            gain=round(by_week[0], 1),
@@ -238,14 +273,22 @@ def percentile(values, fraction):
     return ordered[low] + (ordered[high] - ordered[low]) * (spot - low)
 
 
+def bid_band(candidate):
+    """0 starter, 1 useful piece, 2 stash, 3 not worth money."""
+    band = min(_projection_band(candidate), _jev_band(candidate))
+    if candidate.get("role"):
+        band = 0   # he starts for somebody while the lead is down, and that is who you are bidding against
+    if candidate.get("position") in STREAM_ONLY:
+        band = max(band, 2)   # there's always another one on the wire, so never real money
+    return band
+
+
 def suggest_bid(candidate, budget_left, minimum_bid, claim_prices=()):
     """What to bid: what claims actually cost here, scaled by how much you want him.
 
     Until this league has priced enough claims, falls back to a share of the budget.
     """
-    band = min(_projection_band(candidate), _jev_band(candidate))
-    if candidate.get("position") in STREAM_ONLY:
-        band = max(band, 2)   # there's always another one on the wire, so never real money
+    band = bid_band(candidate)
     if band == 3:
         return minimum_bid, max(minimum_bid, 1)
     if len(claim_prices) >= MIN_CLAIMS:
@@ -276,7 +319,7 @@ def drop_candidates(roster, target, slot_counts, horizon, this_week, replacement
     """
     replacement = replacement or {}
     spare = sorted((p for p in roster if target[p["id"]] == BENCH),
-                   key=lambda p: (surplus(p, replacement), p["season_projection"] or 0))
+                   key=lambda p: (surplus(p, replacement), season_pace(p)))
     holes = [sum(shortfalls(projected_for(roster, w, this_week), slot_counts, g).values()) for w, g in horizon]
     droppable = []
     for person in spare:
@@ -303,11 +346,11 @@ def drop_for(candidate, roster, slot_counts, horizon, this_week, replacement):
     placed, _ = plan(joined, slot_counts, horizon[0][1])
     holes = [sum(shortfalls(projected_for(joined, w, this_week), slot_counts, g).values()) for w, g in horizon]
     spare = sorted((p for p in joined if p["id"] != candidate["id"] and placed[p["id"]] == BENCH),
-                   key=lambda p: (surplus(p, replacement), p["season_projection"] or 0))
+                   key=lambda p: (surplus(p, replacement), season_pace(p)))
     if candidate["position"] in STREAM_ONLY:
         same = sorted((p for p in joined if p["id"] != candidate["id"]
                        and p["position"] == candidate["position"]),
-                      key=lambda p: (surplus(p, replacement), p["season_projection"] or 0))
+                      key=lambda p: (surplus(p, replacement), season_pace(p)))
         spare = same + [p for p in spare if p["position"] != candidate["position"]]
     for person in spare:
         rest = [p for p in joined if p["id"] != person["id"]]
@@ -325,7 +368,7 @@ def bye_gaps(roster, slot_counts, horizon, this_week, pool=()):
         for slot, missing in sorted(short.items(), key=lambda item: SLOT_ORDER.index(item[0])):
             cover = sorted((c for c in pool if slot in c["eligible_slots"] and c["pro_team"] in games
                             and c["injury_status"] not in CANT_PLAY),
-                           key=lambda c: -(c["season_projection"] or 0))[:2]
+                           key=lambda c: -season_pace(c))[:2]
             line = f"week {week}: {SLOT_NAMES[slot]} short by {missing}"
             if cover:
                 line += " — available and playing that week: " + ", ".join(
@@ -399,8 +442,10 @@ def ask_claude(brief):
         "season). Waivers process daily, so claims are cheap to make but the wire is thin with 14 teams.\n\n"
         f"Here is today's data:\n{json.dumps(brief, indent=1)}\n\n"
         "Recommend at most three claims, and none is a good answer when nothing qualifies. Every claim "
-        "needs a reason: a positive lineup gain in the data, news you found and cite, or a lineup hole "
-        "ahead that it fills. For a hole a few weeks out, say which week and suggest claiming a few days "
+        "needs a reason: a positive lineup gain in the data, news you found and cite, a next_man_up note, or a "
+        "lineup hole ahead that it fills. For a next_man_up, search first for how long the lead back is expected to "
+        "miss: if it is weeks, the claim is a priority even as a bench stash, and if he is due back at once, say so "
+        "and bid low. For a hole a few weeks out, say which week and suggest claiming a few days "
         "early rather than scrambling on game day. For each: the player, a bid inside the suggested range (or a different number with a "
         "reason), and the drop. Every candidate comes with the drop that costs least; use it unless "
         "you have a reason to prefer another, and give that reason. Compare players only with numbers that appear in the data, never an "
@@ -431,6 +476,11 @@ def ask_claude(brief):
     return None
 
 
+def _level(player):
+    """His level as the reports show it; a dash for a kicker, a defense, or anyone ESPN sent no games for."""
+    return "-" if player.get("level") is None else f"{player['level']:.1f}"
+
+
 def build_report(context):
     lines = [f"Waiver report — {datetime.now():%a %b %d}, week {context['week']}", ""]
     lines.append(f"Your FAAB: ${context['budget_left']} of ${context['budget']}"
@@ -453,19 +503,27 @@ def build_report(context):
     if context["gaps"]:
         lines += [f"Lineup holes in the next {LOOKAHEAD} weeks:"] + [f"  {gap}" for gap in context["gaps"]] + [""]
 
+    stepping_in = [c for c in context["candidates"] if c.get("role")]
+    if stepping_in:
+        lines += ["Next man up:"] + [f"  {roles.describe(c)}" for c in stepping_in]
+        lines += [f"  Backs flagged this way averaged {roles.FILL_IN} a game over their next {roles.FILL_IN_WEEKS} weeks "
+                  f"in 2025-26. Just under", "  half reached 10 a game and a quarter stayed under 5. "
+                  "They are bid as starters and listed even with no lineup gain.", ""]
+
     if context.get("ranked_by"):
         lines += [context["ranked_by"], ""]
     jev_column = any("jev" in c for c in context["candidates"])
-    header = (f"{'PLAYER':<20} {'POS':<5} {'TEAM':<5} {'OWN%':>6} {'SNAP%':>7} {'WK':>5} {'NOW':>5} "
-              f"{str(LOOKAHEAD + 1) + 'WK':>5} {'SEASON':>7}")
+    header = (f"{'PLAYER':<20} {'POS':<5} {'TEAM':<5} {'OWN%':>6} {'+/-':>6} {'SNAP%':>7} {'WK':>5} {'LEVEL':>5} "
+              f"{'NOW':>5} {str(LOOKAHEAD + 1) + 'WK':>5} {'SEASON':>7}")
     lines.append(header + ("  JEV  CONF  PROJ#  BID" if jev_column else "  BID") + "    DROP FOR HIM")
     for candidate in context["candidates"]:
         low, high = candidate["bid"]
         bid = f"${low}" if low == high else f"${low}-{high}"
         row = (f"{candidate['name'][:20]:<20} {candidate['position']:<5} "
                f"{PRO_TEAMS.get(candidate['pro_team'], '?'):<5} "
-               f"{candidate['percent_owned']:>5.0f}% {snaps.label(candidate.get('snaps')):>7} "
-               f"{candidate['projection'] or 0:>5.1f} "
+               f"{candidate['percent_owned']:>5.0f}% {candidate['percent_change']:>+6.1f} "
+               f"{snaps.label(candidate.get('snaps')):>7} "
+               f"{candidate['projection'] or 0:>5.1f} {_level(candidate):>5} "
                f"{candidate['gain']:>+5.1f} {candidate.get('ahead_gain', candidate['gain']):>+5.1f} "
                f"{candidate['season_gain']:>+7.0f}")
         if jev_column:
@@ -477,7 +535,9 @@ def build_report(context):
 
     if context["advice"]:
         lines += ["", "-" * 60, "", context["advice"]]
-    lines += ["", "Bids are suggestions only. Place claims yourself in ESPN."]
+    lines += ["", "WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's",
+              "evidence (values.py), and it is what the weeks after this one are valued at.",
+              "", "Bids are suggestions only. Place claims yourself in ESPN."]
     return "\n".join(lines)
 
 
@@ -526,6 +586,33 @@ def log_jev(week, judged, path=None):
     return len(rows)
 
 
+def log_pool(week, pool, scored, path=None):
+    """Append what this run knew about every free agent it fetched, scored or not.
+
+    auctions.py matches each night's waiver auctions to these rows, which is how we'll learn
+    whether anything visible at 6am (the add rate, mostly) predicts a bidding war.
+    """
+    path = path or POOL_LOG
+    if not pool:
+        return 0
+    judged = {c["id"]: c for c in scored}
+    path.parent.mkdir(exist_ok=True)
+    new_file = not path.exists()
+    stamp = datetime.now().isoformat(timespec="minutes")
+    with open(path, "a", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=POOL_LOG_FIELDS)
+        if new_file:
+            writer.writeheader()
+        for p in pool:
+            c = judged.get(p["id"])        # injured free agents aren't scored, so they get no band
+            bid = c.get("bid") if c else None
+            writer.writerow({"logged_at": stamp, "week": week, "player_id": p["id"], "name": p["name"],
+                             "position": p["position"], "percent_owned": p["percent_owned"],
+                             "percent_change": p["percent_change"], "projection": p["projection"],
+                             "band": bid_band(c) if c else "", "bid": f"{bid[0]}-{bid[1]}" if bid else ""})
+    return len(pool)
+
+
 def ranker_from(argv):
     if "--ranker" in argv and "jev" in argv:
         return "jev"
@@ -566,7 +653,8 @@ def _prose(text):
 def build_html(context):
     """The report as HTML. The plain text version still goes out as the fallback."""
     jev_column = any("jev" in c for c in context["candidates"])
-    headers = [_column("Player"), _column("Rostered", True), _column("Snaps", True), _column("This wk", True),
+    headers = [_column("Player"), _column("Rostered", True), _column("+/-", True), _column("Snaps", True),
+               _column("Level", True), _column("This wk", True),
                _column(f"Next {LOOKAHEAD + 1}", True), _column("Season", True)]
     if jev_column:
         headers += [_column("Jev", True), _column("Conf", True)]
@@ -580,7 +668,9 @@ def build_html(context):
                   f'<div style="color:#6b7280;font-size:12px">{candidate["position"]} &middot; '
                   f'{PRO_TEAMS.get(candidate["pro_team"], "?")}</div>'),
             _cell(f'{candidate["percent_owned"]:.0f}%', NUMBER),
+            _cell(f'{candidate["percent_change"]:+.1f}', NUMBER),
             _cell(html_escape.escape(snaps.label(candidate.get("snaps"))), NUMBER + ";white-space:nowrap"),
+            _cell(_level(candidate).replace("-", "&mdash;"), NUMBER),
             _number(candidate["gain"]),
             _number(candidate.get("ahead_gain", candidate["gain"])),
             _number(candidate["season_gain"], 0),
@@ -600,6 +690,17 @@ def build_html(context):
         holes = (f'<div style="background:#fff7ed;border-left:3px solid #fb923c;padding:10px 14px;margin:18px 0">'
                  f'<div style="font-weight:600;font-size:14px">Lineup holes in the next {LOOKAHEAD} weeks</div>'
                  f'<ul style="margin:6px 0 0;padding-left:18px;color:#374151;font-size:14px">{items}</ul></div>')
+
+    stepping_in = [c for c in context["candidates"] if c.get("role")]
+    if stepping_in:
+        items = "".join(f'<li style="margin:2px 0">{html_escape.escape(roles.describe(c))}</li>' for c in stepping_in)
+        holes += (f'<div style="background:#eff6ff;border-left:3px solid #3b82f6;padding:10px 14px;margin:18px 0">'
+                  f'<div style="font-weight:600;font-size:14px">Next man up</div>'
+                  f'<ul style="margin:6px 0 0;padding-left:18px;color:#374151;font-size:14px">{items}</ul>'
+                  f'<div style="color:#6b7280;font-size:12px;margin-top:6px">Backs flagged this way averaged '
+                  f'{roles.FILL_IN} a game over their next {roles.FILL_IN_WEEKS} weeks in 2025-26. Just under half '
+                  f'reached 10 a game and a quarter stayed under 5. Bid as starters, listed even with no lineup gain.'
+                  f'</div></div>')
 
     summary = (f'FAAB <strong>${context["budget_left"]}</strong> of ${context["budget"]} '
                f'&middot; minimum bid ${context["minimum_bid"]}')
@@ -656,7 +757,22 @@ def gather(espn, ranker="math"):
     rivals = [budget - faab_spent(t, spent_by_team) for t in league["teams"] if t["id"] != team["id"]]
     budget_left = budget - spent
 
-    scored = score_pool(roster, espn.free_agents(week, POOL_SIZE), slot_counts, games, byes, week)
+    pool = espn.free_agents(week, POOL_SIZE)
+    rival_backs, cards = [], {}
+    try:
+        # A lead back is nearly always on someone's roster, so the role rule needs every team's backs.
+        rival_backs = [p for p in (parse_roster_entry(entry, week, espn.season)
+                                   for rival in espn.league("mRoster", week=week)["teams"] if rival["id"] != team["id"]
+                                   for entry in rival["roster"]["entries"]) if p["position"] == "RB"]
+        cards = values.attach(espn, roster + pool + rival_backs, week)
+    except (ESPNError, requests.exceptions.RequestException) as problem:
+        print(f"(player levels unavailable: {type(problem).__name__}); later weeks use ESPN's season projection")
+    try:
+        roles.mark(pool, roster + rival_backs, cards, espn.season,
+                   roles.finished_weeks(week, byes, games, datetime.now()))
+    except Exception as problem:  # broad on purpose: a missing extra must not stop the report
+        print(f"(next-man-up check failed: {type(problem).__name__}: {problem}); report continues without it")
+    scored = score_pool(roster, pool, slot_counts, games, byes, week)
     try:
         shares, snap_week = snaps.load(espn.season)
     except Exception as problem:  # broad on purpose: a missing extra must not stop the report
@@ -679,6 +795,7 @@ def gather(espn, ranker="math"):
     shortlist = shortlist_from(scored)
     for candidate in shortlist:
         candidate["bid"] = suggest_bid(candidate, budget_left, acquisition.get("minimumBid", 0), prices)
+    log_pool(week, pool, scored)
     runs = sorted({claim["processed"] for claim in claims if claim["processed"]})
 
     return {
@@ -692,10 +809,14 @@ def gather(espn, ranker="math"):
     }
 
 
+def _per_game(player):
+    return round(season_pace(player) / GAMES_PER_SEASON, 1)
+
+
 def _projections(player):
     """The same fields for roster players as for free agents, so every comparison is like for like."""
     return {"name": player["name"], "position": player["position"],
-            "week_projection": player["projection"], "season_projection": player["season_projection"]}
+            "week_projection": player["projection"], "level_per_game": _per_game(player)}
 
 
 def brief_for_claude(context):
@@ -709,17 +830,25 @@ def brief_for_claude(context):
         "my_bench": [_projections(p) for p in context["roster"] if context["target"][p["id"]] == BENCH],
         "available": [{"name": c["name"], "position": c["position"],
                        "rostered_pct": c["percent_owned"], "rostered_pct_change": c["percent_change"],
-                       "week_projection": c["projection"], "season_projection": c["season_projection"],
+                       "week_projection": c["projection"], "level_per_game": _per_game(c),
                        "lineup_gain_this_week": c["gain"],
                        f"lineup_gain_next_{LOOKAHEAD + 1}_weeks_byes_included": c.get("ahead_gain"),
                        "lineup_gain_rest_of_season": c["season_gain"],
                        "snap_share_pct_by_week": (c.get("snaps") or {}).get("by_week"),
                        "snap_trend": (c.get("snaps") or {}).get("trend"),
                        "jev_score": c.get("jev"), "jev_confidence": c.get("jev_confidence"),
+                       "next_man_up": roles.describe(c) if c.get("role") else None,
                        "drop_to_make_room": c["drop"]["name"] if c.get("drop") else None,
                        "suggested_bid": list(c["bid"])}
                       for c in context["candidates"]],
         "drop_candidates": [p["name"] for p in context["drops"]],
+        "note_on_levels": ("level_per_game is what a player scores a game on this season's evidence: his preseason "
+                           "projection, moved by every game he has played. Every lineup gain past this week is "
+                           "built on it. For kickers and defenses it is ESPN's season projection per game."),
+        "note_on_next_man_up": (f"A candidate with next_man_up set took over a backfield in his team's latest game, or "
+                                f"is next in line behind a lead back who is ruled out. His lineup gains count him at "
+                                f"{roles.FILL_IN} points a game for {roles.FILL_IN_WEEKS} weeks, the average for backs "
+                                f"flagged this way; just under half reach 10 a game and a quarter stay under 5."),
         "note_on_drops": ("Each candidate already has the drop that costs least, measured against the "
                           "best free agent at that player's own position. Use it unless you can say why not."),
     }
@@ -732,7 +861,7 @@ def main(email, ranker="math"):
     report = build_report(context)
     print(report)
     if email:
-        worth_it = [c for c in context["candidates"] if c["gain"] > 0]
+        worth_it = [c for c in context["candidates"] if c["gain"] > 0 or c.get("role")]
         headline = f"{len(worth_it)} worth a claim" if worth_it else "nothing worth a claim"
         mailer.send(f"Waivers week {context['week']}: {headline}", report, build_html(context))
 

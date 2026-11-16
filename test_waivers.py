@@ -40,9 +40,10 @@ def test_season_gain_ignores_points_you_would_never_start():
     assert ranked["WR"]["season_gain"] > 0
 
 
-def test_a_better_kicker_gains_what_he_outprojects_yours_by():
+def test_a_better_kicker_is_worth_nothing_while_yours_plays():
+    """Kicker projections predicted nothing over 2025 and 2026, so a better one isn't better."""
     ranked = waivers.candidates(list(full_roster().values()), [free_agent("K", 11.0)], SLOTS, GAMES)
-    assert round(ranked[0]["gain"], 1) == 3.0      # your kicker projects 8.0
+    assert ranked[0]["gain"] == 0.0 and ranked[0]["season_gain"] == 0     # your kicker projects 8.0
 
 
 def test_a_kicker_is_worth_plenty_when_yours_is_on_bye():
@@ -70,14 +71,24 @@ def test_adding_a_kicker_pairs_with_your_kicker():
     better = free_agent("K", 11.0, season=187.0)
     ranked = waivers.score_pool(roster, [better], SLOTS, GAMES)
     assert ranked[0]["drop"]["position"] == "K", "swap kicker for kicker, don't carry two"
-    assert ranked[0]["gain"] == 3.0
+    assert ranked[0]["gain"] == 0.0, "both play, so the swap is worth nothing"
 
 
-def test_a_worse_kicker_costs_points_instead_of_taking_a_bench_spot():
+def test_a_worse_kicker_still_pairs_with_yours_and_gains_nothing():
     roster = list(roster_at_capacity().values())
     worse = free_agent("K", 6.0, season=102.0)
     ranked = waivers.score_pool(roster, [worse], SLOTS, GAMES)
-    assert ranked[0]["drop"]["position"] == "K" and ranked[0]["ahead_gain"] < 0, "so he's never recommended"
+    assert ranked[0]["drop"]["position"] == "K" and ranked[0]["ahead_gain"] == 0.0, "so he's never recommended"
+
+
+def test_a_kicker_swap_counts_only_the_week_yours_cannot_play():
+    """Your kicker's bye three weeks out is the one week a new kicker is worth anything."""
+    roster = roster_at_capacity(k=on_team(player("K", 17, 8.0), 30))       # NFL team 30 is off in week 3
+    better = on_team(free_agent("K", 11.0, season=187.0), 31)
+    ranked = waivers.score_pool(list(roster.values()), [better], SLOTS, GAMES, byes={30: {3}}, week=2)
+    assert ranked[0]["drop"]["position"] == "K"
+    assert ranked[0]["gain"] == 0.0, "this week both play"
+    assert ranked[0]["ahead_gain"] == 11.0 and ranked[0]["weeks_helped"] == 1, "week 3 is worth his average"
 
 
 def test_a_starter_is_only_dropped_for_someone_better_all_season():
@@ -262,8 +273,8 @@ def test_claude_sees_the_same_numbers_for_the_bench_as_for_free_agents():
     brief = waivers.brief_for_claude({"week": 2, "budget_left": 100, "rivals": [], "gaps": [],
                                       "candidates": ranked, "drops": [], "roster": roster, "target": target})
     for group in ("my_starters", "my_bench"):
-        assert brief[group] and all({"week_projection", "season_projection"} <= set(p) for p in brief[group])
-    assert {"week_projection", "season_projection"} <= set(brief["available"][0])
+        assert brief[group] and all({"week_projection", "level_per_game"} <= set(p) for p in brief[group])
+    assert {"week_projection", "level_per_game"} <= set(brief["available"][0])
 
 
 def test_a_paused_turn_that_never_finishes_says_so():
@@ -494,6 +505,46 @@ def test_claude_is_optional(monkey_key=None):
     finally:
         if saved:
             os.environ["ANTHROPIC_API_KEY"] = saved
+
+
+def test_a_kicker_swap_still_counts_the_week_the_new_one_cannot_play():
+    """Interchangeable only while both play: his bye with yours gone is a real hole."""
+    yours, his = on_team(player("K", 17, 8.0), 1), on_team(free_agent("K", 11.0), 31)
+    everyone = {team: None for team in range(1, 35)}
+    horizon = [(2, everyone), (3, {team: None for team in everyone if team != 31})]    # he's off in week 3
+    assert waivers.kicker_weeks([3.0, -8.0], [yours], his, yours, horizon) == [0.0, -8.0]
+
+
+def test_pool_log_keeps_every_free_agent_with_what_the_report_made_of_him():
+    """auctions.py matches each night's claims to these rows, players the report skipped included."""
+    import csv, tempfile
+    from pathlib import Path
+    path = Path(tempfile.mkdtemp()) / "logs" / "pool.csv"
+    roster = list(full_roster().values())                         # weakest starter projects 10.0
+    listed = free_agent("WR", 14.0, season=238.0, owned=31.0, change=12.5)
+    skipped = free_agent("RB", 1.0, season=17.0, owned=2.0, change=-0.4)
+    hurt = free_agent("TE", 0.0, status="OUT", owned=6.0, change=3.1)      # never scored
+    pool = [listed, skipped, hurt]
+    scored = waivers.score_pool(roster, pool, SLOTS, GAMES)
+    scored[0]["bid"] = (8, 15)                                    # only the shortlist carries bids
+    assert waivers.log_pool(5, pool, scored, path) == 3
+    assert waivers.log_pool(6, pool[:1], scored, path) == 1      # the next run appends
+    rows = list(csv.DictReader(open(path)))
+    assert len(rows) == 4 and open(path).read().count("logged_at") == 1
+    assert rows[0]["name"] == listed["name"] and rows[0]["percent_change"] == "12.5"
+    assert rows[0]["band"] == "0" and rows[0]["bid"] == "8-15"
+    assert rows[1]["band"] == "3" and rows[1]["bid"] == "", "scored, not worth money, not on the list"
+    assert rows[2]["band"] == "" and rows[2]["percent_owned"] == "6.0", "in the pool, never scored"
+    assert rows[3]["week"] == "6"
+
+
+def test_both_reports_show_the_add_rate():
+    """ESPN's change in rostered %, the earliest sign of who rivals are about to bid on."""
+    context = _sample_context()
+    context["candidates"][0]["percent_change"] = 18.4
+    assert "+/-" in waivers.build_report(context) and "+18.4" in waivers.build_report(context)
+    html = waivers.build_html(context)
+    assert ">+/-<" in html and "+18.4" in html
 
 
 def test_report_reads_correctly_without_advice():

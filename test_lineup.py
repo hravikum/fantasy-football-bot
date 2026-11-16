@@ -6,6 +6,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import requests
+
 from espn import BENCH, ESPN, IR, ESPNError
 from lineup import (MIN_GAIN, decide, describe, game_time_soon, later_in_flex, plan, season_kickoffs,
                     would_act)
@@ -142,14 +144,27 @@ def test_upgrade_to_questionable_does_not_pull_him_off_ir():
     assert slots_of(roster, target_for(roster))["hurt"] == IR
 
 
-def test_kicker_and_defense_follow_projections_like_everyone_else():
-    """Their projections barely track results, but a projected point was still worth most of a real one."""
-    roster = full_roster(bench_k=player("K", BENCH, 14.0), bench_dst=player("D/ST", BENCH, 12.0))
+def test_a_kicker_who_plays_is_never_swapped_for_a_better_projection():
+    """A projected kicker point was worth +1.04 real ones in 2025 and -1.70 in 2026: a coin flip."""
+    roster = full_roster(bench_k=player("K", BENCH, 14.0))      # your kicker projects 8.0
+    target, moves, _, _, _ = decide(list(roster.values()), SLOTS, GAMES)
+    slots = slots_of(roster, target)
+    assert slots["k"] == 17 and slots["bench_k"] == BENCH and not moves
+
+
+def test_a_defense_still_follows_its_projection():
+    """A projected point was worth 0.65 real ones at D/ST in 2025 and 0.73 in 2026."""
+    roster = full_roster(bench_dst=player("D/ST", BENCH, 12.0))   # your defense projects 7.0
     target, moves, gain, broken, _ = decide(list(roster.values()), SLOTS, GAMES)
     slots = slots_of(roster, target)
-    assert slots["bench_k"] == 17 and slots["k"] == BENCH      # your kicker projects 8.0
-    assert slots["bench_dst"] == 16 and slots["dst"] == BENCH  # your defense projects 7.0
+    assert slots["bench_dst"] == 16 and slots["dst"] == BENCH
     assert would_act(moves, gain, broken)
+
+
+def test_the_rest_of_the_lineup_still_optimises_around_a_steady_kicker():
+    roster = full_roster(bench_k=player("K", BENCH, 14.0), bench_wr=player("WR", BENCH, 18.0))
+    slots = slots_of(roster, target_for(roster))
+    assert slots["k"] == 17 and slots["bench_wr"] == 4
 
 
 def test_a_kicker_who_cannot_play_is_replaced():
@@ -259,6 +274,37 @@ def test_kickoffs_come_from_a_copy_refreshed_daily():
         raise AssertionError("with no copy at all, the error should surface")
     except ESPNError:
         pass
+
+
+def test_espn_retries_a_read_once_when_the_connection_was_dropped():
+    class Response:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True}
+
+    class Session:
+        def __init__(self, failures):
+            self.failures, self.calls = failures, 0
+
+        def get(self, url, params=None, headers=None, timeout=None):
+            self.calls += 1
+            if self.calls <= self.failures:
+                raise requests.exceptions.ConnectionError("Connection aborted.")
+            return Response()
+
+    espn = ESPN(1, "s2", "{swid}", season=2026)
+    espn.session = Session(failures=1)
+    assert espn.league("mSettings") == {"ok": True} and espn.session.calls == 2, "an idle connection ESPN closed"
+    espn.session = Session(failures=2)
+    try:
+        espn.league("mSettings")
+        raise AssertionError("a second failure in a row is a real outage and should surface")
+    except requests.exceptions.ConnectionError:
+        assert espn.session.calls == 2
 
 
 def test_espn_lists_each_kickoff_once():

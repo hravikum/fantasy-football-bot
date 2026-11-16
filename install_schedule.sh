@@ -77,7 +77,31 @@ cat >"$AGENTS/local.fantasy.waivers.plist" <<PLIST
 </plist>
 PLIST
 
-for job in local.fantasy.lineup local.fantasy.gameday local.fantasy.waivers; do
+# Trades: every 15 minutes, offset from the gameday check-ins, look for proposals sent to you or
+# by you and email an analysis of each new one. Silent when there's nothing new; read-only always.
+cat >"$AGENTS/local.fantasy.trades.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>local.fantasy.trades</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string><string>$DIR/run.sh</string><string>trades.py</string><string>--watch</string></array>
+  <key>WorkingDirectory</key><string>$DIR</string>
+  <key>StandardOutPath</key><string>$DIR/logs/launchd.out</string>
+  <key>StandardErrorPath</key><string>$DIR/logs/launchd.err</string>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Minute</key><integer>7</integer></dict>
+    <dict><key>Minute</key><integer>22</integer></dict>
+    <dict><key>Minute</key><integer>37</integer></dict>
+    <dict><key>Minute</key><integer>52</integer></dict>
+  </array>
+</dict>
+</plist>
+PLIST
+
+for job in local.fantasy.lineup local.fantasy.gameday local.fantasy.waivers local.fantasy.trades; do
     launchctl bootout "gui/$UID/$job" 2>/dev/null || true
     launchctl bootstrap "gui/$UID" "$AGENTS/$job.plist"
     echo "installed $job"

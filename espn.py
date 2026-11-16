@@ -64,7 +64,15 @@ class ESPN:
         return cls(int(os.environ["LEAGUE_ID"]), os.environ["ESPN_S2"], os.environ["SWID"])
 
     def _get(self, url, params, headers=None):
-        resp = self.session.get(url, params=params, headers=headers, timeout=30)
+        for attempt in range(2):
+            try:
+                resp = self.session.get(url, params=params, headers=headers, timeout=30)
+                break
+            except requests.exceptions.ConnectionError:
+                # ESPN closes a connection left idle while the report does other work, and the session
+                # only finds out on its next request. A read is safe to send again.
+                if attempt:
+                    raise
         if resp.status_code == 401:
             raise ESPNError("ESPN rejected the cookies (401). Re-copy ESPN_S2 and SWID from your browser.")
         if resp.status_code == 404:

@@ -23,11 +23,14 @@ from espn import BENCH, ESPN, IR, SLOT_NAMES, SLOT_ORDER, ESPNError, ESPNWriteRe
 
 # Over the 2025 season (accuracy.py 2025), one projected point was worth about 0.9 real points at
 # RB, WR and TE, so an upgrade held back costs nearly its whole edge. The bar only stops the
-# lineup flipping back and forth as projections wobble through the week. Kicker and defense
-# projections barely track results, but a projected point was still worth 1.04 and 0.65 real
-# ones (with wide margins), and following a projection costs nothing on average even when it's
-# useless, so those slots follow projections like every other.
+# lineup flipping back and forth as projections wobble through the week. Defense projections
+# barely track results, but a projected point was still worth 0.65 real ones over 2025 and 0.73
+# over 2026's first five weeks, so defenses follow projections like every other slot.
 MIN_GAIN = 0.5
+# Kickers don't: a projected point was worth +1.04 real ones over 2025 and -1.70 over 2026's first
+# five weeks, about zero together. Swapping one kicker who plays for another is a coin flip that
+# the waiver report would spend FAAB chasing, so a kicker who plays keeps his slot.
+STEADY_SLOTS = {17}  # K
 CANT_PLAY = {"OUT", "INJURY_RESERVE", "SUSPENSION"}
 HEALTHY = {"ACTIVE", "NORMAL"}
 IR_ELIGIBLE = {"OUT", "INJURY_RESERVE"}                   # ESPN allows only the O and IR tags on IR
@@ -55,7 +58,8 @@ def plan(players, slot_counts, games):
     """Target slot for every player, plus anyone stuck on IR with nowhere to go.
 
     Slots are filled most-restrictive first, which is optimal while slot eligibility stays
-    nested the way ESPN defines it. Locked players keep the slot they are already in.
+    nested the way ESPN defines it. Locked players keep the slot they are already in, and so
+    does a kicker who plays (STEADY_SLOTS).
     """
     starting = {s: n for s, n in slot_counts.items() if n and s not in (BENCH, IR)}
     capacity = sum(starting.values()) + slot_counts.get(BENCH, 0)
@@ -81,7 +85,7 @@ def plan(players, slot_counts, games):
 
     lineup = dict(reserve)
     for player in active:
-        if player["locked"]:
+        if player["locked"] or (player["slot"] in STEADY_SLOTS and expected_points(player, games) > 0):
             lineup[player["id"]] = player["slot"]
             if player["slot"] in starting:
                 starting[player["slot"]] -= 1
