@@ -13,9 +13,11 @@ Usage:
 import csv
 import html as html_escape
 import json
+import math
 import re
 import os
 import sys
+import textwrap
 import time
 from collections import Counter
 from datetime import datetime
@@ -24,6 +26,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+import bids
 import jev
 import mailer
 import roles
@@ -172,12 +175,15 @@ def held(candidate):
 def shortlist_from(scored):
     """Top of the list, capped per position so it never becomes eight of one thing.
 
-    A next man up is listed even when he adds nothing to your lineup: the league bids on him the
-    night after the game that flagged him, and by the time he looks good on paper he is gone.
+    Only players worth a bid are listed (bid_band): when nobody adds to your lineup, the list used
+    to fill up with the most widely rostered free agents, each at $0-1, and that is how a quarterback
+    you had no use for sat on it for weeks. A next man up is listed even when he adds nothing to
+    your lineup: the league bids on him the night after the game that flagged him, and by the time
+    he looks good on paper he is gone.
     """
     shortlist, seen = [], Counter()
     for candidate in scored:
-        if held(candidate):
+        if held(candidate) or bid_band(candidate) == 3:
             continue
         if seen[candidate["position"]] < PER_POSITION:
             shortlist.append(candidate)
@@ -256,9 +262,12 @@ def score_pool(roster, pool, slot_counts, games, byes=None, week=0):
 
 
 BANDS = [(0.20, 0.35), (0.08, 0.15), (0.02, 0.05)]   # starter, useful piece, stash: used until
-MIN_CLAIMS = 10        # this many claims have been seen; then your league's own prices take over
-# How badly you want him, as a percentile of what winning claims actually cost here.
-TIER_PERCENTILES = {0: (0.90, 0.97), 1: (0.60, 0.80), 2: (0.20, 0.50)}
+MIN_CLAIMS = 10        # this many claims of his kind have been seen; then your league's own prices take over
+# How often a bid should win, low end and high end, as a share of the past claims of his kind
+# (bids.py). Losing one claim in four on a player who would start for you, and one in two on a
+# stash, is the target you set; the high end is the next step up, for when you can't miss.
+STARTER, STASH = (0.75, 0.90), (0.50, 0.75)
+ODDS = {0.50: "half", 0.75: "three in four", 0.90: "nine in ten"}
 STREAM_ONLY = {"K", "D/ST"}   # one slot, no flex, another one always available
 
 
@@ -305,25 +314,30 @@ def bid_band(candidate):
     """0 starter, 1 useful piece, 2 stash, 3 not worth money."""
     band = min(_projection_band(candidate), _jev_band(candidate))
     if candidate.get("role"):
-        band = 0   # he starts for somebody while the lead is down, and that is who you are bidding against
+        band = min(band, 2)   # worth a stash whatever your lineup says; who you bid against is bids.kind_of
     if candidate.get("position") in STREAM_ONLY:
         band = max(band, 2)   # there's always another one on the wire, so never real money
     return band
 
 
-def suggest_bid(candidate, budget_left, minimum_bid, claim_prices=()):
-    """What to bid: what claims actually cost here, scaled by how much you want him.
+def winning_bid(prices, share):
+    """The smallest whole-dollar bid that would have beaten at least that share of these prices."""
+    ordered = sorted(prices)
+    return int(ordered[math.ceil(share * len(ordered)) - 1]) + 1
 
-    Until this league has priced enough claims, falls back to a share of the budget.
+
+def suggest_bid(candidate, budget_left, minimum_bid, past=None):
+    """What to bid: what past claims of his kind took to win, at the odds his band calls for.
+
+    past: {kind: [prices to beat]} from bids.history. Until this league has priced enough claims
+    of his kind, falls back to a share of the budget.
     """
     band = bid_band(candidate)
     if band == 3:
         return minimum_bid, max(minimum_bid, 1)
-    if len(claim_prices) >= MIN_CLAIMS:
-        low_mark, high_mark = TIER_PERCENTILES[band]
-        low = round(percentile(claim_prices, low_mark))
-        high = round(percentile(claim_prices, high_mark))
-        high = max(high, low + 1 if band < 2 else low)   # a claim you want should outbid the last one
+    prices = (past or {}).get(bids.kind_of(candidate), ())
+    if len(prices) >= MIN_CLAIMS:
+        low, high = (winning_bid(prices, share) for share in (STASH if band == 2 else STARTER))
     else:
         low, high = round(budget_left * BANDS[band][0]), round(budget_left * BANDS[band][1])
     return max(minimum_bid, min(low, budget_left)), max(minimum_bid, min(high, budget_left))
@@ -488,8 +502,12 @@ def ask_claude(brief):
         "and bid low. A hole in a later week is not a claim today: name the week and leave the claim for "
         "that week, unless the player would also start for you before then. A kicker or a defense replaces "
         "the one you have; never drop another position to carry two. A candidate whose availability says free "
-        "agent should be added today, before someone else does, with no bid. For each: the player, a bid inside "
-        "the suggested range (or a different number with a reason), and the drop. Every candidate comes with the drop that costs least; use it unless "
+        "agent should be added today, before someone else does, with no bid. For each: the player, a bid, and "
+        "the drop. note_on_bids says what each end of a suggested range has won in this league. Take the bid "
+        "from the range, toward the high end when he would start for you and faab_pace shows money to spare: "
+        "FAAB left over when the season ends buys nothing. If your search shows he is this week's most wanted "
+        "pickup (a new starter, a featured role) and he is not already priced as in demand, bid from the "
+        "in-demand line and say why. Every candidate comes with the drop that costs least; use it unless "
         "you have a reason to prefer another, and give that reason. Compare players only with numbers that appear in the data, never an "
         "estimate of one that doesn't. Say plainly what to skip and why. "
         "Mention keeper value only when it genuinely changes the call. If you search, check the last few "
@@ -519,6 +537,7 @@ def ask_claude(brief):
 
 
 HELD_NOTE = "A kicker, defense or one-week fill-in is listed in the week you need him, not before."
+NOBODY = "Nobody on the wire is worth a bid today."
 FREE_NOTE = ("\"add now\": he has cleared waivers, so he costs nothing and goes to whoever adds him first. "
              "Everyone else is decided by bid at the next run.")
 
@@ -531,6 +550,43 @@ def _bid(candidate, dash="-"):
     return f"${low}" if low == high else f"${low}{dash}{high}"
 
 
+def faab_pace(context):
+    """One line on how fast the budget is going, or None when ESPN doesn't say when the season ends.
+
+    A bid isn't scaled by this: what a claim costs is set by the other thirteen teams. It is here
+    because money left after the last week buys nothing.
+    """
+    weeks_left, played = context.get("weeks_left"), context["week"] - 1
+    if not weeks_left:
+        return None
+    line = (f"${context['budget_left'] / weeks_left:.0f} a week for the {weeks_left} "
+            f"week{'s' if weeks_left != 1 else ''} of waivers left, this one included")
+    if played:
+        line += f"; ${(context['budget'] - context['budget_left']) / played:.0f} a week spent so far"
+    return line
+
+
+def bid_notes(context):
+    """What the bid ranges are priced off, one note to a line. Both reports print them."""
+    past = context.get("past_claims") or {}
+    lines = ["What it has taken to win a claim in this league (bids.py):"]
+    for kind, label in bids.KINDS.items():
+        prices = past.get(kind, ())
+        if len(prices) >= MIN_CLAIMS:
+            steps = ", ".join(f"${winning_bid(prices, share)} won {said}" for share, said in ODDS.items())
+            lines.append(f"{label} ({len(prices)} claims): {steps}")
+        else:
+            lines.append(f"{label}: {len(prices)} claims so far, so a share of your budget until there are {MIN_CLAIMS}")
+    if any(len(prices) >= MIN_CLAIMS for prices in past.values()):
+        lines.append(f"For a player who would start for you, the range runs from the bid that won {ODDS[STARTER[0]]} to "
+                     f"the one that won {ODDS[STARTER[1]]}; for a stash, from {ODDS[STASH[0]]} to {ODDS[STASH[1]]}.")
+    in_demand = [bids.describe(c) for c in context["candidates"]
+                 if bids.kind_of(c) == bids.IN_DEMAND and not c.get("free_now")]
+    if in_demand:
+        lines.append("Priced as in demand today: " + "; ".join(in_demand))
+    return lines
+
+
 def _level(player):
     """His level as the reports show it; a dash where values.py keeps ESPN's number (tight ends, kickers,
     defenses) and for anyone ESPN sent no games for."""
@@ -541,19 +597,14 @@ def build_report(context):
     lines = [f"Waiver report — {datetime.now():%a %b %d}, week {context['week']}", ""]
     lines.append(f"Your FAAB: ${context['budget_left']} of ${context['budget']}"
                  f"   (minimum bid ${context['minimum_bid']})")
+    if faab_pace(context):
+        lines.append(f"  {faab_pace(context)}")
     if context["rivals"]:
         rich = sorted(context["rivals"], reverse=True)[:3]
         lines.append("Rivals with the most FAAB: " + ", ".join(f"${r}" for r in rich))
     if context["last_runs"]:
         stamps = [run.strftime("%a %I:%M %p").replace(" 0", " ") for run in context["last_runs"][-3:]]
         lines.append("Claims processed: " + ", ".join(stamps))
-    prices = context.get("claim_prices") or []
-    if len(prices) >= MIN_CLAIMS:
-        lines.append(f"Bids priced off {len(prices)} claims in this league: median ${percentile(prices, 0.5):.0f}, "
-                     f"top of market ${max(prices):.0f}")
-    else:
-        lines.append(f"Bids are budget shares until this league prices {MIN_CLAIMS} claims "
-                     f"({len(prices)} so far)")
     lines.append("")
 
     if context["gaps"]:
@@ -565,7 +616,7 @@ def build_report(context):
         lines += ["Next man up:"] + [f"  {roles.describe(c)}" for c in stepping_in]
         lines += [f"  Backs flagged this way averaged {roles.FILL_IN} a game over their next {roles.FILL_IN_WEEKS} weeks "
                   f"in 2025-26. Just under", "  half reached 10 a game and a quarter stayed under 5. "
-                  "They are bid as starters and listed even with no lineup gain.", ""]
+                  "They are listed even with no lineup gain.", ""]
 
     if context.get("ranked_by"):
         lines += [context["ranked_by"], ""]
@@ -588,6 +639,11 @@ def build_report(context):
             row += f" {candidate.get('math_rank', 0):>6}"
         drop = candidate["drop"]["name"] if candidate.get("drop") else "-"
         lines.append(f"{row}  {bid:<7} {drop[:18]}")
+    if not context["candidates"]:
+        lines.append(NOBODY)
+    title, *notes = bid_notes(context)
+    lines += ["", title] + [wrapped for note in notes
+                            for wrapped in textwrap.wrap(note, 100, initial_indent="  ", subsequent_indent="    ")]
 
     if context["advice"]:
         lines += ["", "-" * 60, "", context["advice"]]
@@ -760,7 +816,7 @@ def build_html(context):
                   f'<ul style="margin:6px 0 0;padding-left:18px;color:#374151;font-size:14px">{items}</ul>'
                   f'<div style="color:#6b7280;font-size:12px;margin-top:6px">Backs flagged this way averaged '
                   f'{roles.FILL_IN} a game over their next {roles.FILL_IN_WEEKS} weeks in 2025-26. Just under half '
-                  f'reached 10 a game and a quarter stayed under 5. Bid as starters, listed even with no lineup gain.'
+                  f'reached 10 a game and a quarter stayed under 5. Listed even with no lineup gain.'
                   f'</div></div>')
 
     summary = (f'FAAB <strong>${context["budget_left"]}</strong> of ${context["budget"]} '
@@ -768,6 +824,8 @@ def build_html(context):
     if context["rivals"]:
         summary += " &middot; rivals&rsquo; most: " + ", ".join(
             f"${amount}" for amount in sorted(context["rivals"], reverse=True)[:3])
+    if faab_pace(context):
+        summary += f"<br>{faab_pace(context)}"
     if context["last_runs"]:
         stamps = [run.strftime("%a %I:%M %p").replace(" 0", " ") for run in context["last_runs"][-3:]]
         summary += "<br>Claims processed: " + ", ".join(stamps)
@@ -776,6 +834,14 @@ def build_html(context):
               f'{html_escape.escape(context["ranked_by"]).replace(chr(10), "<br>")}</p>'
               if context.get("ranked_by") else "")
     free_note = f"{FREE_NOTE} " if any(c.get("free_now") for c in context["candidates"]) else ""
+    table = (f'<table style="border-collapse:collapse;width:100%;margin-bottom:18px">'
+             f'<thead><tr>{"".join(headers)}</tr></thead><tbody>{"".join(rows)}</tbody></table>'
+             if rows else f'<p style="font-size:14px;margin:18px 0">{NOBODY}</p>')
+    notes = bid_notes(context)
+    prices = (f'<div style="background:#f9fafb;border-left:3px solid #d1d5db;padding:10px 14px;margin:0 0 18px;'
+              f'color:#374151;font-size:13px;line-height:1.5"><div style="font-weight:600">'
+              f'{html_escape.escape(notes[0])}</div>'
+              + "".join(f"<div>{html_escape.escape(note)}</div>" for note in notes[1:]) + "</div>")
     write_up = context.get("advice") or (NO_WRITE_UP if context.get("advice_failed") else "")
     advice = _prose(write_up) if write_up else ""
 
@@ -783,9 +849,7 @@ def build_html(context):
             f'sans-serif;color:#111827;max-width:720px;margin:0 auto;padding:4px 8px">'
             f'<h2 style="margin:0 0 4px;font-size:19px">Waiver report &middot; week {context["week"]}</h2>'
             f'<p style="color:#4b5563;font-size:14px;margin:0 0 4px">{summary}</p>'
-            f'{holes}{ranked}'
-            f'<table style="border-collapse:collapse;width:100%;margin-bottom:18px">'
-            f'<thead><tr>{"".join(headers)}</tr></thead><tbody>{"".join(rows)}</tbody></table>'
+            f'{holes}{ranked}{table}{prices}'
             f'{advice}'
             f'<p style="color:#6b7280;font-size:12px;border-top:1px solid #e5e7eb;padding-top:10px">'
             f'{free_note}Bids are suggestions only. Place claims yourself in ESPN.</p></div>')
@@ -811,8 +875,8 @@ def gather(espn, ranker="math"):
 
     acquisition = settings["acquisitionSettings"]
     budget = acquisition.get("acquisitionBudget", 0)
-    claims = espn.waiver_claims(range(1, week + 1))
-    prices = [claim["bid"] for claim in claims]
+    every_bid = bids.all_bids(espn, week)
+    claims = [bid for bid in every_bid if bid["status"] == "EXECUTED"]
     spent_by_team = Counter()
     for claim in claims:
         spent_by_team[claim["team_id"]] += claim["bid"]
@@ -831,11 +895,17 @@ def gather(espn, ranker="math"):
         cards = values.attach(espn, roster + pool + rival_backs, week)
     except (ESPNError, requests.exceptions.RequestException) as problem:
         print(f"(player levels unavailable: {type(problem).__name__}); later weeks use ESPN's season projection")
+    team_weeks = roles.finished_weeks(week, byes, games, datetime.now())
     try:
-        roles.mark(pool, roster + rival_backs, cards, espn.season,
-                   roles.finished_weeks(week, byes, games, datetime.now()))
+        roles.mark(pool, roster + rival_backs, cards, espn.season, team_weeks)
     except Exception as problem:  # broad on purpose: a missing extra must not stop the report
         print(f"(next-man-up check failed: {type(problem).__name__}: {problem}); report continues without it")
+    past = {}
+    try:
+        bids.mark(pool, cards, espn.season, week, team_weeks)
+        past = bids.history(espn, every_bid, team["id"], cards)
+    except Exception as problem:  # broad on purpose: a missing extra must not stop the report
+        print(f"(claim prices unavailable: {type(problem).__name__}: {problem}); bids fall back to budget shares")
     scored = score_pool(roster, pool, slot_counts, games, byes, week)
     try:
         shares, snap_week = snaps.load(espn.season)
@@ -858,14 +928,16 @@ def gather(espn, ranker="math"):
         print(f"(shadow {note.lower()}; logged {log_jev(week, judged)} judgments)")
     shortlist = shortlist_from(scored)
     for candidate in shortlist:
-        candidate["bid"] = suggest_bid(candidate, budget_left, acquisition.get("minimumBid", 0), prices)
+        candidate["bid"] = suggest_bid(candidate, budget_left, acquisition.get("minimumBid", 0), past)
     log_pool(week, pool, scored)
     runs = sorted({claim["processed"] for claim in claims if claim["processed"]})
 
+    final_week = (league.get("status") or {}).get("finalScoringPeriod") or 0
     return {
         "week": week, "budget": budget, "budget_left": budget_left,
+        "weeks_left": max(final_week - week + 1, 0),   # 0 when ESPN doesn't say when the season ends
         "minimum_bid": acquisition.get("minimumBid", 0), "rivals": rivals,
-        "last_runs": runs, "claim_prices": prices,
+        "last_runs": runs, "past_claims": past,
         "gaps": bye_gaps(roster, slot_counts, horizon, week, scored),
         "candidates": shortlist, "ranked_by": ranked_by,
         "drops": drop_candidates(roster, target, slot_counts, horizon, week, replacement_level(scored)),
@@ -888,6 +960,7 @@ def brief_for_claude(context):
     return {
         "week": context["week"],
         "faab_left": context["budget_left"],
+        "faab_pace": faab_pace(context),
         "faab_of_rivals": sorted(context["rivals"], reverse=True),
         "lineup_holes_ahead": context["gaps"],
         "my_starters": [_projections(p) for p in context["roster"] if context["target"][p["id"]] not in (BENCH, IR)],
@@ -908,6 +981,9 @@ def brief_for_claude(context):
                        "suggested_bid": list(c["bid"])}
                       for c in context["candidates"]],
         "drop_candidates": [p["name"] for p in context["drops"]],
+        "note_on_bids": bid_notes(context),
+        "note_on_holes": ("The players named for a hole in a later week are listed, with bids, on the report of the "
+                          "Tuesday that week starts, a day before its waiver run. Until then there is nothing to claim."),
         "note_on_levels": ("level_per_game is what a player scores a game on this season's evidence: his preseason "
                            "projection, moved by every game he has played. Every lineup gain past this week is "
                            "built on it. For tight ends, kickers and defenses it is ESPN's season projection per game."),

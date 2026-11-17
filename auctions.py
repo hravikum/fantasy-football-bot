@@ -4,77 +4,29 @@ ESPN returns every claim, the losing ones included, so each night's waivers read
 auctions, one per player. This shows how the price depends on how many teams bid, lists the
 recent contested auctions, and writes logs/auctions.csv. Each auction is matched to the report's
 last look at that player before the run (logs/pool.csv, appended by every waivers.py run). That
-match is what will show whether anything the report can see at 6am, the add rate above all,
-predicts a bidding war.
+match showed that the add rate at 6am doesn't predict a bidding war (bids.py has what does), and
+it is how the report's own bids are checked: of the claims it had priced the morning before, how
+many each end of its range would have won.
 
 Usage: python3 auctions.py
 """
 import csv
-import json
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from bids import all_bids, auctions, to_beat
 from espn import ESPN, ESPNError, parse_roster_entry
 from waivers import POOL_LOG, percentile
 
 LOG = Path(__file__).with_name("logs") / "auctions.csv"
 FIELDS = ["processed", "week", "player_id", "player", "position", "teams", "price", "runner_up", "winner",
-          "your_bid", "snapshot_at", "percent_owned", "percent_change", "projection", "band", "report_bid"]
-OUTBID = "FAILED_INVALIDPLAYERSOURCE"    # a live bid that lost: by the time it ran, he was someone else's
-NOT_BIDS = {"CANCELED", "PENDING"}
+          "your_bid", "to_beat", "snapshot_at", "percent_owned", "percent_change", "projection", "band", "report_bid"]
 SNAPSHOT_AGE = timedelta(hours=30)       # the 6am report comes about 21 hours before the next claims run
 RECENT = timedelta(days=14)
+CHECKED = timedelta(days=28)             # how far back the report's own bids are held against what won
 BUCKETS = [("1", 1, 1), ("2", 2, 2), ("3-4", 3, 4), ("5 or more", 5, 99)]
-
-
-def all_bids(espn, week):
-    """Every waiver bid ESPN returns, whatever its status. espn.waiver_claims() keeps only winners."""
-    rules = {"transactions": {"filterType": {"value": ["WAIVER"]}}}
-    bids, seen = [], set()
-    for played in range(1, week + 1):
-        try:
-            data = espn.league("mTransactions2", week=played, headers={"x-fantasy-filter": json.dumps(rules)})
-        except ESPNError:
-            continue
-        for transaction in data.get("transactions", []):
-            key = transaction.get("id") or id(transaction)
-            if key in seen:
-                continue
-            seen.add(key)
-            stamp = transaction.get("processDate")
-            for item in transaction.get("items", []):
-                if item.get("type") == "ADD":
-                    bids.append({"week": played, "team_id": transaction.get("teamId"),
-                                 "status": transaction.get("status"), "bid": transaction.get("bidAmount") or 0,
-                                 "player_id": item.get("playerId"),
-                                 "processed": datetime.fromtimestamp(stamp / 1000) if stamp else None})
-    return bids
-
-
-def auctions(bids, me):
-    """One auction per player per waiver run, oldest first.
-
-    teams counts everyone who claimed him, even a claim that failed on its own terms (a drop
-    already used, a full roster): that's still a team that wanted him. runner_up is only the
-    best of the live bids that lost, the number the winner actually had to beat.
-    """
-    grouped = defaultdict(list)
-    for bid in bids:
-        if bid["status"] not in NOT_BIDS and bid["processed"]:
-            grouped[(bid["player_id"], bid["processed"].date())].append(bid)
-    found = []
-    for (player_id, _), field in grouped.items():
-        winner = next((b for b in field if b["status"] == "EXECUTED"), None)
-        lost = [b["bid"] for b in field if b["status"] == OUTBID]
-        found.append({"processed": (winner or field[0])["processed"], "week": field[0]["week"],
-                      "player_id": player_id, "teams": len({b["team_id"] for b in field}),
-                      "price": winner["bid"] if winner else None,
-                      "winner": winner["team_id"] if winner else None,
-                      "runner_up": max(lost) if lost else None,
-                      "your_bid": next((b["bid"] for b in field if b["team_id"] == me), None)})
-    return sorted(found, key=lambda a: a["processed"])
 
 
 def read_pool(path=None):
@@ -106,6 +58,18 @@ def by_teams(found):
     return rows
 
 
+def bids_checked(won, now):
+    """(claims the report had priced, how many its low end would have won, how many its high end).
+
+    The low end is meant to win three in four for a player who would start and half for a stash
+    (waivers.STARTER and STASH), so over a month this should land between the two.
+    """
+    rows = [(a["to_beat"], [int(end) for end in a["snapshot"]["bid"].split("-")]) for a in won
+            if a.get("snapshot") and a["snapshot"]["bid"] and now - a["processed"] <= CHECKED]
+    return (len(rows), sum(1 for beat, ends in rows if ends[0] > beat),
+            sum(1 for beat, ends in rows if ends[-1] > beat))
+
+
 def collect(espn, pool_path=None):
     league = espn.league("mSettings", "mTeam")
     week = league["scoringPeriodId"]
@@ -119,6 +83,7 @@ def collect(espn, pool_path=None):
         player = parse_roster_entry({"player": card}, week, espn.season) if card else {}
         a["player"] = player.get("name", str(a["player_id"]))
         a["position"] = player.get("position", "?")
+        a["to_beat"] = to_beat(a, me) if a["price"] is not None else None
         a["winner"] = names.get(a["winner"], a["winner"])
         a["snapshot"] = snapshot(a, pool)
     return league["settings"]["name"], week, found
@@ -157,6 +122,10 @@ def report(name, week, found, now):
                          f"{owned:>6} {change:>6}  {said}")
         lines += ["", "OWN%, +/- and REPORT are what the waiver report saw before that run (logs/pool.csv).",
                   "\"unlisted\" means it saw him but left him off the shortlist; \"-\" means it never saw him."]
+    priced, low, high = bids_checked(won, now)
+    if priced:
+        lines += ["", f"The report's own bids, last {CHECKED.days} days: of the {priced} claims it had priced the morning "
+                      f"before,", f"the low end of its range would have won {low} and the high end {high}."]
     return "\n".join(lines)
 
 
@@ -172,7 +141,7 @@ def write_log(found, path=None):
                 "processed": a["processed"].isoformat(timespec="minutes"), "week": a["week"],
                 "player_id": a["player_id"], "player": a["player"], "position": a["position"],
                 "teams": a["teams"], "price": a["price"], "runner_up": a["runner_up"], "winner": a["winner"],
-                "your_bid": a["your_bid"],
+                "your_bid": a["your_bid"], "to_beat": a.get("to_beat"),
                 "snapshot_at": seen["logged_at"].isoformat(timespec="minutes") if seen else None,
                 "percent_owned": seen.get("percent_owned"), "percent_change": seen.get("percent_change"),
                 "projection": seen.get("projection"), "band": seen.get("band"), "report_bid": seen.get("bid")})

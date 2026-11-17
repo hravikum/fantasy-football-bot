@@ -7,6 +7,7 @@ from pathlib import Path
 
 import accuracy
 import auctions
+import bids
 import claims
 import waivers
 
@@ -19,35 +20,60 @@ def test_percentile_reads_the_sample():
     assert waivers.percentile([], 0.5) == 0
 
 
-def test_budget_shares_until_the_league_has_priced_enough_claims():
-    starter = {"gain": 4.0, "season_gain": 60}
-    assert waivers.suggest_bid(starter, 100, 0, CHEAP[:5]) == (20, 35), "five claims isn't a market"
+STARTER = {"position": "WR", "gain": 4.0, "season_gain": 60}
+STASH = {"position": "WR", "gain": 0.5, "season_gain": 0}
+BREAKOUT = {"week": 5, "points": 21.0, "before": 4.0}
+
+
+def priced(other=(), in_demand=(), streamed=()):
+    return {bids.OTHER: list(other), bids.IN_DEMAND: list(in_demand), bids.STREAMED: list(streamed)}
+
+
+def test_a_winning_bid_is_the_smallest_that_beat_that_share():
+    paid = [0, 2, 3, 3, 5, 6, 6, 6, 7, 7, 8, 11, 11, 14, 17, 19, 28, 30, 33, 37]   # breakout claims here, weeks 1-10
+    assert [waivers.winning_bid(paid, share) for share in (0.50, 0.75, 0.90)] == [8, 18, 31]
+    assert sum(price < 18 for price in paid) == 15 and sum(price < 17 for price in paid) == 14, "15 of 20 is three in four"
+    assert waivers.winning_bid([0, 0, 0, 0], 0.50) == 1, "matching a bid of nothing isn't beating it"
+    assert waivers.winning_bid([5, 1, 3], 0.90) == 6, "order doesn't matter, and nine in ten of three is all three"
+
+
+def test_budget_shares_until_the_league_has_priced_enough_claims_of_his_kind():
+    assert waivers.suggest_bid(STARTER, 100, 0, priced(other=CHEAP[:5])) == (20, 35), "five claims isn't a market"
+    assert waivers.suggest_bid(STARTER, 100, 0, priced(in_demand=RICH, streamed=RICH)) == (20, 35), \
+        "what other kinds of claim cost says nothing about his"
+    assert waivers.suggest_bid(STARTER, 100, 0) == (20, 35), "and with no history at all"
     assert len(CHEAP) == waivers.MIN_CLAIMS
 
 
-def test_a_cheap_league_stops_the_report_overbidding():
-    starter = {"gain": 4.0, "season_gain": 60}
-    low, high = waivers.suggest_bid(starter, 100, 0, CHEAP)
-    assert (low, high) < (20, 35), "nobody here pays 20% of budget; don't suggest it"
-    assert high <= max(CHEAP) + 1
+def test_a_claim_is_priced_off_past_claims_of_its_own_kind():
+    past = priced(other=CHEAP, in_demand=RICH, streamed=[0, 0, 0, 0, 1, 1, 2, 2, 3, 4])
+    assert waivers.suggest_bid(STARTER, 100, 0, past) == (4, 6), "nobody here pays 20% of budget for him"
+    assert waivers.suggest_bid(dict(STARTER, breakout=BREAKOUT), 100, 0, past) == (29, 36), "but they do after a big game"
+    assert waivers.suggest_bid(dict(STARTER, role={"touches": 19}), 100, 0, past) == (29, 36), "or for a next man up"
+    kicker = dict(STARTER, position="K")
+    assert waivers.suggest_bid(kicker, 100, 0, past) == (2, 3), "a kicker costs what kickers cost, at stash odds"
+    assert waivers.suggest_bid(dict(kicker, breakout=BREAKOUT), 100, 0, past) == (2, 3), "whatever else is on him"
 
 
-def test_an_expensive_league_pushes_bids_up():
-    starter = {"gain": 4.0, "season_gain": 60}
-    assert waivers.suggest_bid(starter, 100, 0, RICH)[0] >= 28, "claims here cost real money"
+def test_a_starter_is_bid_to_win_three_in_four_and_a_stash_one_in_two():
+    past = priced(other=CHEAP, in_demand=RICH)
+    for candidate, sample in ((STARTER, CHEAP), (dict(STARTER, breakout=BREAKOUT), RICH)):
+        low, high = waivers.suggest_bid(candidate, 100, 0, past)
+        assert sum(price < low for price in sample) >= 0.75 * len(sample) > sum(price < low - 1 for price in sample)
+        assert sum(price < high for price in sample) >= 0.90 * len(sample)
+    assert waivers.suggest_bid(STASH, 100, 0, past) == (2, 4)
+    low, high = waivers.suggest_bid(dict(STASH, breakout=BREAKOUT), 100, 0, past)
+    assert (low, high) == (16, 29) and sum(price < low for price in RICH) == 5, "half of ten"
+    useful = {"position": "WR", "gain": 2.0, "season_gain": 10}
+    assert waivers.suggest_bid(useful, 100, 0, past) == waivers.suggest_bid(STARTER, 100, 0, past), \
+        "anyone who would start for you is bid at the same odds"
 
 
-def test_the_tiers_stay_in_order_and_inside_the_budget():
-    tiers = [waivers.suggest_bid({"gain": 4.0, "season_gain": 60}, 100, 0, RICH),
-             waivers.suggest_bid({"gain": 2.0, "season_gain": 10}, 100, 0, RICH),
-             waivers.suggest_bid({"gain": 0.5, "season_gain": 0}, 100, 0, RICH)]
-    assert tiers[0][0] >= tiers[1][0] >= tiers[2][0]
-    assert all(low <= high for low, high in tiers)
-    assert waivers.suggest_bid({"gain": 4.0, "season_gain": 60}, 6, 0, RICH)[1] <= 6, "never bid what you lack"
-
-
-def test_minimum_bid_is_respected():
-    assert waivers.suggest_bid({"gain": 0.0, "season_gain": 0}, 100, 2, CHEAP)[0] >= 2
+def test_bids_stay_inside_the_budget_and_above_the_minimum():
+    past = priced(other=CHEAP, in_demand=RICH)
+    assert waivers.suggest_bid(dict(STARTER, breakout=BREAKOUT), 20, 0, past) == (20, 20), "never bid what you lack"
+    assert waivers.suggest_bid(STASH, 100, 5, past) == (5, 5)
+    assert waivers.suggest_bid({"gain": 0.0, "season_gain": 0}, 100, 2, past)[0] >= 2
 
 
 def test_correlation_spots_a_projection_that_tracks_nothing():
@@ -150,8 +176,8 @@ def bid(team, status, amount, player=7, when=RUN, week=6):
 
 def test_one_player_on_one_night_is_one_auction():
     """Germie Bernard on Oct 14: six teams, $33 won, $18 was the best live bid that lost."""
-    field = [bid(1, "EXECUTED", 33), bid(2, auctions.OUTBID, 18), bid(3, auctions.OUTBID, 16),
-             bid(13, auctions.OUTBID, 4), bid(4, "FAILED_PLAYERALREADYDROPPED", 40),
+    field = [bid(1, "EXECUTED", 33), bid(2, bids.OUTBID, 18), bid(3, bids.OUTBID, 16),
+             bid(13, bids.OUTBID, 4), bid(4, "FAILED_PLAYERALREADYDROPPED", 40),
              bid(5, "FAILED_ROSTERLIMIT", 3), bid(6, "CANCELED", 0), bid(8, "PENDING", 9, when=None)]
     (auction,) = auctions.auctions(field, me=13)
     assert auction["price"] == 33 and auction["winner"] == 1 and auction["your_bid"] == 4
@@ -182,10 +208,10 @@ def test_an_auction_meets_the_reports_last_look_before_that_run():
 
 
 def test_prices_are_grouped_by_how_many_teams_bid():
-    three = [bid(1, "EXECUTED", 11, player=5), bid(2, auctions.OUTBID, 0, player=5), bid(3, auctions.OUTBID, 0, player=5)]
-    six = [bid(t, auctions.OUTBID, 10 + t, player=4) for t in range(2, 7)] + [bid(1, "EXECUTED", 37, player=4)]
+    three = [bid(1, "EXECUTED", 11, player=5), bid(2, bids.OUTBID, 0, player=5), bid(3, bids.OUTBID, 0, player=5)]
+    six = [bid(t, bids.OUTBID, 10 + t, player=4) for t in range(2, 7)] + [bid(1, "EXECUTED", 37, player=4)]
     found = auctions.auctions([bid(1, "EXECUTED", 0, player=1), bid(1, "EXECUTED", 2, player=2),
-                               bid(1, "EXECUTED", 9, player=3), bid(2, auctions.OUTBID, 5, player=3)] + three + six,
+                               bid(1, "EXECUTED", 9, player=3), bid(2, bids.OUTBID, 5, player=3)] + three + six,
                               me=13)
     assert auctions.by_teams(found) == [("1", 2, 1.0, 2), ("2", 1, 9, 9), ("3-4", 1, 11, 11), ("5 or more", 1, 37, 37)]
 
@@ -224,7 +250,7 @@ def test_auctions_end_to_end_with_the_reports_snapshot():
     def claim(tid, team, status, amount):
         return {"id": tid, "teamId": team, "status": status, "bidAmount": amount, "processDate": stamp,
                 "items": [{"type": "ADD", "playerId": 99}, {"type": "DROP", "playerId": 1}]}
-    won, mine = claim("a", 4, "EXECUTED", 33), claim("b", 13, auctions.OUTBID, 4)
+    won, mine = claim("a", 4, "EXECUTED", 33), claim("b", 13, bids.OUTBID, 4)
     espn = FakeAuctions({5: [won], 6: [won, mine, claim("c", 4, "CANCELED", 0)]})   # ESPN repeats some
     pool_path = Path(tempfile.mkdtemp()) / "pool.csv"
     with open(pool_path, "w", newline="") as handle:
@@ -236,12 +262,113 @@ def test_auctions_end_to_end_with_the_reports_snapshot():
     name, week, found = auctions.collect(espn, pool_path)
     assert len(found) == 1 and found[0]["teams"] == 2 and found[0]["winner"] == "Rival"
     text = auctions.report(name, week, found, RUN + timedelta(days=1))
-    for piece in ("Germie Bernard", "WR", "$33", "$4", "+18.4", "$1-3", "Auctions someone won: 1"):
+    for piece in ("Germie Bernard", "WR", "$33", "$4", "+18.4", "$1-3", "Auctions someone won: 1",
+                  "of the 1 claims it had priced the morning", "would have won 0 and the high end 0"):
         assert piece in text, piece
+    assert found[0]["to_beat"] == 33
     log = Path(tempfile.mkdtemp()) / "auctions.csv"
     auctions.write_log(found, log)
     row = next(csv.DictReader(open(log)))
     assert row["report_bid"] == "1-3" and row["percent_change"] == "18.4" and row["position"] == "WR"
+    assert row["to_beat"] == "33"
+
+
+def test_the_reports_bids_are_checked_against_what_it_took_to_win():
+    def priced(beat, report_bid, days_ago=2):
+        return {"to_beat": beat, "processed": RUN - timedelta(days=days_ago), "snapshot": {"bid": report_bid}}
+    won = [priced(14, "18-31"), priced(19, "18-31"), priced(33, "18-31"), priced(0, "3-5"), priced(5, "3-5"),
+           priced(3, "3-3"),                                    # matching the price to beat isn't beating it
+           priced(50, "0-1", days_ago=40),                      # too old to say anything about today's pricing
+           {"to_beat": 9, "processed": RUN, "snapshot": {"bid": ""}},      # seen, not listed
+           {"to_beat": 9, "processed": RUN, "snapshot": None}]             # never seen
+    assert auctions.bids_checked(won, RUN) == (6, 2, 3)
+    assert auctions.bids_checked([], RUN) == (0, 0, 0)
+
+
+def test_what_a_new_bid_had_to_beat():
+    lost_to_rival = {"price": 33, "winner": 4, "runner_up": 18, "your_bid": 4}
+    assert bids.to_beat(lost_to_rival, me=13) == 33, "someone else's winning bid is the one to top"
+    assert bids.to_beat({"price": 10, "winner": 13, "runner_up": 1, "your_bid": 10}, me=13) == 1, \
+        "your own $10 says nothing about what it took: the next bid down does (Bryce Young, week 3)"
+    assert bids.to_beat({"price": 3, "winner": 13, "runner_up": None, "your_bid": 3}, me=13) == 0, "nobody else bid"
+
+
+def test_a_breakout_game_is_ten_points_and_five_more_than_before():
+    assert bids.breakout([(1, 3.0), (2, 4.0), (4, 11.5)], 4) == {"week": 4, "points": 11.5, "before": 3.5}
+    assert bids.breakout([(1, 16.4)], 1) == {"week": 1, "points": 16.4, "before": 0.0}, "a first game counts from nothing"
+    assert bids.breakout([(1, 3.0), (2, 4.0), (4, 9.9)], 4) is None, "under ten is a decent game, not a breakout"
+    assert bids.breakout([(1, 5.0), (2, 10.0)], 2) == {"week": 2, "points": 10.0, "before": 5.0}, "on both lines counts"
+    assert bids.breakout([(1, 12.0), (2, 14.0), (4, 17.0)], 4) is None, "seventeen from a man who scores thirteen"
+    assert bids.breakout([(1, 3.0), (2, 21.0)], 4) is None, "he didn't play that week"
+    assert bids.breakout([(1, 3.0), (2, 4.0), (4, 11.5), (5, 2.0)], 4)["before"] == 3.5, "later games don't count"
+
+
+def test_kinds_put_kickers_first_and_breakouts_and_next_men_up_together():
+    assert bids.kind("K", True) == bids.kind("D/ST", False) == bids.STREAMED
+    assert bids.kind_of({"position": "RB", "role": {"touches": 19}}) == bids.IN_DEMAND
+    assert bids.kind_of({"position": "WR", "breakout": {"week": 4}}) == bids.IN_DEMAND
+    assert bids.kind_of({"position": "WR"}) == bids.kind_of({"position": "TE", "role": None}) == bids.OTHER
+    assert set(bids.KINDS) == {bids.STREAMED, bids.IN_DEMAND, bids.OTHER}, "every kind has a line in the report"
+
+
+def game(week, points):
+    return {"seasonId": 2026, "scoringPeriodId": week, "statSourceId": 0, "statSplitTypeId": 1,
+            "appliedTotal": points, "stats": {"53": 4.0}}
+
+
+class FakeCards:
+    season = 2026
+    CARDS = {1: {"id": 1, "eligibleSlots": [4, 23], "stats": [game(1, 2.0), game(2, 4.0), game(3, 19.0), game(4, 6.0)]},
+             2: {"id": 2, "eligibleSlots": [0, 20], "stats": [game(1, 9.0), game(2, 8.0), game(3, 26.0)]},
+             3: {"id": 3, "eligibleSlots": [17], "stats": [game(3, 14.0)]},
+             4: {"id": 4, "eligibleSlots": [2, 23], "stats": [game(3, 1.0)]},
+             -16001: {"id": -16001, "eligibleSlots": [16], "stats": [game(3, 20.0)]}}
+
+    def __init__(self):
+        self.asked = []
+
+    def player_cards(self, ids, final_week):
+        self.asked.append(list(ids))
+        return {i: self.CARDS[i] for i in ids if i in self.CARDS}
+
+
+def test_history_sorts_past_claims_by_kind_with_what_each_took_to_win():
+    later = RUN + timedelta(days=14)
+    field = [bid(4, "EXECUTED", 28, player=1, week=4), bid(13, bids.OUTBID, 9, player=1, week=4),   # a receiver, after 19
+             bid(4, "EXECUTED", 2, player=1, when=later, week=6),                 # the same man two weeks on
+             bid(4, "EXECUTED", 11, player=2, week=4),                            # a quarterback's 26 is no breakout
+             bid(13, "EXECUTED", 6, player=3, week=4), bid(4, bids.OUTBID, 3, player=3, week=4),    # yours: the next bid down
+             bid(4, "EXECUTED", 1, player=-16001, week=4),
+             bid(4, "EXECUTED", 5, player=4, week=4),                             # a back after a quiet game
+             bid(4, "FAILED_ROSTERLIMIT", 40, player=5, week=4),                  # nobody won him
+             bid(4, "EXECUTED", 7, player=77, week=4)]                            # ESPN sends no card for him
+    espn = FakeCards()
+    past = bids.history(espn, field, me=13, cards={4: FakeCards.CARDS[4]})
+    assert past == {bids.IN_DEMAND: [28], bids.OTHER: [11, 5, 2], bids.STREAMED: [3, 1]}
+    assert espn.asked == [[-16001, 1, 2, 3, 77]], "a card already in hand isn't fetched again"
+
+
+def test_a_free_agent_coming_off_a_breakout_game_is_tagged():
+    def agent(player_id, position="WR", team=5):
+        return {"id": player_id, "name": f"P{player_id}", "position": position, "pro_team": team}
+    cards = {1: {"stats": [game(1, 2.0), game(2, 4.0), game(3, 19.0)]},
+             2: {"stats": [game(1, 2.0), game(2, 4.0), game(3, 19.0)]},
+             3: {"stats": [game(1, 2.0), game(2, 19.0)]},
+             4: {"stats": [game(1, 2.0), game(2, 4.0), game(3, 19.0), game(4, 5.0)]}}
+    risen, tight_end, before_bye, cooled, no_card = agent(1), agent(2, "TE"), agent(3, team=7), agent(4), agent(9)
+    finished = {5: [1, 2, 3], 7: [1, 2]}                       # team 7 was off in week 3
+    found = bids.mark([risen, tight_end, before_bye, cooled, no_card], cards, 2026, 4, finished)
+    assert found == [risen, cooled] and risen["breakout"] == {"week": 3, "points": 19.0, "before": 3.0}
+    assert "breakout" not in tight_end, "no tight end's claim has drawn a crowd here"
+    assert "breakout" not in before_bye, "the league has already had a run to bid on that game"
+    assert bids.describe(risen) == "P1 (19.0 points in week 3, 3.0 a game before)"
+    assert bids.describe(dict(risen, role={"touches": 19})) == "P1 (next man up)"
+    monday = bids.mark([agent(4)], cards, 2026, 4, {5: [1, 2, 3, 4]})    # week 4's game is over, the week isn't
+    assert monday == [], "Sunday's five points replace last week's nineteen as his latest game"
+    sunday_star = agent(1)
+    cards[1]["stats"].append(game(4, 22.0))
+    assert bids.mark([sunday_star], cards, 2026, 4, {5: [1, 2, 3, 4]})[0]["breakout"]["week"] == 4, \
+        "a Monday morning sees Sunday"
 
 
 def test_auctions_report_says_when_nothing_has_run():

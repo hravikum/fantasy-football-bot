@@ -148,7 +148,7 @@ def test_the_drop_goes_by_level_not_by_the_preseason_number():
 def report_context():
     roster = list(full_roster().values())
     ranked = waivers.candidates(roster, [dict(free_agent("WR", 14.0, owned=41.0), level=11.26),
-                                         free_agent("TE", 9.0)], SLOTS, GAMES)
+                                         free_agent("TE", 10.0)], SLOTS, GAMES)
     for candidate in ranked:
         candidate["bid"] = (0, 1)
     target, _ = plan(roster, SLOTS, GAMES)
@@ -161,7 +161,7 @@ def test_both_reports_show_the_level_and_a_dash_for_a_tight_end():
     text = waivers.build_report(context).splitlines()
     receiver, tight_end = (next(row for row in text if row.startswith(c["name"])) for c in context["candidates"])
     assert "LEVEL" in next(row for row in text if row.startswith("PLAYER"))
-    assert receiver.split()[6:8] == ["14.0", "11.3"] and tight_end.split()[6:8] == ["9.0", "-"]
+    assert receiver.split()[6:8] == ["14.0", "11.3"] and tight_end.split()[6:8] == ["10.0", "-"]
     html = waivers.build_html(context)
     assert ">Level<" in html and ">11.3<" in html and "&mdash;" in html
 
@@ -171,7 +171,7 @@ def test_claude_is_given_the_level_not_the_frozen_projection():
     context["roster"][0]["level"] = 18.24
     brief = waivers.brief_for_claude(context)
     assert brief["my_starters"][0]["level_per_game"] == 18.2
-    assert brief["available"][0]["level_per_game"] == 11.3 and brief["available"][1]["level_per_game"] == 9.0
+    assert brief["available"][0]["level_per_game"] == 11.3 and brief["available"][1]["level_per_game"] == 10.0
     assert "season_projection" not in str(brief) and "level_per_game" in brief["note_on_levels"]
 
 

@@ -2,6 +2,7 @@
 import sys
 from datetime import datetime, timedelta
 
+import bids
 import roles
 import waivers
 from espn import BENCH
@@ -193,7 +194,7 @@ def test_a_flagged_back_is_valued_as_a_starter_in_your_lineup():
     assert plain["gain"] == 0 and plain["ahead_gain"] == 0
 
 
-def test_a_flagged_back_is_listed_and_bid_as_a_starter_even_with_no_lineup_gain():
+def test_a_flagged_back_is_listed_and_priced_with_the_breakouts_even_with_no_lineup_gain():
     roster = list(full_roster().values())                              # weakest starter projects 10.0
     pool = [free_agent("WR", 10.0 + n) for n in range(4)] + [free_agent("TE", 9.0 + n) for n in range(4)] \
         + [free_agent("QB", 20.0 + n) for n in range(4)] + [free_agent("RB", 10.0 + n) for n in range(4)] \
@@ -201,12 +202,15 @@ def test_a_flagged_back_is_listed_and_bid_as_a_starter_even_with_no_lineup_gain(
     scored = waivers.score_pool(roster, pool, SLOTS, GAMES, byes={}, week=5)
     listed = waivers.shortlist_from(scored)
     assert len(listed) == waivers.SHORTLIST + 1 and "role" in listed[-1], "on top of the eight, not instead of one"
-    assert listed[-1]["ahead_gain"] == 0 and waivers.bid_band(listed[-1]) == 0
-    # Shaped like this league's winning claims: mostly $0-3, and about one in nine at $11 or more.
-    prices = [0] * 45 + [1] * 25 + [2] * 20 + [3] * 12 + [5] * 10 + [7] * 6 \
-        + [11, 11, 12, 13, 14, 17, 18, 19, 25, 28, 30, 33, 37, 38, 39]
-    assert waivers.suggest_bid(listed[-1], 65, 0, prices) == (11, 30), "the top of what claims cost here"
-    assert waivers.suggest_bid(dict(listed[-1], role=None), 65, 0, prices) == (0, 1), "and without the flag, nothing"
+    assert listed[-1]["ahead_gain"] == 0 and waivers.bid_band(listed[-1]) == 2, "a stash: he wouldn't start for you"
+    # What this league's claims took to win through week 10 of 2026: after a breakout game, and the rest.
+    past = {bids.IN_DEMAND: [0, 2, 3, 3, 5, 6, 6, 6, 7, 7, 8, 11, 11, 14, 17, 19, 28, 30, 33, 37],
+            bids.OTHER: [0] * 20 + [1] * 9 + [2] * 8 + [3] * 8 + [4] * 5 + [5, 5, 6, 8, 9, 11, 11, 11, 12, 13, 25, 39]}
+    assert bids.kind_of(listed[-1]) == bids.IN_DEMAND, "who you are bidding against, whatever he does for you"
+    assert waivers.suggest_bid(listed[-1], 65, 0, past) == (8, 18), "what won half and three in four of those"
+    starting = dict(listed[-1], gain=0.0, ahead_gain=7.3)          # Demercado on Nov 16: nothing now, a start later
+    assert waivers.bid_band(starting) == 1 and waivers.suggest_bid(starting, 65, 0, past) == (18, 31)
+    assert waivers.bid_band(dict(listed[-1], role=None)) == 3, "and without the flag he isn't worth a bid"
 
 
 def test_the_list_takes_only_so_many_extra_backs_busiest_first():

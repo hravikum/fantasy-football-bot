@@ -1,6 +1,7 @@
 """Tests for the waiver report. Run: python3 test_waivers.py"""
 import sys
 
+import bids
 import waivers
 from espn import BENCH, IR
 from test_lineup import GAMES, SLOTS, full_roster, player
@@ -16,9 +17,30 @@ def free_agent(position, projection, season=None, status="ACTIVE", owned=12.0, c
 def test_candidate_gain_is_what_he_adds_to_the_starting_lineup():
     roster = list(full_roster().values())          # weakest starter projects 10.0
     pool = [free_agent("WR", 14.0), free_agent("WR", 4.0)]
-    ranked = waivers.candidates(roster, pool, SLOTS, GAMES)
+    ranked = waivers.score_pool(roster, pool, SLOTS, GAMES)
     assert round(ranked[0]["gain"], 1) == 4.0 and ranked[0]["would_start"]
     assert ranked[1]["gain"] == 0.0 and not ranked[1]["would_start"], "a bench-quality add gains nothing"
+
+
+def test_a_player_who_adds_nothing_is_not_listed():
+    """Nov 16: seven of the eight rows were the most widely rostered free agents at +0.0, +0.0, +0, each
+    for $0-1, Justin Herbert among them."""
+    roster = list(full_roster().values())          # weakest starter projects 10.0
+    useful = free_agent("WR", 14.0, season=238.0)
+    pool = [useful] + [free_agent("QB", 12.0, season=100.0, owned=30.0), free_agent("WR", 4.0, owned=25.0)]
+    scored = waivers.score_pool(roster, pool, SLOTS, GAMES)
+    assert [waivers.bid_band(c) for c in scored] == [0, 3, 3]
+    assert [c["id"] for c in waivers.shortlist_from(scored)] == [useful["id"]]
+    assert waivers.shortlist_from(scored[1:]) == [], "and an empty list is a fine answer"
+    promoted = dict(scored[1], jev=0.8, jev_confidence=0.7)
+    assert waivers.shortlist_from([promoted]) == [promoted], "a confident Jev rating is worth a bid too"
+
+
+def test_both_reports_say_so_when_nobody_is_worth_a_bid():
+    context = _sample_context(candidates=[])
+    assert waivers.NOBODY in waivers.build_report(context)
+    html = waivers.build_html(context)
+    assert waivers.NOBODY in html and "<table" not in html
 
 
 def test_backup_quarterbacks_do_not_crowd_out_the_list():
@@ -35,7 +57,7 @@ def test_season_gain_ignores_points_you_would_never_start():
     roster = list(full_roster().values())
     backup_qb = free_agent("QB", 17.0, season=300.0)   # huge season total, still behind your starter
     flex_help = free_agent("WR", 9.5, season=200.0)    # behind your flex this week, ahead of him all season
-    ranked = {c["position"]: c for c in waivers.candidates(roster, [backup_qb, flex_help], SLOTS, GAMES)}
+    ranked = {c["position"]: c for c in waivers.score_pool(roster, [backup_qb, flex_help], SLOTS, GAMES)}
     assert ranked["QB"]["season_gain"] == 0, "a season total is not an upgrade if he never starts"
     assert ranked["WR"]["season_gain"] > 0
 
@@ -113,7 +135,7 @@ def test_held_kickers_leave_their_places_to_players_you_can_use():
     roster = list(full_roster(k=dict(player("K", 17, 8.0), pro_team=2),
                               dst=dict(player("D/ST", 16, 7.0), pro_team=2)).values())
     pool = [free_agent("K", 9.0), free_agent("K", 8.5), free_agent("D/ST", 6.5), free_agent("D/ST", 6.0)] \
-        + [free_agent("WR", 6.0 + n) for n in range(2)] + [free_agent("RB", 6.0 + n) for n in range(2)]
+        + [free_agent("WR", 10.5 + n / 2) for n in range(2)] + [free_agent("RB", 10.5 + n / 2) for n in range(2)]
     scored = waivers.score_pool(roster, pool, SLOTS, GAMES, byes={2: {6}}, week=5)   # both idle in week 6
     assert [c["position"] for c in scored[:4]] == ["K", "K", "D/ST", "D/ST"], "they used to lead the list"
     assert sorted(c["position"] for c in waivers.shortlist_from(scored)) == ["RB", "RB", "WR", "WR"]
@@ -178,6 +200,66 @@ def test_claude_is_told_to_wait_for_the_week_and_not_to_carry_two_kickers():
     assert "never drop another position to carry two" in prompt
     assert "early on Wednesday" in prompt and "Waivers process daily" not in prompt
     assert "should be added today" in prompt
+
+
+# What this league's claims took to win through week 10 of 2026, after a breakout game and otherwise.
+PAID = {bids.IN_DEMAND: [0, 2, 3, 3, 5, 6, 6, 6, 7, 7, 8, 11, 11, 14, 17, 19, 28, 30, 33, 37],
+        bids.OTHER: [0] * 20 + [1] * 9 + [2] * 8 + [3] * 8 + [4] * 5 + [5, 5, 6, 8, 9, 11, 11, 11, 12, 13, 25, 39],
+        bids.STREAMED: [0, 0, 1, 2, 3]}
+
+
+def test_both_reports_say_what_bids_have_won_here():
+    context = _sample_context(past_claims=PAID)
+    text, html = waivers.build_report(context), waivers.build_html(context)
+    for piece in ("next men up (20 claims): $8 won half, $18 won three in four, $31 won nine in ten",
+                  "tight end (62 claims): $3 won half, $5 won three in four, $12 won nine in ten",
+                  "Kickers and defenses: 5 claims so far, so a share of your budget until there are 10"):
+        assert piece in " ".join(text.split()) and piece in html, piece      # the text report wraps long notes
+    said = ("For a player who would start for you, the range runs from the bid that won three in four to the one that "
+            "won nine in ten; for a stash, from half to three in four.")
+    assert said in " ".join(text.split()) and said in html
+    assert max(len(line) for line in text.splitlines() if "$" in line and "PLAYER" not in line) <= 110
+    assert "Priced as in demand" not in text + html, "nobody on this list is"
+    context["candidates"][0]["breakout"] = {"week": 2, "points": 21.0, "before": 4.0}
+    named = f"Priced as in demand today: {context['candidates'][0]['name']} (21.0 points in week 2, 4.0 a game before)"
+    assert named in waivers.build_report(context) and named in waivers.build_html(context)
+    context["candidates"][0]["free_now"] = True
+    assert "Priced as in demand" not in waivers.build_report(context), "a free add has no price"
+
+
+def test_the_notes_read_the_odds_from_the_same_settings_the_bids_use():
+    assert set(waivers.STARTER + waivers.STASH) == set(waivers.ODDS), "every share a bid uses has its words"
+    assert waivers.STARTER[0] > waivers.STASH[0] and waivers.STARTER[1] > waivers.STARTER[0]
+    notes = waivers.bid_notes(_sample_context(past_claims=PAID))
+    low, high = waivers.suggest_bid({"position": "RB", "gain": 4.0, "season_gain": 60, "role": {"touches": 19}}, 100, 0, PAID)
+    assert f"${low} won three in four, ${high} won nine in ten" in notes[1], "the range is two of the printed steps"
+    unpriced = waivers.bid_notes(_sample_context())
+    assert len(unpriced) == 4 and all(note.endswith("until there are 10") for note in unpriced[1:]), \
+        "no history: every kind says so, and nothing is said about odds a budget share doesn't have"
+
+
+def test_the_pace_line_says_what_is_left_a_week_and_what_has_gone():
+    context = _sample_context(week=11, budget=100, budget_left=65, weeks_left=7)
+    assert waivers.faab_pace(context) == ("$9 a week for the 7 weeks of waivers left, this one included; "
+                                          "$4 a week spent so far")
+    assert waivers.faab_pace(context) in waivers.build_report(context)
+    assert waivers.faab_pace(context) in waivers.build_html(context)
+    assert waivers.faab_pace(dict(context, week=1)) == "$9 a week for the 7 weeks of waivers left, this one included"
+    assert waivers.faab_pace(dict(context, weeks_left=1)).startswith("$65 a week for the 1 week of waivers left")
+    assert waivers.faab_pace(dict(context, weeks_left=0)) is None, "ESPN didn't say when the season ends"
+    assert "a week" not in waivers.build_report(_sample_context()), "and then the report says nothing about pace"
+
+
+def test_claude_is_told_what_the_ranges_mean_and_when_to_go_high():
+    context = _sample_context(past_claims=PAID, week=11, budget_left=65, weeks_left=7)
+    brief = waivers.brief_for_claude(context)
+    assert brief["note_on_bids"] == waivers.bid_notes(context) and brief["faab_pace"] == waivers.faab_pace(context)
+    assert "Tuesday that week starts" in brief["note_on_holes"]
+    prompt = _prompt_sent()
+    for piece in ("note_on_bids says what each end of a suggested range has won", "faab_pace shows money to spare",
+                  "FAAB left over when the season ends buys nothing", "bid from the in-demand line and say why"):
+        assert piece in prompt, piece
+    assert "inside the suggested range" not in prompt
 
 
 def roster_at_capacity(**overrides):

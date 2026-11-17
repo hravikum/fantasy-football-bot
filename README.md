@@ -48,10 +48,11 @@ python3 trades.py --give "A" --get "B"   what a trade does to both lineups, read
 python3 trades.py --watch           email an analysis of each new proposal sent to you or by you
 python3 trade_probe.py              what ESPN sends for trades, schedule and draft, read-only
 python3 claims.py                   what waiver claims actually cost in your league
-python3 auctions.py                 each waiver auction: bidders, price, what the report saw
+python3 auctions.py                 each waiver auction: bidders, price, what the report saw, how its bids did
 python3 accuracy.py [season]        how good ESPN's projections have been, by position
 python3 snap_test.py [season]       whether a rising snap share beats ESPN's projection
 python3 value_test.py               whether player levels beat ESPN's season projection, on ESPN's numbers
+python3 lineup_test.py [season]     whether lineups set some other way would have outscored ESPN's projection
 python3 role_probe.py               every next man up right now, and how deep the free-agent list goes, read-only
 python3 test_lineup.py              optimizer and IR tests
 python3 test_waivers.py             waiver scoring tests
@@ -131,12 +132,15 @@ So:
   zero together, so swapping one kicker who plays for another is a coin flip. The waiver report
   follows the same rule: a new kicker is only worth something in a week yours can't play.
   Defenses follow projections like every other slot, since a projected point was worth 0.65
-  real ones in 2025 and 0.73 in 2026. Both are bid in the cheap range at most (`STREAM_ONLY` in
-  `waivers.py`), since there's always another one on the wire.
-- Bid bands in `waivers.py`: once this league has priced `MIN_CLAIMS` (10) claims, bids come
-  from what winning claims actually cost here, scaled by how much you want the player
-  (`TIER_PERCENTILES`). Until then they fall back to shares of your remaining FAAB. `claims.py`
-  shows the distribution behind them and writes `logs/claims.csv`.
+  real ones in 2025 and 0.73 in 2026. Both are bid at stash odds at most (`STREAM_ONLY` in
+  `waivers.py`), off what kickers and defenses cost here, since there's always another one on
+  the wire.
+- Bids in `waivers.py` (see Bids below): `STARTER` and `STASH` set how often each end of a bid
+  range should win. `MIN_CLAIMS` (10) is how many past claims of a kind the league must have
+  priced before its prices are used; until then a bid is a share of your remaining FAAB
+  (`BANDS`). `BREAKOUT_POINTS` and `BREAKOUT_JUMP` in `bids.py` define the breakout game.
+  `claims.py` shows every executed claim's price and who has spent what, and writes
+  `logs/claims.csv`.
 - `accuracy.py` reports PER PROJ PT for each position: what one projected point has been
   worth in real points, so each upgrade `MIN_GAIN` holds back costs about that times its edge.
   The size of the misses doesn't change that; it only means any single call can go wrong.
@@ -208,9 +212,9 @@ and isn't flagged (Cam Skattebo in week 10, on the first live run).
 
 A free agent flagged this way is listed in the waiver report whatever he adds to your lineup, on
 top of the usual eight (`ROLE_SLOTS`), with a line above the table saying who he is behind and
-why. His lineup gains count him at 9.5 points a game for four weeks, and he is bid in the top
-band, since for some team in the league he is a starter. Claude is told to look up how long the
-lead back is out before recommending him.
+why. His lineup gains count him at 9.5 points a game for four weeks, and his bid is priced off
+what the league has paid after a breakout game (Bids, below), since for some team in the league
+he is a starter. Claude is told to look up how long the lead back is out before recommending him.
 
 Replayed on public 2025 and 2026 box scores, the rule flagged 42 backs who then played. They
 averaged 9.5 a game over their next four weeks, where their levels said 6.0. Just under half
@@ -228,8 +232,8 @@ free to add, with the time his waivers clear, and that it will send running back
 
 Three limits. Past injury tags aren't kept anywhere, so the tag half of the rule has not been
 replayed. A back who is bought on news alone, before any game shows it and before ESPN tags the
-lead, is still missed unless Claude's search finds him. And the bid is a wide range from the
-league's top claims, not yet a price for a contested player.
+lead, is still missed unless Claude's search finds him. And only four flagged backs have been
+through an auction here, so their price comes from the twenty breakout claims, not from their own.
 
 The report now reads the 200 most rostered free agents (`POOL_SIZE`), up from 75. The shorter
 list ended near 3% rostered, above a receiver and a back the league went on to pay $28 and $11 for.
@@ -240,6 +244,12 @@ Nearly every claim in this league is decided in one run, Wednesday at 3am: 112 o
 auctions and $469 of the $496 spent. A player nobody claims then becomes a free agent anyone can
 add at once, for nothing, until his next game starts. ESPN says which state each player is in,
 and the report shows `add now` in place of a bid for one who has cleared.
+
+Only players worth a bid are listed. When nobody added to your lineup, the list used to fill up
+with the most widely rostered free agents at +0.0 and $0-1, which is how Justin Herbert sat on it
+for weeks; on Nov 16 seven of the eight rows were like that. Now a player is listed if he helps
+this week, over the next five, or by 15 points or more over the season, or if he is a next man
+up or Jev rates him with confidence. On a day with nobody, the report says so.
 
 A kicker, a defense, or a player who fills one later week and nothing else is not listed until
 the week he is needed (`held` in `waivers.py`). There will be one like him on the wire that
@@ -258,6 +268,56 @@ report saw holes your bench could fill; now nobody is locked in a later week. Tu
 the one before the Wednesday run, was not affected. One Monday quirk remains: the snap-share
 column reads `out` for the week just played until the public snap counts are published later
 that day.
+
+## Bids
+
+A bid is priced off what it took to win past claims of the same kind in this league. ESPN returns
+the losing bids with the winner once a run is over, so every past claim says what a new bid would
+have had to beat: the winning price, or the runner-up where the winner was you. `bids.py` sorts
+the claims into three kinds. Through week 10 of 2026:
+
+| Kind of claim | Claims | Won half | Won three in four | Won nine in ten |
+| --- | ---: | ---: | ---: | ---: |
+| A back or receiver after a breakout game, or a next man up | 20 | $8 | $18 | $31 |
+| Anyone else at quarterback, back, receiver or tight end | 62 | $3 | $5 | $12 |
+| A kicker or a defense | 56 | $2 | $4 | $7 |
+
+Each figure is the smallest bid that would have beaten that share of the claims, and the report
+prints the current table under its candidates on every run. A player who would start for you gets
+the range from three in four to nine in ten. A stash gets half to three in four, and so does any
+kicker or defense. Those odds are `STARTER` and `STASH`: losing one claim in four on a starter and
+one in two on a stash was the target, and the high end is there for the claim you can't miss.
+
+A breakout game is at least 10 points and at least 5 more than he had averaged before it, in the
+game before the claim, for a back or a receiver. It is the one thing visible beforehand that told
+the expensive claims apart: 14 of the 20 claims that drew three or more teams followed one, and 6
+of the 62 that drew one or two did. The add rate doesn't (Waiver auctions, below). The old rule
+priced a claim by how much the player helped you, off every winning price pooled together, so a
+useful receiver was $3-6 whoever else wanted him: Caleb Douglas and Tank Dell were listed at that
+and went for $11 and $14.
+
+The test was to walk forward through the season, pricing each claim only from the ones before it.
+The three-in-four bid won 36 of 47 ordinary claims and 33 of 41 kicker and defense claims. For
+breakout claims there were only ten to test (weeks 7-10): it won six, and three of the four misses
+came in week 10, when four ran at once and none went for less than $11. The nine-in-ten bid won
+all ten. So read the low end for an in-demand player as a floor.
+
+What this can't do:
+
+- See a claim the box score doesn't explain. Six of the twenty contested claims had no breakout
+  game behind them, and two of those players hadn't played that week at all; news is the likely
+  reason. Claude is told to price a player off the in-demand line when its search shows he is that
+  week's most wanted pickup.
+- Tell you he is worth it. Backs and receivers who cost $10 or more averaged 6.9 points a game
+  over their next four weeks, against 5.2 for the cheaper ones, and one in five reached 10 a
+  game. A breakout game prices a claim; the lineup gain is still the reason to make one.
+- Set the budget. What a claim costs is decided by the other thirteen teams, so a bid isn't
+  scaled by what you have left, only capped by it. The report's second line shows what is left
+  per week of waivers and what you have spent per week so far, because FAAB left after the last
+  week buys nothing. At the start of week 11 that read $9 a week left against $4 a week spent.
+
+`python3 auctions.py` checks it as the season goes: of the claims the report had priced the
+morning before, over the last 28 days, how many each end of its range would have won.
 
 ## The Jev ranker (experimental)
 
@@ -292,6 +352,24 @@ To stop the experiment, remove `--jev-shadow` from `install_schedule.sh` and rei
 
 Fall back by dropping the flag. Missing key, missing SDK, or failed calls all fall back on
 their own and say so in the report.
+
+## Lineup projections
+
+`lineup.py` starts whoever ESPN projects highest that week. `lineup_test.py` asks whether anything
+else would have scored more. It replays every team in the league, every finished week, from the
+rosters as they stood: what the manager started, the best lineup by ESPN's final projection, the
+best by each player's level (`values.py`), the best by the average of the two, and the best with
+hindsight. Each lineup is scored on what its starters actually did, and every roster row goes to
+`logs/lineups.csv` (or `lineups_2025.csv`) so other methods can be tried on the same weeks.
+
+The first look, before that script existed, used `logs/accuracy*.csv`: 3,237 quarterback, back,
+receiver and tight end weeks from this league's rosters (2025, and 2026 through week 5), each with
+ESPN's projection and the result. Fitted on one stretch and tested on another, three ways round,
+ESPN's number missed by 5.4 to 5.7 points a player. A level built from his earlier games missed by
+5.7 to 5.9. Blends of the two, with or without his last three games and what the opponent had
+allowed to his position, landed within 0.1 of ESPN's number each time, better once and worse
+twice, and the weight they put on the level came out between -0.27 and +0.25. So nothing in the
+box scores adds to ESPN's weekly projection. Most of a five-point miss is the game itself.
 
 ## Snap share
 
@@ -339,8 +417,9 @@ everyone: an average of 0.04 to 0.13 points across the pool on the four Tuesdays
 itself barely moves between Sunday and Tuesday either, since most ESPN leagues also wait for
 Wednesday. The add rate only moves after the auction, so it stays display-only. What the
 contested players had in common was on the field: across the ten claims of $10 or more at RB, WR
-and TE, the player's last game averaged 11.3 points on 10.1 carries plus targets, against 3.0 and
-3.2 before it. Those players went on to score 8.7 a game, against 5.2 for the $3-9 claims.
+and TE through week 8, the player's last game averaged 11.3 points on 10.1 carries plus targets,
+against 3.0 and 3.2 before it. That became the breakout rule the bids are now priced with (Bids,
+above).
 
 ## When it breaks
 

@@ -1,8 +1,8 @@
 """What waiver claims actually cost in this league.
 
-Reads every executed claim this season, prints the price distribution, and appends them to
-logs/claims.csv. The bid bands in waivers.py use these prices once there are enough of them,
-instead of the budget shares I picked before anyone had measured your league.
+Reads every executed claim this season, prints the price distribution and who has spent what,
+and writes them to logs/claims.csv. The bids in the waiver report are priced off the same claims
+split by kind (bids.py), and the report prints those prices itself.
 
 Usage: python3 claims.py
 """
@@ -12,7 +12,7 @@ from collections import Counter
 from pathlib import Path
 
 from espn import ESPN, ESPNError
-from waivers import MIN_CLAIMS, TIER_PERCENTILES, percentile
+from waivers import percentile
 
 LOG = Path(__file__).with_name("logs") / "claims.csv"
 FIELDS = ["processed", "week", "team", "bid", "player"]
@@ -47,7 +47,7 @@ def report(name, week, claims):
     prices = [claim["bid"] for claim in claims]
     lines = [f"Waiver claims in {name}, weeks 1-{week}", ""]
     if not claims:
-        return "\n".join(lines + ["No claims have processed yet, so bids stay at budget shares."])
+        return "\n".join(lines + ["No claims have processed yet."])
 
     free = sum(1 for price in prices if price == 0)
     lines.append(f"{len(claims)} executed claims, {free} of them free")
@@ -62,12 +62,6 @@ def report(name, week, claims):
         spenders[claim["team"]] += claim["bid"]
     if any(spenders.values()):
         lines += ["", "Spent so far: " + ", ".join(f"{team} ${spent}" for team, spent in spenders.most_common(5))]
-
-    lines += ["", f"Bid ranges from these prices ({len(claims)} claims, "
-                  f"{'in use' if len(claims) >= MIN_CLAIMS else f'{MIN_CLAIMS} needed before the report uses them'}):"]
-    for band, label in enumerate(("starter upgrade", "useful piece", "stash")):
-        low, high = TIER_PERCENTILES[band]
-        lines.append(f"  {label:<16} ${percentile(prices, low):.0f} - ${percentile(prices, high):.0f}")
     return "\n".join(lines)
 
 
