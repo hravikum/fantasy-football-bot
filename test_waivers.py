@@ -42,14 +42,142 @@ def test_season_gain_ignores_points_you_would_never_start():
 
 def test_a_better_kicker_is_worth_nothing_while_yours_plays():
     """Kicker projections predicted nothing over 2025 and 2026, so a better one isn't better."""
-    ranked = waivers.candidates(list(full_roster().values()), [free_agent("K", 11.0)], SLOTS, GAMES)
-    assert ranked[0]["gain"] == 0.0 and ranked[0]["season_gain"] == 0     # your kicker projects 8.0
+    scored = waivers.score_pool(list(full_roster().values()), [free_agent("K", 11.0)], SLOTS, GAMES)
+    assert scored[0]["gain"] == 0.0 and scored[0]["season_gain"] == 0     # your kicker projects 8.0
+    assert waivers.shortlist_from(scored) == [], "so he isn't on the list at all"
 
 
 def test_a_kicker_is_worth_plenty_when_yours_is_on_bye():
     roster = full_roster(k=player("K", 17, 8.0, bye=True))
     ranked = waivers.candidates(list(roster.values()), [free_agent("K", 11.0)], SLOTS, GAMES)
     assert round(ranked[0]["gain"], 1) == 11.0
+
+
+def test_a_kicker_for_a_later_week_waits_for_that_week():
+    """Jason Myers is on bye next week. The report listed two kickers for it a week early, at the top."""
+    roster = list(full_roster(k=dict(player("K", 17, 8.0), pro_team=2)).values())   # he plays this week
+    scored = waivers.score_pool(roster, [free_agent("K", 9.0), free_agent("WR", 14.0)], SLOTS, GAMES,
+                                byes={2: {6}}, week=5)
+    waiting = next(c for c in scored if c["position"] == "K")
+    assert waiting["gain"] == 0 and waiting["ahead_gain"] == 9.0 and waivers.held(waiting)
+    assert [c["position"] for c in waivers.shortlist_from(scored)] == ["WR"]
+    games_without_his = {team: game for team, game in GAMES.items() if team != 2}
+    needed_now = waivers.score_pool(roster, [free_agent("K", 9.0)], SLOTS, games_without_his, byes={2: {5}}, week=5)
+    assert needed_now[0]["gain"] == 9.0 and not waivers.held(needed_now[0]), "the week he's needed, he is listed"
+
+
+def test_a_player_who_has_played_this_week_is_free_to_move_in_later_weeks():
+    """Monday morning: Sunday's players are locked, and next week's lineup must not inherit that."""
+    starter = dict(player("TE", 6, 9.0, locked=True), pro_team=2)      # your tight end, idle in week 6
+    backup = player("TE", BENCH, 8.0, locked=True)                     # his backup played on Sunday too
+    roster = list(full_roster(te=starter, bench_wr=backup).values())
+    byes = {2: {6}}
+    assert waivers.bye_gaps(roster, SLOTS, waivers.schedule_ahead(GAMES, byes, 5), 5) == [], \
+        "the backup covers week 6, so there is no hole"
+    fill_in = waivers.score_pool(roster, [free_agent("TE", 8.5)], SLOTS, GAMES, byes=byes, week=5)[0]
+    assert fill_in["gain"] == 0 and fill_in["ahead_gain"] == 0.5, "half a point over your backup, in week 6 only"
+
+
+def test_a_free_agent_whose_game_has_started_adds_nothing_until_next_week():
+    from datetime import datetime, timedelta
+    kickoff = datetime(2026, 11, 15, 13)
+    played = free_agent("WR", 14.0)
+    tonight, idle = dict(free_agent("WR", 14.0), pro_team=2), dict(free_agent("WR", 14.0), pro_team=3)
+    games = dict(GAMES)
+    games.update({1: (9, kickoff), 2: (8, kickoff + timedelta(hours=31))})
+    del games[3]                                                       # team 3 has a bye
+    waivers.lock_started([played, tonight, idle], games, kickoff + timedelta(hours=20))     # Monday morning
+    assert [p["locked"] for p in (played, tonight, idle)] == [True, False, False]
+    roster = list(full_roster().values())                              # your weakest starter projects 10.0
+    scored = {c["id"]: c for c in waivers.score_pool(roster, [played, tonight], SLOTS, games, byes={}, week=5)}
+    assert scored[played["id"]]["gain"] == 0 and scored[played["id"]]["ahead_gain"] == 16.0, "four later weeks at +4"
+    assert scored[tonight["id"]]["gain"] == 4.0 and scored[tonight["id"]]["ahead_gain"] == 20.0
+    waivers.lock_started([played], {1: (9, None)}, kickoff)
+    assert played["locked"] is False, "with no kickoff time there is nothing to go on"
+
+
+def test_who_is_held_back_and_who_is_not():
+    base = {"position": "WR", "gain": 0.0, "ahead_gain": 9.0, "season_gain": 0, "weeks_helped": 1}
+    assert waivers.held(base), "a receiver who fills one later week and nothing else"
+    assert not waivers.held(dict(base, season_gain=4)), "he also makes your lineup better all season"
+    assert not waivers.held(dict(base, weeks_helped=3)), "three weeks of help is not a fill-in"
+    assert not waivers.held(dict(base, gain=2.0)), "he helps this week"
+    assert not waivers.held(dict(base, role={"touches": 19})), "a next man up is the exception that pays"
+    assert not waivers.held(dict(base, ahead_gain=0.0, weeks_helped=0)), "a row that adds nothing is left as it was"
+    assert waivers.held(dict(base, position="D/ST", weeks_helped=3)), "a defense waits whatever it adds later"
+    assert waivers.held(dict(base, position="K", ahead_gain=0.0, weeks_helped=0))
+    assert not waivers.held(dict(base, position="K", gain=8.0))
+
+
+def test_held_kickers_leave_their_places_to_players_you_can_use():
+    roster = list(full_roster(k=dict(player("K", 17, 8.0), pro_team=2),
+                              dst=dict(player("D/ST", 16, 7.0), pro_team=2)).values())
+    pool = [free_agent("K", 9.0), free_agent("K", 8.5), free_agent("D/ST", 6.5), free_agent("D/ST", 6.0)] \
+        + [free_agent("WR", 6.0 + n) for n in range(2)] + [free_agent("RB", 6.0 + n) for n in range(2)]
+    scored = waivers.score_pool(roster, pool, SLOTS, GAMES, byes={2: {6}}, week=5)   # both idle in week 6
+    assert [c["position"] for c in scored[:4]] == ["K", "K", "D/ST", "D/ST"], "they used to lead the list"
+    assert sorted(c["position"] for c in waivers.shortlist_from(scored)) == ["RB", "RB", "WR", "WR"]
+
+
+def test_a_free_agent_who_cleared_waivers_is_added_not_bid_on():
+    context = _sample_context()
+    assert "add now" not in waivers.build_report(context) and "add now" not in waivers.build_html(context)
+    assert waivers.brief_for_claude(context)["available"][0]["availability"].startswith("on waivers")
+    context["candidates"][0]["free_now"] = True
+    text, html = waivers.build_report(context), waivers.build_html(context)
+    row = next(line for line in text.splitlines() if line.startswith(context["candidates"][0]["name"]))
+    assert "add now" in row and "$8" not in row, "no bid is shown for a player who costs nothing"
+    assert waivers.FREE_NOTE in text and "add now" in html and "$8&ndash;15" not in html
+    assert waivers.brief_for_claude(context)["available"][0]["availability"].startswith("free agent")
+
+
+def test_the_holes_block_says_fill_ins_wait():
+    context = _sample_context()                                # has a week-5 hole
+    assert waivers.HELD_NOTE in waivers.build_report(context) and waivers.HELD_NOTE in waivers.build_html(context)
+    context["gaps"] = []
+    assert waivers.HELD_NOTE not in waivers.build_report(context)
+
+
+def test_espn_marks_who_can_be_added_on_the_spot():
+    from espn import ESPN
+    from test_lineup import ELIGIBLE
+    def entry(pid, status):
+        return {"status": status, "player": {"id": pid, "fullName": f"P{pid}", "eligibleSlots": ELIGIBLE["WR"],
+                                             "proTeamId": 1, "stats": [], "ownership": {}}}
+    espn = ESPN(1, "s2", "{swid}", season=2026)
+    espn.league = lambda *views, **kwargs: {"players": [entry(1, "FREEAGENT"), entry(2, "WAIVERS"), entry(3, None)]}
+    assert [p["free_now"] for p in espn.free_agents(5)] == [True, False, False], "unknown is treated as on waivers"
+
+
+def _prompt_sent():
+    """The text ask_claude sends to the Messages API."""
+    import os
+    sent = []
+    def capture(url, json=None, headers=None, timeout=None):
+        sent.append(json["messages"][0]["content"])
+        class Reply:
+            status_code = 200
+            def json(self):
+                return {"content": [{"type": "text", "text": "ok"}]}
+        return Reply()
+    saved = waivers.requests.post
+    waivers.requests.post = capture
+    os.environ["ANTHROPIC_API_KEY"] = "test-key"
+    try:
+        waivers.ask_claude({"week": 2})
+    finally:
+        waivers.requests.post = saved
+        os.environ["ANTHROPIC_API_KEY"] = ""
+    return sent[0]
+
+
+def test_claude_is_told_to_wait_for_the_week_and_not_to_carry_two_kickers():
+    prompt = _prompt_sent()
+    assert "claiming a few days" not in prompt and "early rather than scrambling" not in prompt
+    assert "A hole in a later week is not a claim today" in prompt
+    assert "never drop another position to carry two" in prompt
+    assert "early on Wednesday" in prompt and "Waivers process daily" not in prompt
+    assert "should be added today" in prompt
 
 
 def roster_at_capacity(**overrides):
@@ -173,6 +301,44 @@ def test_claude_retries_a_dropped_connection_once():
     finally:
         waivers.requests.post, waivers.time.sleep = saved_post, saved_sleep
         os.environ["ANTHROPIC_API_KEY"] = ""
+
+
+def _ask_through(failures):
+    """ask_claude against a Messages API that raises each failure in turn, then answers.
+    Returns (what it returned, how many calls it made, the waits between them)."""
+    import os
+    calls, waits = [], []
+    def flaky(url, json=None, headers=None, timeout=None):
+        calls.append(1)
+        if len(calls) <= len(failures):
+            raise failures[len(calls) - 1]
+        class Reply:
+            status_code = 200
+            def json(self):
+                return {"content": [{"type": "text", "text": "Bid $3 on Somebody."}]}
+        return Reply()
+    saved_post, saved_sleep = waivers.requests.post, waivers.time.sleep
+    waivers.requests.post, waivers.time.sleep = flaky, waits.append
+    os.environ["ANTHROPIC_API_KEY"] = "test-key"
+    try:
+        return waivers.ask_claude({"week": 2}), len(calls), waits
+    finally:
+        waivers.requests.post, waivers.time.sleep = saved_post, saved_sleep
+        os.environ["ANTHROPIC_API_KEY"] = ""
+
+
+def test_a_call_that_died_while_the_mac_slept_is_tried_again_and_waits_longer_the_second_time():
+    import requests
+    asleep = requests.exceptions.ReadTimeout("read timed out")          # what a mid-call sleep looks like on waking
+    no_wifi = requests.exceptions.ConnectionError("connection reset")   # and the first try after it
+    assert _ask_through([asleep, no_wifi]) == ("Bid $3 on Somebody.", 3, [3, 20])
+    assert _ask_through([asleep]) == ("Bid $3 on Somebody.", 2, [3])
+
+
+def test_three_failures_in_a_row_send_the_report_without_a_write_up():
+    import requests
+    reset = requests.exceptions.ConnectionError("connection reset")
+    assert _ask_through([reset, reset, reset]) == (None, 3, [3, 20])
 
 
 def _with_replies(replies):
@@ -558,6 +724,17 @@ def test_report_reads_correctly_without_advice():
         "advice": None, "roster": roster, "target": target})
     assert "Waiver report" in report and "$20-35" in report
     assert "Place claims yourself" in report, "the report must never imply it bid for you"
+    assert "No write-up" not in report, "with no API key, a report without a write-up is the normal one"
+
+
+def test_both_reports_say_so_when_the_write_up_failed():
+    context = _sample_context(advice=None)
+    assert "No write-up" not in waivers.build_report(context) and "No write-up" not in waivers.build_html(context)
+    context["advice_failed"] = True
+    assert "No write-up today: the call to Claude failed" in waivers.build_report(context)
+    assert "No write-up today: the call to Claude failed" in waivers.build_html(context)
+    context.update(advice="Bid $3 on Somebody.", advice_failed=False)
+    assert "No write-up" not in waivers.build_report(context) and "Bid $3 on Somebody." in waivers.build_html(context)
 
 
 if __name__ == "__main__":

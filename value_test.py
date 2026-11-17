@@ -20,7 +20,7 @@ from waivers import LOOKAHEAD
 
 WIRE = 150                      # free agents to include, most rostered first
 ORDER = ["QB", "RB", "WR", "TE", "K", "D/ST"]
-PRIOR_CHECKS = (2, 4, 8, 16, 32)   # games the preseason number could count for, to choose PRIOR_GAMES from
+PRIOR_CHECKS = (2, 4, 8, 16, 32)   # games the preseason number could count for, to set values.PRIOR_GAMES from
 APART = 3.0                     # points a game between the level and ESPN's number that would change a ranking
 
 
@@ -49,13 +49,18 @@ def collect(espn):
     return week, found
 
 
-def compare(players, prior_games=values.PRIOR_GAMES, apart=0.0):
+def compare(players, prior_games=None, apart=0.0):
     """{position: (player-weeks, ESPN's average miss, the level's average miss)}, in points a game.
 
-    apart keeps only the player-weeks where the two numbers disagreed by at least that much.
+    With no prior_games, each position is scored at the weight values.py uses for it, and the
+    positions it doesn't rate are left out. apart keeps only the player-weeks where the two
+    numbers disagreed by at least that much.
     """
     misses = defaultdict(lambda: ([], []))
     for player in players:
+        weight = prior_games or values.PRIOR_GAMES.get(player["position"])
+        if weight is None:
+            continue
         prior = player["season_projection"] / values.GAMES_PER_SEASON
         games = player["games"]
         for index, (week, _) in enumerate(games):
@@ -63,7 +68,7 @@ def compare(players, prior_games=values.PRIOR_GAMES, apart=0.0):
             if not ahead:
                 continue
             actual = sum(ahead) / len(ahead)
-            estimate = values.level(prior, [points for _, points in games[:index + 1]], prior_games)
+            estimate = values.level(prior, [points for _, points in games[:index + 1]], weight)
             if abs(estimate - prior) < apart:
                 continue
             misses[player["position"]][0].append(abs(prior - actual))
@@ -73,10 +78,12 @@ def compare(players, prior_games=values.PRIOR_GAMES, apart=0.0):
 
 
 def overall(summary):
-    """The level's average miss across the positions it is used for, weighted by player-weeks."""
+    """(ESPN's average miss, the level's) across the positions values.py rates, weighted by player-weeks."""
     rated = [summary[position] for position in values.FILTERED if position in summary]
     weeks = sum(n for n, _, _ in rated)
-    return sum(n * ours for n, _, ours in rated) / weeks if weeks else None
+    if not weeks:
+        return None
+    return sum(n * espn for n, espn, _ in rated) / weeks, sum(n * ours for n, _, ours in rated) / weeks
 
 
 def miscounted(players):
@@ -89,39 +96,29 @@ def miscounted(players):
 
 def report(week, players):
     lines = [f"Level against ESPN's season projection, weeks 1-{week - 1}, {len(players)} players", "",
-             f"Average miss on what a player scored a game over his next {LOOKAHEAD} weeks:",
+             f"Average miss on what a player scored a game over his next {LOOKAHEAD} weeks, at the weight values.py uses:",
              f"{'POS':<5} {'WEEKS':>6} {'ESPN SEASON/17':>15} {'LEVEL':>7} {'CHANGE':>8}"]
     summary = compare(players)
-    for position in ORDER:
-        if position not in summary:
-            continue
-        n, espn, ours = summary[position]
-        unused = "" if position in values.FILTERED else "   not used: the report keeps ESPN's number here"
-        lines.append(f"{position:<5} {n:>6} {espn:>15.2f} {ours:>7.2f} {100 * (ours - espn) / espn:>+7.0f}%{unused}")
+    row = lambda name, n, espn, ours: f"{name:<5} {n:>6} {espn:>15.2f} {ours:>7.2f} {100 * (ours - espn) / espn:>+7.0f}%"
+    lines += [row(position, *summary[position]) for position in ORDER if position in summary]
+    if overall(summary):
+        lines.append(row("ALL", sum(n for n, _, _ in summary.values()), *overall(summary)))
 
-    shown = [position for position in ORDER if position in summary]
-    used = [position for position in shown if position in values.FILTERED]
     grid = {games: compare(players, games) for games in PRIOR_CHECKS}
-    mark = lambda games: f"{games} games" + ("*" if games == values.PRIOR_GAMES else "")
-    lines += ["", "How much the preseason number should count for (the level's average miss; * is what values.py uses):",
-              f"{'POS':<5} {'ESPN ONLY':>10} " + " ".join(f"{mark(games):>10}" for games in PRIOR_CHECKS)]
+    shown = [position for position in ORDER if position in grid[PRIOR_CHECKS[0]]]
+    lines += ["", "The level's average miss at each weight on the preseason number. * is the weight values.py uses;",
+              "a row with no * is a position that keeps ESPN's number.",
+              f"{'POS':<5} {'ESPN ONLY':>10} " + " ".join(f"{str(games) + ' games':>10}" for games in PRIOR_CHECKS)]
     for position in shown:
-        lines.append(f"{position:<5} {summary[position][1]:>10.2f} "
-                     + " ".join(f"{grid[games][position][2]:>10.2f}" for games in PRIOR_CHECKS))
-    if used:
-        weeks = sum(summary[position][0] for position in used)
-        lines.append(f"{'USED':<5} {sum(summary[p][0] * summary[p][1] for p in used) / weeks:>10.2f} "
-                     + " ".join(f"{overall(grid[games]):>10.2f}" for games in PRIOR_CHECKS)
-                     + "   " + ", ".join(used) + " together")
+        cells = [f"{grid[games][position][2]:.2f}" + ("*" if values.PRIOR_GAMES.get(position) == games else "")
+                 for games in PRIOR_CHECKS]
+        lines.append(f"{position:<5} {grid[PRIOR_CHECKS[0]][position][1]:>10.2f} " + " ".join(f"{cell:>10}" for cell in cells))
 
     split = compare(players, apart=APART)
     lines += ["", f"Only where the level and ESPN's number are {APART:.0f} or more points a game apart, which is",
               "where the choice between them changes a ranking:",
               f"{'POS':<5} {'WEEKS':>6} {'ESPN SEASON/17':>15} {'LEVEL':>7} {'CHANGE':>8}"]
-    for position in shown:
-        if position in split:
-            n, espn, ours = split[position]
-            lines.append(f"{position:<5} {n:>6} {espn:>15.2f} {ours:>7.2f} {100 * (ours - espn) / espn:>+7.0f}%")
+    lines += [row(position, *split[position]) for position in ORDER if position in split]
 
     more, fewer, known = miscounted(players)
     lines += ["", f"Missed games: for {known - len(more) - len(fewer)} of {known} players the weeks counted match "
@@ -148,7 +145,7 @@ def report(week, players):
 
 def _level(player):
     return values.level(player["season_projection"] / values.GAMES_PER_SEASON,
-                        [points for _, points in player["games"]])
+                        [points for _, points in player["games"]], values.PRIOR_GAMES[player["position"]])
 
 
 if __name__ == "__main__":

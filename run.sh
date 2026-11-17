@@ -8,6 +8,11 @@ cd "$(dirname "$0")" || exit 1
 # maintenance wake can be put back to sleep halfway. -s only works on power.
 caffeinate -i -s -w "$$" &
 
+# What the Mac was running on, for the log. With the lid closed and no charger it goes back to
+# sleep mid-run whatever caffeinate asks; that cost 24 of the first 53 waiver reports their write-up.
+POWER="$(pmset -g batt 2>/dev/null | sed -n "1s/.*'\(.*\)'.*/\1/p")"
+LID_CLOSED="$(ioreg -r -k AppleClamshellState -d 4 2>/dev/null | grep -c '"AppleClamshellState" = Yes')"
+
 PYTHON="./.venv/bin/python3"
 mkdir -p logs
 LOG="logs/$(date +%Y-%m).log"
@@ -36,6 +41,8 @@ if [ -n "$OUTPUT" ] || [ "$STATUS" -ne 0 ]; then
     {
         echo "$HEADER"
         [ "$waited" -gt 0 ] && echo "waited ${waited}s for the network"
+        if [ "${LID_CLOSED:-0}" = "0" ]; then echo "power: ${POWER:-unknown}, lid open"
+        else echo "power: ${POWER:-unknown}, lid closed"; fi
         printf '%s\nexit %s\n\n' "$OUTPUT" "$STATUS"
     } >>"$LOG"
 fi

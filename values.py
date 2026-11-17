@@ -6,27 +6,33 @@ waiver report, the drop choice and the trade analyzer all valued later weeks fro
 starts at that projection per game and moves toward what he actually scores, one game at a time.
 
 The model is a local level: his true level drifts a little from game to game, and each game is a
-noisy reading of it. Only two ratios decide the estimate, so there are two settings, the same at
-every position. Both were fit on public 2025 results and checked on 2026, where the level missed
-a player's next four weeks by 4-10% less than a fixed preseason number did (last season's average
-per game, the nearest public stand-in for ESPN's projection). value_test.py repeats that check on
-ESPN's own numbers for this league.
+noisy reading of it. Only two ratios decide the estimate, so there are two settings: how many
+games the preseason projection counts for, and how far a level can drift per game. The drift
+was fit on public 2025 results. The weights come from value_test.py on this league's own numbers
+(weeks 1-9 of 2026), and that test is how to revisit them.
 
-What it can't see is a role that changed yesterday. A backup's level catches up over three or
-four games as a starter, not one.
+What it can't see is a role that changed yesterday. A backup's level takes weeks as a starter to
+catch up. And at running back, where a level at the lighter weight had moved three or more
+points from ESPN's number, ESPN's number was the closer of the two on average. So backs lean on
+the projection, and roles.py handles the takeover.
 """
 GAMES_PER_SEASON = 17   # turns a season projection into a per-game one
-PRIOR_GAMES = 4         # the preseason projection counts as much as this many games
+# How many games the preseason projection counts for. ESPN's number is a weak guide at quarterback,
+# where jobs change hands (-10% average miss at 4 games), and a good one at back and receiver, where
+# 16 did best (-4% and -3%) and 8 to 32 were within two hundredths of a point of it. A position
+# that isn't here keeps ESPN's number: at tight end and defense no weight beat it, and at kicker
+# the heaviest did by three hundredths of a point, which is noise.
+PRIOR_GAMES = {"QB": 4, "RB": 16, "WR": 16}
 DRIFT = 0.02            # how far his true level can move per game, as a share of one game's noise;
                         # it keeps every new game worth about 13% however late in the season it is
-# Kickers and defenses keep ESPN's number: the settings above were fit on these four positions only.
-FILTERED = {"QB", "RB", "WR", "TE"}
+FILTERED = set(PRIOR_GAMES)
 
 
-def level(prior, scores, prior_games=PRIOR_GAMES, drift=DRIFT):
+def level(prior, scores, prior_games, drift=DRIFT):
     """Points a game from here on, given his games so far, oldest first.
 
-    Variances are in units of one game's noise, which is why there is no noise setting.
+    prior_games is PRIOR_GAMES for his position. Variances are in units of one game's noise,
+    which is why there is no noise setting.
     """
     estimate, variance = prior, 1.0 / prior_games
     for points in scores:
@@ -57,7 +63,7 @@ def games_played(card, season, before_week):
 
 
 def attach(espn, players, week, final_week=18):
-    """Give each quarterback, back, receiver and tight end his level, in place.
+    """Give each quarterback, running back and receiver his level, in place.
 
     A player ESPN sends no card for is left as he is, and season_pace falls back to ESPN's number.
     Returns the cards, {player_id: card}, for anything else that reads a player's games (roles.py).
@@ -71,7 +77,7 @@ def attach(espn, players, week, final_week=18):
         games = games_played(card, espn.season, week)
         prior = (player["season_projection"] or 0.0) / GAMES_PER_SEASON
         player["games"] = len(games)
-        player["level"] = level(prior, [points for _, points in games])
+        player["level"] = level(prior, [points for _, points in games], PRIOR_GAMES[player["position"]])
     return cards
 
 

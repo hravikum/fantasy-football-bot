@@ -5,8 +5,8 @@ This reads the change straight off the workload instead: carries plus targets, g
 a team's lead back missed or left its latest game, or is tagged out of the next one, the back who
 took the work (or is next in line) is flagged.
 
-Replayed on 2025 and 2026 (public results, box scores only), the 49 backs flagged this way averaged
-9.4 points a game over their next four weeks, where their levels said 7.0. Just under half reached
+Replayed on 2025 and 2026 (public results, box scores only), the 42 backs flagged this way averaged
+9.5 points a game over their next four weeks, where their levels said 6.0. Just under half reached
 10 a game and a quarter stayed under 5. Nothing told the hits from the misses beforehand: not the
 back's own level, the lead's, or how much work he got in the game. So every flagged back is valued
 at the same FILL_IN for those weeks. A bigger workload on its own, with no lead back down,
@@ -28,7 +28,7 @@ LEAD_SHARE = 0.45       # ...holding at least this share of his backfield's work
 LEFT = 0.35             # under this share of his usual work in the latest game: he missed it or left it
 DOWN = CANT_PLAY | {"DOUBTFUL"}                 # tags that say the lead won't play the next one
 GAME_OVER = timedelta(hours=5)                  # after kickoff, by when a game's stats are final
-FILL_IN = 9.4           # points a game a flagged back is valued at...
+FILL_IN = 9.5           # points a game a flagged back is valued at...
 FILL_IN_WEEKS = 4       # ...for this many weeks after the game that flagged him
 
 
@@ -60,6 +60,12 @@ def finished_weeks(week, byes, games, now):
 
 def _work(player, weeks):
     return sum(player["touches"].get(week, 0) for week in weeks)
+
+
+def _per_game(player, weeks):
+    """His touches a game in the listed weeks, over the games he played."""
+    played = [player["touches"][week] for week in weeks if week in player["touches"]]
+    return sum(played) / len(played) if played else 0.0
 
 
 def backfields(players):
@@ -110,6 +116,8 @@ def next_man_up(backs, weeks):
     heir = max(others, key=order, default=None)
     if heir is None or order(heir) == 0:
         return None
+    if _per_game(heir, weeks[:-1]) > _per_game(lead, weeks[:-1]):
+        return None     # a starter back in his own job (Skattebo, week 10 of 2026), not a backup taking one
     return {"player": heir, "lead": lead, "week": latest, "lead_usual": usual,
             "lead_latest": lead["touches"].get(latest, 0), "latest": heir["touches"].get(latest, 0),
             "usual": _work(heir, before) / len(before)}

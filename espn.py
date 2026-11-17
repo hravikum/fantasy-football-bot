@@ -96,7 +96,10 @@ class ESPN:
         players = []
         for entry in data.get("players", []):
             player = parse_roster_entry(entry, week, self.season)
-            player["locked"] = False  # a free agent's current game doesn't matter; we are claiming him for later
+            player["locked"] = False  # ESPN's flag isn't the question; waivers.lock_started sets it from kickoffs
+            # Cleared waivers: anyone can add him on the spot for nothing. Otherwise he goes to the
+            # highest bid at the next run. Unknown counts as on waivers, so a bid is still shown.
+            player["free_now"] = entry.get("status") == "FREEAGENT"
             players.append(player)
         return players
 

@@ -101,11 +101,21 @@ So:
 - On game days keep it plugged in, with System Settings > Battery > Options >
   "Prevent automatic sleeping on power adapter when the display is off" turned on.
   `pmset -g custom` should then show `sleep 0` under AC Power.
-- Closing the lid sleeps it regardless, unless it's on power with an external display.
-- `run.sh` holds the Mac awake until each run finishes (`caffeinate`; the part that stops
-  system sleep only works on power). A run launchd starts as the Mac wakes can beat Wi-Fi
-  back, so it first waits up to two minutes for the network, and the log says
-  `waited 15s for the network` when it had to.
+- With the lid closed the Mac sleeps, and jobs only run on its own periodic wakes, roughly once
+  an hour. `run.sh` holds it awake until a run finishes (`caffeinate`), but the part that stops
+  system sleep only works on power. On battery with the lid closed it goes back to sleep in the
+  middle of a run. That cost 24 of the first 53 waiver reports their write-up, and it is why
+  game-day check-ins have been landing about hourly instead of every 15 minutes: of eight
+  Sundays through Nov 15, nothing ran at all on one (Nov 1), and on two more (Oct 11 and 18)
+  nothing ran for more than four hours of the afternoon. So leave it plugged in overnight and
+  on Sundays.
+- Every logged run says what it ran on, for example `power: Battery Power, lid closed`, so a
+  morning with no write-up can be checked against it.
+- A run launchd starts as the Mac wakes can beat Wi-Fi back, so `run.sh` first waits up to two
+  minutes for the network, and the log says `waited 15s for the network` when it had to.
+- The Claude API is blocked on some office networks (`curl` gets a reset instead of a status
+  code). A report that runs or retries there goes out with the table and a line saying the
+  write-up is missing.
 - macOS lists these under System Settings > General > Login Items & Extensions as
   background items. They need to stay allowed.
 
@@ -146,31 +156,43 @@ never moved by a point. Justin Herbert's stayed at 276 (16.2 a game) through 39 
 scored 10.1 a game, which is why the report listed him on 30 of 32 mornings.
 
 `values.py` replaces it with a level: a Kalman filter that starts at ESPN's projection per game
-and moves toward what the player scores, one finished game at a time. The first game moves it
-about a fifth of the way, and later ones settle near 13% each. A game he missed isn't counted,
-and neither is the current week, which may still be in progress. The waiver ranking, the
-suggested drop, replacement level and the trade analyzer all read it, and the reports show it as
-LEVEL. Kickers and defenses keep ESPN's number, since the two settings (`PRIOR_GAMES`, `DRIFT`)
-were fit on quarterbacks, backs, receivers and tight ends only. On Monday morning ESPN is still
-on the week just played, so levels there are one game behind until Tuesday.
+and moves toward what the player scores, one finished game at a time. A game he missed isn't
+counted, and neither is the current week, which may still be in progress. The waiver ranking,
+the suggested drop, replacement level and the trade analyzer all read it, and the reports show
+it as LEVEL. On Monday morning ESPN is still on the week just played, so levels there are one
+game behind until Tuesday.
 
-The settings were fit on public 2025 results (nflverse) and scored on 2026: against a fixed
-preseason number, the level missed a player's next four weeks by 8% less at QB, 10% at RB, 8% at
-WR and 4% at TE. Most of any miss is game-to-game noise that nothing removes, so the gain sits in
-the players who have changed.
+There are two settings. `DRIFT` is how far a level can move per game, fit on public 2025 results
+(nflverse). `PRIOR_GAMES` is how many games ESPN's projection counts for, and it is set per
+position from `value_test.py`, which scores the level against ESPN's number on this league's own
+projections and scoring: what each said a player would average over his next four weeks, against
+what he did. On weeks 1-9 of 2026 (295 players), the average miss in points a game:
 
-`value_test.py` runs the same comparison on ESPN's own projections and this league's scoring. On
-weeks 1-9 of 2026 (296 players) the level missed by 10% less at QB, 3% less at RB and 2% less at
-WR, and by 5% more at TE. Every player's missed games were counted correctly. ESPN's projection
-is a better starting point than the public stand-in was, most of all at tight end, so it likely
-deserves more weight than `PRIOR_GAMES = 4`. The test prints the miss at each weight for each
-position, and separately for the player-weeks where the two numbers are three or more points
-apart, which are the ones that change a ranking. Kickers and defenses came out worse with a level
-(3% and 6%), so they stay on ESPN's number.
+| | ESPN only | 2 games | 4 | 8 | 16 | 32 |
+|---|---|---|---|---|---|---|
+| QB | 5.41 | 4.89 | **4.87** | 4.90 | 4.97 | 5.02 |
+| RB | 3.98 | 3.91 | 3.85 | 3.82 | **3.81** | 3.82 |
+| WR | 3.26 | 3.33 | 3.22 | 3.17 | **3.15** | 3.16 |
+| TE | **2.74** | 2.99 | 2.88 | 2.82 | 2.79 | 2.78 |
+| K | 2.96 | 3.17 | 3.06 | 2.99 | 2.95 | 2.93 |
+| D/ST | **3.01** | 3.35 | 3.19 | 3.10 | 3.05 | 3.03 |
 
-What a level can't see is a role that changed yesterday. A backup who takes over needs three or
-four games as the starter before his level says so, and the league bids on him after one. That
-is what the next section is for.
+So a quarterback's projection counts for 4 games, a back's or receiver's for 16, and tight ends,
+kickers and defenses keep ESPN's number, which nothing beat by more than noise. ESPN's projection
+is a weak guide at quarterback, where jobs change hands (Kirk Cousins was projected for 1.5 a
+game and scored 19.1), and a good one elsewhere. That is also why one game moves a quarterback's
+level about a fifth of the way and a back's or receiver's under a tenth; every position settles
+near 13% a game. The gain is 10% at QB, 4% at RB and 3% at WR. Most of any miss is game-to-game
+noise that nothing removes, so the gain sits in the players who have changed. Every player's
+missed games were counted correctly (295 of 295). To revisit the weights, run the test again:
+it marks the weight in use and shows the same comparison for only the player-weeks where the two
+numbers are three or more points apart.
+
+What a level can't see is a role that changed yesterday. A backup who takes over needs weeks as
+the starter before his level says so, and the league bids on him after one game. At running back
+the level did worse than ESPN's number where the two were far apart at the lighter weight (5.16
+against 4.92), which is the other reason backs lean on the projection. Takeovers are what the
+next section is for.
 
 ## Next man up
 
@@ -180,21 +202,29 @@ or among the free agents. A team has a lead back when one runner averaged 12 or 
 three games before the latest and held 45% of the backfield's work. He is down if he had under
 35% of his usual work in the latest game (he missed it or left it), or if his tag is out,
 doubtful, suspended or injured reserve. The next man is whoever took the work in that game, or,
-when only the tag says so, the back with the most work before it.
+when only the tag says so, the back with the most work before it. A back who has averaged more
+work than the "lead" over the season is a starter returning to his own job, not a next man up,
+and isn't flagged (Cam Skattebo in week 10, on the first live run).
 
 A free agent flagged this way is listed in the waiver report whatever he adds to your lineup, on
 top of the usual eight (`ROLE_SLOTS`), with a line above the table saying who he is behind and
-why. His lineup gains count him at 9.4 points a game for four weeks, and he is bid in the top
+why. His lineup gains count him at 9.5 points a game for four weeks, and he is bid in the top
 band, since for some team in the league he is a starter. Claude is told to look up how long the
 lead back is out before recommending him.
 
-Replayed on public 2025 and 2026 box scores, the rule flagged 49 backs who then played. They
-averaged 9.4 a game over their next four weeks, where their levels said 7.0. Just under half
+Replayed on public 2025 and 2026 box scores, the rule flagged 42 backs who then played. They
+averaged 9.5 a game over their next four weeks, where their levels said 6.0. Just under half
 reached 10 a game and a quarter stayed under 5. Nothing told the hits from the misses beforehand
 (not the back's level, the lead's, or his workload in the game), which is why every one is
 valued the same. In 2026 it named Ollie Gordon, Tyrone Tracy, Audric Estime and Kaleb Johnson
-before the auctions that took them for $37, $6, $19 and $11. A bigger workload with no lead back
-down predicted nothing a level didn't already say, so there is no rule for that.
+before the auctions that took them for $37, $6, $19 and $11. Naming who the league will chase is
+not naming who pays off: Gordon averaged 16 over his next three games, and Estime and Johnson
+scored 1.6 and 4.2 in the game after theirs. A bigger workload with no lead back down predicted
+nothing a level didn't already say, so there is no rule for that.
+
+`role_probe.py` prints every flag in the league, rostered backs included, and which lead backs
+carry a tag. Its first run (Nov 16) also showed that ESPN marks each free agent as on waivers or
+free to add, with the time his waivers clear, and that it will send running backs only.
 
 Three limits. Past injury tags aren't kept anywhere, so the tag half of the rule has not been
 replayed. A back who is bought on news alone, before any game shows it and before ESPN tags the
@@ -203,6 +233,31 @@ league's top claims, not yet a price for a contested player.
 
 The report now reads the 200 most rostered free agents (`POOL_SIZE`), up from 75. The shorter
 list ended near 3% rostered, above a receiver and a back the league went on to pay $28 and $11 for.
+
+## What gets listed, and when
+
+Nearly every claim in this league is decided in one run, Wednesday at 3am: 112 of the first 131
+auctions and $469 of the $496 spent. A player nobody claims then becomes a free agent anyone can
+add at once, for nothing, until his next game starts. ESPN says which state each player is in,
+and the report shows `add now` in place of a bid for one who has cleared.
+
+A kicker, a defense, or a player who fills one later week and nothing else is not listed until
+the week he is needed (`held` in `waivers.py`). There will be one like him on the wire that
+week, and until then he costs a roster spot. Before this, kickers and defenses took 37% of the
+list. A player who helps this week, helps in more than one week, makes your lineup better over
+the season, or is a next man up is never held. The
+"Lineup holes" block still names every hole in the window, so you can see them coming. Claude
+is told the same: a hole in a later week is not a claim today, and a kicker or defense replaces
+the one you have and never costs a player at another position.
+
+Two things made the reports from Thursday night to Tuesday morning wrong, and Monday's most of
+all, because ESPN stays on the finished week until Tuesday. A free agent whose game had already
+been played still counted as able to score this week; now he is locked once his game kicks off.
+And players who had played were kept locked in their slots when later weeks were valued, so the
+report saw holes your bench could fill; now nobody is locked in a later week. Tuesday's report,
+the one before the Wednesday run, was not affected. One Monday quirk remains: the snap-share
+column reads `out` for the week just played until the public snap counts are published later
+that day.
 
 ## The Jev ranker (experimental)
 
@@ -301,3 +356,15 @@ and TE, the player's last game averaged 11.3 points on 10.1 carries plus targets
   the report left idle while it did other work. Jev's usage lookup lost 6 of 14 November mornings
   to this, and judged without usage on those days. Every ESPN read now retries once, which opens
   a new connection.
+- **The waiver email has no write-up, or arrives an hour late.** Through Nov 15, 30 of 53 reports
+  went out without one. On 24 of them the log says the call to Claude failed after 900 to 6,300
+  seconds, against a 120-second timeout: the Mac went back to sleep in the middle of the call,
+  and the call died when it next woke, which is also when the email went. The call is now tried
+  three times, so a report that wakes up late still gets its write-up, and an email with none
+  says so. Getting it at 6am needs the Mac awake for the few minutes the run takes; see
+  Scheduling. Four of the rest, and one since, were the connection to `api.anthropic.com` being
+  reset at once on every try; three of those five came on weekday mornings between 9 and 11. If
+  that happens, run
+  `curl -sS -o /dev/null -w '%{http_code}\n' https://api.anthropic.com/v1/messages` on the same
+  network: any three-digit number means the API is reachable, and a reset means that network is
+  blocking it.

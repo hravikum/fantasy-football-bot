@@ -99,6 +99,17 @@ def test_a_tag_alone_is_enough_and_names_the_next_in_line():
     assert roles.next_man_up([lead, heir, third], WEEKS)["player"] is heir
 
 
+def test_a_starter_back_in_his_own_job_is_not_a_next_man_up():
+    """Week 10 of 2026: Skattebo returned and took 22 touches from Singletary, who had filled in for him."""
+    starter = back("Starter", w1=19, w2=21, w7=22)                   # hurt in week 2, back in week 7
+    stand_in = back("Stand-in", w1=3, w2=4, w3=12, w4=15, w5=14, w6=13, w7=1)
+    assert roles.lead_back([starter, stand_in], [1, 2, 3, 4, 5, 6, 7])[0] is stand_in, "he carried weeks 4 to 6"
+    assert roles.next_man_up([starter, stand_in], [1, 2, 3, 4, 5, 6, 7]) is None, \
+        "20 a game when he played, against 10: the weeks he missed don't count against him"
+    newcomer = back("Newcomer", w7=22)                               # the same game, from a back with no history
+    assert roles.next_man_up([newcomer, stand_in], [1, 2, 3, 4, 5, 6, 7])["player"] is newcomer
+
+
 def test_a_back_who_cant_play_isnt_next():
     lead, heir, third = room(lead_latest=0, heir_latest=19, heir_status="INJURY_RESERVE")
     assert roles.next_man_up([lead, heir, third], WEEKS)["player"] is third
@@ -134,7 +145,7 @@ def test_mark_tags_the_free_agent_and_values_his_next_four_weeks():
     assert [p["name"] for p in found] == ["Heir"]
     heir = found[0]
     assert heir["role"]["lead"] == "Lead" and heir["role"]["touches"] == 19 and heir["role"]["week"] == 4
-    assert heir["fill_in"] == {5: 9.4, 6: 9.4, 7: 9.4, 8: 9.4}
+    assert heir["fill_in"] == {5: 9.5, 6: 9.5, 7: 9.5, 8: 9.5}
     assert all("role" not in p for p in free if p is not heir), "the healthy team's backup is just a backup"
 
 
@@ -165,7 +176,7 @@ def flagged_agent(projection=4.0, level=3.0, week=4):
 def test_a_fill_in_lifts_the_weeks_it_covers_and_no_others():
     person = flagged_agent(projection=4.0, level=3.0, week=4)      # covers weeks 5 to 8
     by_week = {week: waivers.projected_for([person], week, 5)[0]["projection"] for week in (5, 6, 8, 9)}
-    assert by_week == {5: 9.4, 6: 9.4, 8: 9.4, 9: 3.0}, "this week beats ESPN's 4.0; week 9 is back to his level"
+    assert by_week == {5: 9.5, 6: 9.5, 8: 9.5, 9: 3.0}, "this week beats ESPN's 4.0; week 9 is back to his level"
     proven = dict(flagged_agent(projection=14.0, level=12.0, week=4))
     assert waivers.projected_for([proven], 5, 5)[0]["projection"] == 14.0, "a fill-in never lowers a number"
     assert waivers.projected_for([proven], 6, 5)[0]["projection"] == 12.0
@@ -178,7 +189,7 @@ def test_a_flagged_back_is_valued_as_a_starter_in_your_lineup():
     ranked = waivers.score_pool(roster, [flagged_agent(), dict(free_agent("RB", 4.0), level=3.0)],
                                 SLOTS, GAMES, byes={}, week=5)
     flagged, plain = sorted(ranked, key=lambda c: "role" not in c)
-    assert flagged["gain"] == 2.4 and flagged["ahead_gain"] == 9.6, "9.4 against your 7.0, for four weeks"
+    assert flagged["gain"] == 2.5 and flagged["ahead_gain"] == 10.0, "9.5 against your 7.0, for four weeks"
     assert plain["gain"] == 0 and plain["ahead_gain"] == 0
 
 
@@ -237,7 +248,7 @@ def test_both_reports_and_the_brief_say_why_he_is_listed():
     brief = waivers.brief_for_claude(context)
     notes = {c["name"]: c["next_man_up"] for c in brief["available"]}
     assert notes[name].startswith(f"{name} is next up behind Lead") and list(notes.values()).count(None) == 1
-    assert "9.4 points a game" in brief["note_on_next_man_up"]
+    assert "9.5 points a game" in brief["note_on_next_man_up"]
 
 
 def test_a_quiet_week_shows_no_block():

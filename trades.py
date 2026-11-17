@@ -177,8 +177,8 @@ def describe(result, ctx):
                      f"{(p['season_projection'] or 0) / GAMES_PER_SEASON:>9.1f} "
                      f"{season_pace(p) / GAMES_PER_SEASON:>6.1f} {pace:>10}")
     lines += ["Weeks after this one count each player at LEVEL: SEASON/G, ESPN's preseason projection per",
-              "game, moved toward what he has scored in each game since (values.py). For kickers and",
-              "defenses LEVEL is still SEASON/G."]
+              "game, moved toward what he has scored in each game since (values.py). For tight ends,",
+              "kickers and defenses LEVEL is still SEASON/G."]
 
     lines.append("")
     for who, key in (("You", "you"), (partner, "them")):

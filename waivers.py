@@ -96,9 +96,12 @@ def projected_for(players, week, this_week):
     """This week's real projection, or his level (values.py) for a later week.
 
     A back filling in for a lead runner who is down (roles.py) counts for more in the weeks that covers.
+    Nobody is locked in a later week. Carrying this week's locks forward froze everyone who had
+    already played in the slot he was in, so from Thursday night to Tuesday morning the report
+    saw holes your bench could fill and missed ones it couldn't.
     """
     if week != this_week:
-        players = [dict(p, projection=season_pace(p) / GAMES_PER_SEASON) for p in players]
+        players = [dict(p, projection=season_pace(p) / GAMES_PER_SEASON, locked=False) for p in players]
     return [dict(p, projection=max(p["projection"] or 0.0, p["fill_in"][week])) if week in p.get("fill_in", ())
             else p for p in players]
 
@@ -143,6 +146,29 @@ def candidates(roster, pool, slot_counts, games):
     return shortlist_from(score_pool(roster, pool, slot_counts, games))
 
 
+def lock_started(pool, games, now):
+    """A free agent whose game this week has kicked off can add nothing until next week.
+
+    Without this, Monday's report still counted points from games that were already over.
+    """
+    for free_agent in pool:
+        kickoff = (games.get(free_agent["pro_team"]) or (None, None))[1]
+        free_agent["locked"] = bool(kickoff and kickoff <= now)
+
+
+def held(candidate):
+    """True for a kicker, a defense or a one-week fill-in who does nothing for you this week.
+
+    There will be one like him on the wire in the week you need him, and until then he costs a
+    roster spot. So he is listed in that week and not before. A player who would also make your
+    lineup better over the season is not a fill-in, and neither is a next man up.
+    """
+    if candidate["gain"] > 0 or candidate.get("role"):
+        return False
+    later_fill_in = candidate.get("weeks_helped") == 1 and candidate["season_gain"] <= 0
+    return candidate["position"] in STREAM_ONLY or later_fill_in
+
+
 def shortlist_from(scored):
     """Top of the list, capped per position so it never becomes eight of one thing.
 
@@ -151,6 +177,8 @@ def shortlist_from(scored):
     """
     shortlist, seen = [], Counter()
     for candidate in scored:
+        if held(candidate):
+            continue
         if seen[candidate["position"]] < PER_POSITION:
             shortlist.append(candidate)
             seen[candidate["position"]] += 1
@@ -377,15 +405,25 @@ def bye_gaps(roster, slot_counts, horizon, this_week, pool=()):
     return gaps
 
 
+RETRY_WAITS = (3, 20)   # seconds before the second and third tries at a call to Claude
+NO_WRITE_UP = ("No write-up today: the call to Claude failed, and the reason is in the log. The table is "
+               "complete, but nobody has checked the news behind it.")
+
+
 def _post(body, headers):
-    """One retry for a dropped connection: a single blip shouldn't cost the day's write-up."""
-    for attempt in range(2):
+    """Up to three tries at one Messages call.
+
+    Through mid-November 30 of 53 reports went out with no write-up, and 24 of those were the Mac
+    going back to sleep in the middle of this call. It then dies the moment the Mac wakes, as a
+    timeout or a reset, often before Wi-Fi is back, which is why the last wait is the long one.
+    """
+    for wait in RETRY_WAITS + (None,):
         try:
             return requests.post("https://api.anthropic.com/v1/messages", json=body, headers=headers, timeout=120)
-        except requests.exceptions.ConnectionError:
-            if attempt:
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            if wait is None:
                 raise
-            time.sleep(3)
+            time.sleep(wait)
 
 
 def _complete(body, headers):
@@ -439,15 +477,19 @@ def ask_claude(brief):
         return None
     prompt = (
         "You advise one manager in a 14-team, 0.5 PPR ESPN keeper league (one keeper carries to next "
-        "season). Waivers process daily, so claims are cheap to make but the wire is thin with 14 teams.\n\n"
+        "season). Nearly every claim is decided by blind bid in the waiver run early on Wednesday. A player "
+        "who clears waivers is a free agent anyone can add at once, for nothing, until his next game starts. "
+        "The wire is thin with 14 teams.\n\n"
         f"Here is today's data:\n{json.dumps(brief, indent=1)}\n\n"
         "Recommend at most three claims, and none is a good answer when nothing qualifies. Every claim "
-        "needs a reason: a positive lineup gain in the data, news you found and cite, a next_man_up note, or a "
-        "lineup hole ahead that it fills. For a next_man_up, search first for how long the lead back is expected to "
+        "needs a reason: a positive lineup gain in the data, news you found and cite, or a next_man_up note. "
+        "For a next_man_up, search first for how long the lead back is expected to "
         "miss: if it is weeks, the claim is a priority even as a bench stash, and if he is due back at once, say so "
-        "and bid low. For a hole a few weeks out, say which week and suggest claiming a few days "
-        "early rather than scrambling on game day. For each: the player, a bid inside the suggested range (or a different number with a "
-        "reason), and the drop. Every candidate comes with the drop that costs least; use it unless "
+        "and bid low. A hole in a later week is not a claim today: name the week and leave the claim for "
+        "that week, unless the player would also start for you before then. A kicker or a defense replaces "
+        "the one you have; never drop another position to carry two. A candidate whose availability says free "
+        "agent should be added today, before someone else does, with no bid. For each: the player, a bid inside "
+        "the suggested range (or a different number with a reason), and the drop. Every candidate comes with the drop that costs least; use it unless "
         "you have a reason to prefer another, and give that reason. Compare players only with numbers that appear in the data, never an "
         "estimate of one that doesn't. Say plainly what to skip and why. "
         "Mention keeper value only when it genuinely changes the call. If you search, check the last few "
@@ -476,8 +518,22 @@ def ask_claude(brief):
     return None
 
 
+HELD_NOTE = "A kicker, defense or one-week fill-in is listed in the week you need him, not before."
+FREE_NOTE = ("\"add now\": he has cleared waivers, so he costs nothing and goes to whoever adds him first. "
+             "Everyone else is decided by bid at the next run.")
+
+
+def _bid(candidate, dash="-"):
+    """The bid as the reports show it. A free agent who has cleared waivers needs none."""
+    if candidate.get("free_now"):
+        return "add now"
+    low, high = candidate["bid"]
+    return f"${low}" if low == high else f"${low}{dash}{high}"
+
+
 def _level(player):
-    """His level as the reports show it; a dash for a kicker, a defense, or anyone ESPN sent no games for."""
+    """His level as the reports show it; a dash where values.py keeps ESPN's number (tight ends, kickers,
+    defenses) and for anyone ESPN sent no games for."""
     return "-" if player.get("level") is None else f"{player['level']:.1f}"
 
 
@@ -501,7 +557,8 @@ def build_report(context):
     lines.append("")
 
     if context["gaps"]:
-        lines += [f"Lineup holes in the next {LOOKAHEAD} weeks:"] + [f"  {gap}" for gap in context["gaps"]] + [""]
+        lines += [f"Lineup holes in the next {LOOKAHEAD} weeks:"] + [f"  {gap}" for gap in context["gaps"]]
+        lines += [f"  {HELD_NOTE}", ""]
 
     stepping_in = [c for c in context["candidates"] if c.get("role")]
     if stepping_in:
@@ -517,8 +574,7 @@ def build_report(context):
               f"{'NOW':>5} {str(LOOKAHEAD + 1) + 'WK':>5} {'SEASON':>7}")
     lines.append(header + ("  JEV  CONF  PROJ#  BID" if jev_column else "  BID") + "    DROP FOR HIM")
     for candidate in context["candidates"]:
-        low, high = candidate["bid"]
-        bid = f"${low}" if low == high else f"${low}-{high}"
+        bid = _bid(candidate)
         row = (f"{candidate['name'][:20]:<20} {candidate['position']:<5} "
                f"{PRO_TEAMS.get(candidate['pro_team'], '?'):<5} "
                f"{candidate['percent_owned']:>5.0f}% {candidate['percent_change']:>+6.1f} "
@@ -531,12 +587,17 @@ def build_report(context):
             row += (f" {candidate['jev']:>5.2f} {candidate['jev_confidence']:>5.2f}" if judged else f" {'-':>5} {'-':>5}")
             row += f" {candidate.get('math_rank', 0):>6}"
         drop = candidate["drop"]["name"] if candidate.get("drop") else "-"
-        lines.append(f"{row}  {bid:<6}  {drop[:18]}")
+        lines.append(f"{row}  {bid:<7} {drop[:18]}")
 
     if context["advice"]:
         lines += ["", "-" * 60, "", context["advice"]]
+    elif context.get("advice_failed"):
+        lines += ["", "-" * 60, "", NO_WRITE_UP]
+    if any(c.get("free_now") for c in context["candidates"]):
+        lines += ["", FREE_NOTE]
     lines += ["", "WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's",
-              "evidence (values.py), and it is what the weeks after this one are valued at.",
+              "evidence (values.py), and it is what the weeks after this one are valued at. A dash means",
+              "ESPN's season projection is used as it is: tight ends, kickers and defenses.",
               "", "Bids are suggestions only. Place claims yourself in ESPN."]
     return "\n".join(lines)
 
@@ -662,7 +723,6 @@ def build_html(context):
 
     rows = []
     for index, candidate in enumerate(context["candidates"]):
-        low, high = candidate["bid"]
         cells = [
             _cell(f'<strong>{html_escape.escape(candidate["name"])}</strong>'
                   f'<div style="color:#6b7280;font-size:12px">{candidate["position"]} &middot; '
@@ -678,7 +738,7 @@ def build_html(context):
         if jev_column:
             cells += ([_cell(f'{candidate["jev"]:.2f}', NUMBER), _cell(f'{candidate["jev_confidence"]:.2f}', NUMBER)]
                       if "jev" in candidate else [_cell("&mdash;", NUMBER), _cell("&mdash;", NUMBER)])
-        cells.append(_cell(f"${low}" if low == high else f"${low}&ndash;{high}", "white-space:nowrap"))
+        cells.append(_cell(_bid(candidate, "&ndash;"), "white-space:nowrap"))
         drop = candidate["drop"]["name"] if candidate.get("drop") else "&mdash;"
         cells.append(_cell(html_escape.escape(drop) if candidate.get("drop") else drop, "color:#374151"))
         stripe = "background:#fafafa" if index % 2 else ""
@@ -689,7 +749,8 @@ def build_html(context):
         items = "".join(f'<li style="margin:2px 0">{html_escape.escape(gap)}</li>' for gap in context["gaps"])
         holes = (f'<div style="background:#fff7ed;border-left:3px solid #fb923c;padding:10px 14px;margin:18px 0">'
                  f'<div style="font-weight:600;font-size:14px">Lineup holes in the next {LOOKAHEAD} weeks</div>'
-                 f'<ul style="margin:6px 0 0;padding-left:18px;color:#374151;font-size:14px">{items}</ul></div>')
+                 f'<ul style="margin:6px 0 0;padding-left:18px;color:#374151;font-size:14px">{items}</ul>'
+                 f'<div style="color:#6b7280;font-size:12px;margin-top:6px">{HELD_NOTE}</div></div>')
 
     stepping_in = [c for c in context["candidates"] if c.get("role")]
     if stepping_in:
@@ -714,7 +775,9 @@ def build_html(context):
     ranked = (f'<p style="color:#6b7280;font-size:13px;margin:0 0 10px">'
               f'{html_escape.escape(context["ranked_by"]).replace(chr(10), "<br>")}</p>'
               if context.get("ranked_by") else "")
-    advice = _prose(context["advice"]) if context.get("advice") else ""
+    free_note = f"{FREE_NOTE} " if any(c.get("free_now") for c in context["candidates"]) else ""
+    write_up = context.get("advice") or (NO_WRITE_UP if context.get("advice_failed") else "")
+    advice = _prose(write_up) if write_up else ""
 
     return (f'<div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,'
             f'sans-serif;color:#111827;max-width:720px;margin:0 auto;padding:4px 8px">'
@@ -725,7 +788,7 @@ def build_html(context):
             f'<thead><tr>{"".join(headers)}</tr></thead><tbody>{"".join(rows)}</tbody></table>'
             f'{advice}'
             f'<p style="color:#6b7280;font-size:12px;border-top:1px solid #e5e7eb;padding-top:10px">'
-            f'Bids are suggestions only. Place claims yourself in ESPN.</p></div>')
+            f'{free_note}Bids are suggestions only. Place claims yourself in ESPN.</p></div>')
 
 
 def faab_spent(team, spent_by_team):
@@ -758,6 +821,7 @@ def gather(espn, ranker="math"):
     budget_left = budget - spent
 
     pool = espn.free_agents(week, POOL_SIZE)
+    lock_started(pool, games, datetime.now())
     rival_backs, cards = [], {}
     try:
         # A lead back is nearly always on someone's roster, so the role rule needs every team's backs.
@@ -838,13 +902,15 @@ def brief_for_claude(context):
                        "snap_trend": (c.get("snaps") or {}).get("trend"),
                        "jev_score": c.get("jev"), "jev_confidence": c.get("jev_confidence"),
                        "next_man_up": roles.describe(c) if c.get("role") else None,
+                       "availability": ("free agent: can be added today at no cost" if c.get("free_now")
+                                        else "on waivers: goes to the highest bid at the next run"),
                        "drop_to_make_room": c["drop"]["name"] if c.get("drop") else None,
                        "suggested_bid": list(c["bid"])}
                       for c in context["candidates"]],
         "drop_candidates": [p["name"] for p in context["drops"]],
         "note_on_levels": ("level_per_game is what a player scores a game on this season's evidence: his preseason "
                            "projection, moved by every game he has played. Every lineup gain past this week is "
-                           "built on it. For kickers and defenses it is ESPN's season projection per game."),
+                           "built on it. For tight ends, kickers and defenses it is ESPN's season projection per game."),
         "note_on_next_man_up": (f"A candidate with next_man_up set took over a backfield in his team's latest game, or "
                                 f"is next in line behind a lead back who is ruled out. His lineup gains count him at "
                                 f"{roles.FILL_IN} points a game for {roles.FILL_IN_WEEKS} weeks, the average for backs "
@@ -858,6 +924,8 @@ def main(email, ranker="math"):
     espn = ESPN.from_env()
     context = gather(espn, ranker)
     context["advice"] = ask_claude(brief_for_claude(context))
+    # With a key set, a missing write-up is a failure worth seeing in the email, not just in the log.
+    context["advice_failed"] = context["advice"] is None and bool(os.getenv("ANTHROPIC_API_KEY"))
     report = build_report(context)
     print(report)
     if email:

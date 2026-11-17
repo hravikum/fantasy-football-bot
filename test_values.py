@@ -31,32 +31,43 @@ class FakeESPN:
         return {pid: self.cards[pid] for pid in player_ids if pid in self.cards}
 
 
+QB, RB = values.PRIOR_GAMES["QB"], values.PRIOR_GAMES["RB"]
+
+
+def test_the_weights_are_the_ones_the_league_test_chose():
+    assert values.PRIOR_GAMES == {"QB": 4, "RB": 16, "WR": 16} and values.FILTERED == {"QB", "RB", "WR"}
+
+
 def test_with_no_games_the_level_is_the_preseason_number():
-    assert values.level(12.0, []) == 12.0
+    assert values.level(12.0, [], QB) == values.level(12.0, [], RB) == 12.0
 
 
-def test_one_game_moves_it_about_a_fifth_of_the_way():
-    assert 12.0 < values.level(10.0, [20.0]) < 12.3
+def test_one_game_moves_a_quarterback_a_fifth_of_the_way_and_a_back_much_less():
+    assert 12.0 < values.level(10.0, [20.0], QB) < 12.3
+    assert 10.6 < values.level(10.0, [20.0], RB) < 10.9, "ESPN's number is the better guide at running back"
 
 
 def test_a_bad_season_overrides_a_good_projection():
     """The report listed Herbert on 30 of 32 mornings at 276 / 17 = 16.2 a game. He was scoring 10.1."""
-    level = values.level(276 / 17, HERBERT)
+    level = values.level(276 / 17, HERBERT, QB)
     assert 10.1 < level < 12.0, level
 
 
 def test_it_closes_on_what_he_scores_and_never_passes_it():
-    levels = [values.level(2.0, [15.0] * games) for games in range(9)]
-    assert all(earlier < later < 15.0 for earlier, later in zip(levels, levels[1:]))
-    assert levels[4] > 9.0, "four games as a starter and a backup's number has mostly caught up"
+    for weight in (QB, RB):
+        levels = [values.level(2.0, [15.0] * games, weight) for games in range(9)]
+        assert all(earlier < later < 15.0 for earlier, later in zip(levels, levels[1:]))
+    assert values.level(2.0, [15.0] * 4, QB) > 9.0, "four starts and a backup quarterback has mostly caught up"
+    assert values.level(2.0, [15.0] * 4, RB) < 7.0, "a back hasn't, which is what roles.py is for"
 
 
 def test_one_big_game_is_not_a_new_level():
-    assert values.level(3.0, [3.0, 3.0, 3.0, 25.0]) < 7.0
+    assert values.level(3.0, [3.0, 3.0, 3.0, 25.0], QB) < 7.0 and values.level(3.0, [3.0, 3.0, 3.0, 25.0], RB) < 5.5
 
 
 def test_a_game_late_in_the_season_still_counts():
-    assert values.level(10.0, [10.0] * 12 + [20.0] * 4) > 14.0, "drift keeps the estimate from freezing"
+    for weight in (QB, RB):
+        assert values.level(10.0, [10.0] * 12 + [20.0] * 4, weight) > 14.0, "drift keeps the estimate from freezing"
 
 
 def test_a_missed_game_is_not_a_zero():
@@ -80,15 +91,18 @@ def test_only_finished_weeks_of_this_season_count():
     assert values.games_played(card, SEASON, 4) == [(2, 6.0), (3, 8.0)], "oldest first, nothing else"
 
 
-def test_attach_rates_skill_players_from_their_preseason_number():
-    back, kicker, defense = player("RB", BENCH, 5.0, season=170.0), player("K", 17, 8.0), player("D/ST", 16, 7.0)
+def test_attach_rates_quarterbacks_backs_and_receivers_each_at_his_own_weight():
+    back, passer = player("RB", BENCH, 5.0, season=170.0), player("QB", BENCH, 5.0, season=170.0)
+    end, kicker, defense = player("TE", BENCH, 6.0), player("K", 17, 8.0), player("D/ST", 16, 7.0)
     unknown = player("WR", BENCH, 5.0)
-    espn = FakeESPN({back["id"]: {"stats": [line(1, 20.0), line(2, 20.0), line(3, 40.0)]},
-                     kicker["id"]: {"stats": [line(1, 30.0)]}})
-    cards = values.attach(espn, [back, kicker, defense, unknown], week=3)
-    assert list(cards) == [back["id"]] and espn.asked == [back["id"], unknown["id"]], "kickers and defenses aren't asked about"
-    assert back["games"] == 2 and round(back["level"], 2) == round(values.level(10.0, [20.0, 20.0]), 2)
-    assert "level" not in kicker and "level" not in defense and "level" not in unknown
+    games = {"stats": [line(1, 20.0), line(2, 20.0), line(3, 40.0)]}
+    espn = FakeESPN({back["id"]: games, passer["id"]: games, end["id"]: games, kicker["id"]: games})
+    cards = values.attach(espn, [back, passer, end, kicker, defense, unknown], week=3)
+    assert espn.asked == [back["id"], passer["id"], unknown["id"]], "tight ends, kickers and defenses aren't asked about"
+    assert set(cards) == {back["id"], passer["id"]}
+    assert back["games"] == 2 and round(back["level"], 2) == round(values.level(10.0, [20.0, 20.0], RB), 2)
+    assert round(passer["level"], 2) == round(values.level(10.0, [20.0, 20.0], QB), 2) and passer["level"] > back["level"]
+    assert all("level" not in p for p in (end, kicker, defense, unknown))
 
 
 def test_season_pace_is_the_level_or_else_espns_number():
@@ -134,7 +148,7 @@ def test_the_drop_goes_by_level_not_by_the_preseason_number():
 def report_context():
     roster = list(full_roster().values())
     ranked = waivers.candidates(roster, [dict(free_agent("WR", 14.0, owned=41.0), level=11.26),
-                                         free_agent("K", 9.0)], SLOTS, GAMES)
+                                         free_agent("TE", 9.0)], SLOTS, GAMES)
     for candidate in ranked:
         candidate["bid"] = (0, 1)
     target, _ = plan(roster, SLOTS, GAMES)
@@ -142,12 +156,12 @@ def report_context():
             "gaps": [], "candidates": ranked, "drops": [], "advice": None, "roster": roster, "target": target}
 
 
-def test_both_reports_show_the_level_and_a_dash_for_a_kicker():
+def test_both_reports_show_the_level_and_a_dash_for_a_tight_end():
     context = report_context()
     text = waivers.build_report(context).splitlines()
-    receiver, kicker = (next(row for row in text if row.startswith(c["name"])) for c in context["candidates"])
+    receiver, tight_end = (next(row for row in text if row.startswith(c["name"])) for c in context["candidates"])
     assert "LEVEL" in next(row for row in text if row.startswith("PLAYER"))
-    assert receiver.split()[6:8] == ["14.0", "11.3"] and kicker.split()[6:8] == ["9.0", "-"]
+    assert receiver.split()[6:8] == ["14.0", "11.3"] and tight_end.split()[6:8] == ["9.0", "-"]
     html = waivers.build_html(context)
     assert ">Level<" in html and ">11.3<" in html and "&mdash;" in html
 
@@ -180,7 +194,7 @@ def test_the_comparison_scores_each_week_against_the_weeks_that_followed():
     weeks, espn, ours = summary["QB"]
     assert weeks == 3, "the last game has nothing after it to be scored against"
     assert espn == 6.0 and ours < espn, "ESPN's number never moves; the level closes the gap"
-    assert value_test.overall(summary) == ours
+    assert value_test.overall(summary) == (espn, ours)
 
 
 def test_the_comparison_never_lets_a_level_see_later_games():
@@ -197,15 +211,28 @@ def test_the_comparison_can_keep_only_the_weeks_where_the_two_disagree():
     assert weeks == 2 and espn == 6.0 and ours < 3.0, "only the fade's weeks 4 and 5, once his level had moved 3"
 
 
-def test_the_report_shows_every_weight_for_every_position_it_rates():
-    players = [tested("QB", 16.0, [(1, 10.0), (2, 10.0), (3, 10.0)]), tested("TE", 8.0, [(1, 2.0), (2, 14.0), (3, 8.0)]),
-               tested("K", 8.0, [(1, 8.0), (2, 9.0)])]
+def test_each_position_is_scored_at_its_own_weight_and_unrated_ones_are_left_out():
+    games = [(1, 2.0), (2, 14.0), (3, 8.0)]
+    summary = value_test.compare([tested("QB", 8.0, games), tested("RB", 8.0, games), tested("TE", 8.0, games)])
+    assert set(summary) == {"QB", "RB"}, "tight ends keep ESPN's number, so there is no level to score"
+    assert summary["QB"][1] == summary["RB"][1] and summary["QB"][2] != summary["RB"][2]
+    assert set(value_test.compare([tested("TE", 8.0, games)], 8)) == {"TE"}, "but any weight can be tried on any position"
+
+
+def test_the_report_shows_every_weight_for_every_position_and_marks_the_one_in_use():
+    players = [tested("QB", 16.0, [(1, 10.0), (2, 10.0), (3, 10.0)]), tested("RB", 8.0, [(1, 2.0), (2, 14.0), (3, 8.0)]),
+               tested("TE", 8.0, [(1, 2.0), (2, 14.0), (3, 8.0)]), tested("K", 8.0, [(1, 8.0), (2, 9.0)])]
     text = value_test.report(5, players).splitlines()
+    top = next(i for i, row in enumerate(text) if row.startswith("POS") and "ESPN SEASON/17" in row)
+    assert [row.split()[0] for row in text[top + 1:top + 4]] == ["QB", "RB", "ALL"], "only what values.py rates"
     header = next(i for i, row in enumerate(text) if row.startswith("POS") and "ESPN ONLY" in row)
-    assert text[header].split()[3:] == ["2", "games", "4", "games*", "8", "games", "16", "games", "32", "games"]
-    assert [row.split()[0] for row in text[header + 1:header + 5]] == ["QB", "TE", "K", "USED"]
-    assert text[header + 4].endswith("QB, TE together"), "the summary row leaves kickers out, as the report does"
-    quarterback = [float(cell) for cell in text[header + 1].split()[1:]]
+    assert text[header].split()[3:] == ["2", "games", "4", "games", "8", "games", "16", "games", "32", "games"]
+    rows = {row.split()[0]: row.split()[1:] for row in text[header + 1:header + 5]}
+    assert list(rows) == ["QB", "RB", "TE", "K"]
+    assert [cell.endswith("*") for cell in rows["QB"]] == [False, False, True, False, False, False]
+    assert [cell.endswith("*") for cell in rows["RB"]] == [False, False, False, False, True, False]
+    assert not any(cell.endswith("*") for cell in rows["TE"] + rows["K"]), "no star: they keep ESPN's number"
+    quarterback = [float(cell.rstrip("*")) for cell in rows["QB"]]
     assert quarterback[0] == 6.0 and quarterback[1:] == sorted(quarterback[1:]), "a fade: less weight on ESPN is better"
 
 
