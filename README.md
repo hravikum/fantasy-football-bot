@@ -362,14 +362,43 @@ best by each player's level (`values.py`), the best by the average of the two, a
 hindsight. Each lineup is scored on what its starters actually did, and every roster row goes to
 `logs/lineups.csv` (or `lineups_2025.csv`) so other methods can be tried on the same weeks.
 
-The first look, before that script existed, used `logs/accuracy*.csv`: 3,237 quarterback, back,
-receiver and tight end weeks from this league's rosters (2025, and 2026 through week 5), each with
-ESPN's projection and the result. Fitted on one stretch and tested on another, three ways round,
-ESPN's number missed by 5.4 to 5.7 points a player. A level built from his earlier games missed by
-5.7 to 5.9. Blends of the two, with or without his last three games and what the opponent had
-allowed to his position, landed within 0.1 of ESPN's number each time, better once and worse
-twice, and the weight they put on the level came out between -0.27 and +0.25. So nothing in the
-box scores adds to ESPN's weekly projection. Most of a five-point miss is the game itself.
+Run on Nov 16, 2026 over all of 2025 and weeks 1-9 of 2026 (364 team-weeks), in points a week
+against the lineup ESPN's projection sets, with one standard error:
+
+| Lineup | 2025 | 2026 |
+| --- | ---: | ---: |
+| As the managers set them | -1.3 ±0.5 | -0.1 ±0.4 |
+| By level | -3.6 ±0.6 | +0.5 ±0.7 |
+| Half ESPN, half level | -0.3 ±0.4 | +0.3 ±0.5 |
+| With hindsight | +12.5 | +11.3 |
+
+Nothing beats ESPN's number, so `lineup.py` keeps it. Tried on the same logs, outside this repo:
+other weights on the level, the level as a tie-break between players ESPN has close together, a
+correction for ESPN's bias by position, a level built from usage-based expected points
+(ffopportunity), and FantasyPros' expert rankings as DynastyProcess archives them each Friday,
+alone and averaged with ESPN. The best two, the tie-break and the average with the experts, came
+out about half a point a week ahead (the average: +0.3 ±0.4 in 2025, +1.0 ±0.4 in 2026). That is
+around two standard errors for the best of some fifteen tries, which is what chance produces, and
+too little to take on a second data source for. A first look at single players instead of
+lineups, on `logs/accuracy*.csv`, said the same: ESPN missed by 5.4 to 5.7 points a player, a level
+by 5.7 to 5.9, and fitted blends landed within 0.1 of ESPN.
+
+What "the projections didn't pan out" looks like in these numbers: a started lineup finishes 15
+points from its projected total in an average week, and 20 or more away in three weeks out of
+ten. ESPN's lineup scored 89 to 90% of what the best lineup scored with hindsight. The other 11 to
+12 points a week sat on benches all over the league, and no method tested got back more of it
+than chance would.
+ESPN also runs 2 to 3 points a week high for everyone, which doesn't change who starts.
+
+On your own team: in 2025, before the bot, your lineups trailed ESPN's by 4.9 a week (±2.2). In
+2026, set by the bot, they were ESPN's lineup in eight weeks of nine, so the Mac being asleep on
+game days has not cost lineup points so far. They also scored under their projection in six of
+those nine weeks, by 7 a week over the nine, with 14 a week left on your bench against 11 for the
+league. That is a cold run, not a method to fix: weeks 3 and 4 alone left 29 and 37.
+
+Worth running again at the end of the season, with twice the 2026 weeks. The average with the
+experts is not in the script, so it would have to be rerun from their archive the same way; if it
+is still half a point or more ahead then, it is worth wiring in.
 
 ## Snap share
 
