@@ -55,6 +55,6 @@ fi
 
 if [ "$STATUS" -ne 0 ]; then
     # A crash before the script's own error handling still has to reach you.
-    "$PYTHON" -c "import sys, mailer; mailer.send('Fantasy bot: $1 failed', sys.stdin.read())" <<<"$OUTPUT"
+    "$PYTHON" -c "import sys, mailer; mailer.send('$1 failed', sys.stdin.read())" <<<"$OUTPUT"
 fi
 exit "$STATUS"

@@ -360,7 +360,7 @@ def report_failure(message, path=FAILED, today=None, send=mailer.send):
         return False
     path.parent.mkdir(exist_ok=True)
     path.write_text(today)
-    send("Fantasy bot: trade watch failed",
+    send("trade watch failed",
          f"{message}\n\nOnly the first failure each day is emailed; logs/ has every one.")
     return True
 

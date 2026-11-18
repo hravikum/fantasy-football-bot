@@ -1017,5 +1017,5 @@ if __name__ == "__main__":
         message = f"Error: {error}"
         print(message, file=sys.stderr)
         if "--email" in sys.argv:
-            mailer.send("Fantasy bot: waiver report failed", message)
+            mailer.send("waiver report failed", message)
         sys.exit(1)

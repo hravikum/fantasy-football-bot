@@ -8,6 +8,8 @@ from pathlib import Path
 import certifi
 from dotenv import load_dotenv
 
+SUBJECT_PREFIX = "Fantasy Football: "   # on every email the bot sends, so an inbox filter can catch them all
+
 
 def _tls_context():
     """python.org's macOS builds leave the CA store empty until Install Certificates.command
@@ -25,6 +27,7 @@ def send(subject, body, html=None):
     subject is printed and the email counts as delivered, so a trade it has reported on once
     isn't reported again when the runs go live.
     """
+    subject = SUBJECT_PREFIX + subject
     if os.getenv("MAIL_TO_LOG"):
         print(f'(shadow run: would have emailed "{subject}")')
         return True

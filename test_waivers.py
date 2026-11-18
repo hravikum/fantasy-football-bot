@@ -577,7 +577,9 @@ def test_email_carries_both_a_text_and_an_html_version():
         def __exit__(self, *a): return False
         def starttls(self, context=None): pass
         def login(self, user, password): pass
-        def send_message(self, message): captured["types"] = [p.get_content_type() for p in message.walk()]
+        def send_message(self, message):
+            captured["types"] = [p.get_content_type() for p in message.walk()]
+            captured["subject"] = message["Subject"]
     saved_smtp, saved_env = smtplib.SMTP, os.environ.get("GMAIL_APP_PASSWORD")
     smtplib.SMTP = FakeSMTP
     os.environ.update({"GMAIL_ADDRESS": "x@gmail.com", "GMAIL_APP_PASSWORD": "abcd efgh ijkl mnop"})
@@ -585,6 +587,7 @@ def test_email_carries_both_a_text_and_an_html_version():
         import mailer
         assert mailer.send("subject", "plain body", "<div>rich body</div>") is True
         assert "text/plain" in captured["types"] and "text/html" in captured["types"]
+        assert captured["subject"] == "Fantasy Football: subject", "every email carries the filterable prefix"
     finally:
         smtplib.SMTP = saved_smtp
         os.environ["GMAIL_APP_PASSWORD"] = saved_env or ""
@@ -602,7 +605,7 @@ def test_a_shadow_run_prints_the_subject_and_sends_nothing():
         with contextlib.redirect_stdout(printed):
             assert mailer.send("Waiver report, week 11", "body", "<p>body</p>") is True, \
                 "counts as delivered, so the trade watch marks a proposal as reported"
-        assert printed.getvalue() == '(shadow run: would have emailed "Waiver report, week 11")\n'
+        assert printed.getvalue() == '(shadow run: would have emailed "Fantasy Football: Waiver report, week 11")\n'
     finally:
         smtplib.SMTP = saved_smtp
         del os.environ["MAIL_TO_LOG"]

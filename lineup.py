@@ -317,5 +317,5 @@ if __name__ == "__main__":
         message = f"Error: {error}"
         print(message, file=sys.stderr)
         if "--live" in sys.argv:
-            mailer.send("Fantasy bot: lineup run failed", message)
+            mailer.send("lineup run failed", message)
         sys.exit(1)
