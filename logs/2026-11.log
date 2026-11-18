@@ -1063,3 +1063,86 @@ Watch: Carnell Tate would start and is listed QUESTIONABLE
 Applied and confirmed on ESPN: 9 move(s).
 exit 0
 
+--- 2026-11-17 22:39:07 waivers.py --email --jev-shadow ---
+(Jev call failed for Chig Okonkwo: TypeSafeAuthenticationError)
+(Jev call failed for Dalton Schultz: TypeSafeAuthenticationError)
+(Jev call failed for Darren Waller: TypeSafeAuthenticationError)
+(Jev call failed for Cade Otton: TypeSafeAuthenticationError)
+(Jev call failed for Tommy Tremble: TypeSafeAuthenticationError)
+(Jev call failed for Greg Dulcich: TypeSafeAuthenticationError)
+(Jev call failed for Gunnar Helm: TypeSafeAuthenticationError)
+(Jev call failed for Darnell Washington: TypeSafeAuthenticationError)
+(Jev call failed for Mason Taylor: TypeSafeAuthenticationError)
+(Jev call failed for Evan Engram: TypeSafeAuthenticationError)
+(Jev call failed for Brevyn Spann-Ford: TypeSafeAuthenticationError)
+(Jev call failed for Emari Demercado: TypeSafeAuthenticationError)
+(Jev call failed for Dawson Knox: TypeSafeAuthenticationError)
+(Jev call failed for Kenyon Sadiq: TypeSafeAuthenticationError)
+(Jev call failed for David Njoku: TypeSafeAuthenticationError)
+(Jev call failed for Oronde Gadsden: TypeSafeAuthenticationError)
+(Jev call failed for Noah Gray: TypeSafeAuthenticationError)
+(Jev call failed for Xavier Hutchinson: TypeSafeAuthenticationError)
+(Jev call failed for Eli Stowers: TypeSafeAuthenticationError)
+(Jev call failed for Elic Ayomanor: TypeSafeAuthenticationError)
+(shadow jev ranking failed; falling back to the projection ranking; logged 0 judgments)
+Waiver report — Tue Nov 17, week 11
+
+Your FAAB: $65 of $100   (minimum bid $0)
+  $9 a week for the 7 weeks of waivers left, this one included; $4 a week spent so far
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Thu 3:27 AM, Fri 3:09 AM, Fri 3:09 AM
+
+Next man up:
+  Emari Demercado is next up behind Woody Marks, who is tagged doubtful. He had 9 carries and targets in week 10 (usually 3).
+  Backs flagged this way averaged 9.5 a game over their next 4 weeks in 2025-26. Just under
+  half reached 10 a game and a quarter stayed under 5. They are listed even with no lineup gain.
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK LEVEL   NOW   5WK  SEASON  BID    DROP FOR HIM
+Wil Lutz             K     DEN       4%   +0.0   0→out  10.2     - +10.2 +10.2      +0  $2-4    Jason Myers
+Cairo Santos         K     CHI      21%   -0.1   0→out  10.1     - +10.1 +10.1      +0  $2-4    Jason Myers
+Chig Okonkwo         TE    WSH      16%   -0.0   74→59   7.8     -  +7.8  +7.8      +0  $3-5    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      22%   -0.1   44→66   7.1     -  +7.1  +7.1      +0  $3-5    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      27%   -0.1       -   4.9     -  +1.2  +6.6     +23  $2-4    Giants D/ST
+Lions D/ST           D/ST  DET      32%   -0.1       -   5.8     -  +2.1  +5.9     +16  $2-4    Giants D/ST
+Emari Demercado      RB    HOU       0%   +0.1   23→33   7.6   0.6  +2.3  +4.0      +0  $18-31  Marvin Harrison Jr
+Xavier Hutchinson    WR    HOU       9%   +0.2   81→76   9.4   7.5  +2.2  +2.2      +0  $8-18   Marvin Harrison Jr
+
+What it has taken to win a claim in this league (bids.py):
+  Backs and receivers after a breakout game, and next men up (20 claims): $8 won half, $18 won three
+    in four, $31 won nine in ten
+  Everyone else at quarterback, back, receiver and tight end (62 claims): $3 won half, $5 won three
+    in four, $12 won nine in ten
+  Kickers and defenses (56 claims): $2 won half, $4 won three in four, $7 won nine in ten
+  For a player who would start for you, the range runs from the bid that won three in four to the
+    one that won nine in ten; for a stash, from half to three in four.
+  Priced as in demand today: Emari Demercado (next man up); Xavier Hutchinson (13.8 points in week
+    10, 6.8 a game before)
+
+------------------------------------------------------------
+
+**Claim 1 — Emari Demercado (RB), bid $9, drop Keaton Mitchell.** He's next man up with Demercado will inherit a baseline of touches if Marks stays sidelined and Montgomery's status is uncertain, but Marks is only out for the short week — Marks should have a real chance to suit up for Week 12. Since the lead back returns almost immediately, this is a one‑week flier, not a priority stash: bid at the low end of the next‑man‑up range instead of the suggested $18‑31.
+
+**Claim 2 — Xavier Hutchinson (WR), bid $11, drop Marvin Harrison Jr.** Hutchinson was the clear No. 2 on the team, seeing nine targets and has now scored in three straight, and Hutchinson has scored in each of the Texans' last three games, hauling in 10-of-20 targets for an average of around 35 yards in that span. Already correctly flagged in-demand; this bid sits mid-range since he's flex/bench depth, not a lock starter over your current WRs.
+
+**Claim 3 — Eagles D/ST, bid $4, drop Giants D/ST.** Straight upgrade: lineup_gain_rest_of_season of 23 vs. Giants' current output, and it would start for you immediately. Keep the bid modest — your FAAB pace ($65 left, ~$9/wk needed over 7 weeks) leaves little real surplus.
+
+**Skip:** Lutz/Santos (no gain over Myers), Okonkwo/Schultz (lineup gain available but Fannin's 0 projection looks like a bye, not a lost job — don't pay to speculate), and MHJ/Shaheed as drops (already covered above).
+
+Sources:
+- Fantasy Football Injury Impact: Woody Marks Doubtful for TNF as Door Opens for David Montgomery and Waiver Wire Add - Yahoo Sports
+  https://sports.yahoo.com/articles/fantasy-football-injury-impact-woody-164958487.html
+- Woody Marks (concussion) remains a DNP Tuesday - NBC Sports
+  https://nbcsports.com/fantasy/football/player-news/2026-11-17/woody-marks-concussion-remains-a-dnp-tuesday
+- 2026 Fantasy Football Usage Report Week 10
+  https://fantasysixpack.net/2026-fantasy-football-usage-report-week-10/
+- Xavier Hutchinson hits paydirt once again in Week 10 - Xavier Hutchinson News
+  https://www.fantasypros.com/nfl/news/620417/xavier-hutchinson-hits-paydirt-once-again-week-10.php
+
+WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's
+evidence (values.py), and it is what the weeks after this one are valued at. A dash means
+ESPN's season projection is used as it is: tight ends, kickers and defenses.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+(shadow run: would have emailed "Waivers week 11: 8 worth a claim")
+exit 0
+
