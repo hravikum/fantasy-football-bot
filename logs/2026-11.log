@@ -1,0 +1,1065 @@
+--- 2026-11-02 10:40:52 lineup.py --live ---
+waited 10s for the network
+Week 8 lineup
+
+Current starters project 101.2
+Best legal lineup projects 101.2  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Harold Fannin Jr., KC Concepcion, Bryce Young, Jets D/ST, Carnell Tate, Tyjae Spears, DeMario Douglas, Treylon Burks, Quentin Johnston
+exit 0
+
+--- 2026-11-02 10:40:52 waivers.py --email --jev-shadow ---
+waited 10s for the network
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 3s: ConnectionError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer')))
+Waiver report — Mon Nov 02, week 8
+
+Your FAAB: $67 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Thu 3:05 AM, Thu 3:05 AM, Sun 3:53 AM
+Bids priced off 110 claims in this league: median $2, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 10: RB short by 1 — available and playing that week: Justice Hill (BAL), Corey Kiner (NE)
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: FLEX short by 2 — available and playing that week: Brian Thomas Jr. (JAX), Jake Ferguson (DAL)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eddy Pineiro         K     SF       37%   -2.2   0→out   0.0  +0.0  +9.0      +0  $0-2    Marvin Harrison Jr
+Cairo Santos         K     CHI      27%   +1.1   0→out   8.8  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Kirk Cousins         QB    LV       60%   -0.1 100→100  16.6  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      48%   -0.5   53→53   7.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Jake Ferguson        TE    DAL      46%   -0.3    56→5   4.5  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Brian Thomas Jr.     WR    JAX      40%   -0.3  out→52   4.6  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      35%   -0.4       -   3.7  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Justin Herbert       QB    LAC      34%   -0.3 out→100  10.9  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-02 18:04:33 lineup.py --live ---
+Week 8 lineup
+
+Current starters project 101.2
+Best legal lineup projects 101.2  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Harold Fannin Jr., KC Concepcion, Bryce Young, Jets D/ST, Carnell Tate, Tyjae Spears, DeMario Douglas, Treylon Burks, Quentin Johnston
+exit 0
+
+--- 2026-11-02 19:56:27 lineup.py --live ---
+waited 10s for the network
+Week 8 lineup
+
+Current starters project 101.2
+Best legal lineup projects 101.2  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Harold Fannin Jr., KC Concepcion, Bryce Young, Jets D/ST, Carnell Tate, Tyjae Spears, DeMario Douglas, Treylon Burks, Quentin Johnston
+exit 0
+
+--- 2026-11-03 06:11:02 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 2737s: ConnectionError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer')))
+Waiver report — Tue Nov 03, week 9
+
+Your FAAB: $67 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Thu 3:05 AM, Thu 3:05 AM, Sun 3:53 AM
+Bids priced off 110 claims in this league: median $2, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+  week 13: D/ST short by 1 — available and playing that week: Eagles D/ST (PHI), Chargers D/ST (LAC)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eagles D/ST          D/ST  PHI      35%   -0.0       -   5.2  +1.3 +10.6     +25  $0-2    Marvin Harrison Jr
+Eddy Pineiro         K     SF       37%   -0.2   0→out   8.6  +0.0  +9.0      +0  $0-2    Jason Myers
+Cairo Santos         K     CHI      27%   +0.2   0→out   9.2  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Giants D/ST          D/ST  NYG       3%   +0.0       -   6.9  +3.0  +8.3      +2  $0-2    Jets D/ST
+Jake Ferguson        TE    DAL      46%   -0.1    56→5   4.3  +0.0  +8.2      +0  $3-6    Marvin Harrison Jr
+Brian Thomas Jr.     WR    JAX      40%   -0.1  out→52   5.8  +0.0  +7.4     +12  $3-6    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      48%   -0.1   53→53   0.0  +0.0  +7.4      +0  $3-6    Marvin Harrison Jr
+Justin Herbert       QB    LAC      34%   -0.0 out→100  12.5  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-03 09:13:01 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.8
+Best legal lineup projects 105.2  (+0.4)
+
+  Omarion Hampton             BE -> RB      8.0
+  KC Concepcion             FLEX -> WR      8.7
+  Justin Jefferson            WR -> FLEX   14.9
+  Bucky Irving                RB -> FLEX   14.9
+  DeMario Douglas           FLEX -> BE      7.7
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+Watch: David Montgomery would start and is listed QUESTIONABLE
+
+
+Applied and confirmed on ESPN: 5 move(s).
+exit 0
+
+--- 2026-11-04 06:03:09 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Wed Nov 04, week 9
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:09 AM, Wed 4:09 AM, Wed 4:09 AM
+Bids priced off 123 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Jake Bates (DET)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      31%   +4.0     0→0   9.6  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Jake Bates           K     DET      44%   +3.0     0→0   9.9  +0.0  +8.3      +0  $0-2    Jason Myers
+Justin Herbert       QB    LAC      34%   -0.6 out→100  12.5  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Jake Ferguson        TE    DAL      45%   -1.3    56→5   4.3  +0.0  +6.7      +0  $0-2    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      46%   -1.9   53→53   0.0  +0.0  +6.3      +0  $0-2    Marvin Harrison Jr
+Brian Thomas Jr.     WR    JAX      40%   +0.2  out→52   5.8  +0.0  +5.5     +12  $0-2    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      35%   -0.4       -   5.1  +0.0  +4.1     +23  $0-2    Marvin Harrison Jr
+Baker Mayfield       QB    TB       25%   -1.2  90→100  12.6  +0.0  +3.6     +20  $0-2    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+Claim 1 — Pat Freiermuth, TE: fills the week‑11 TE hole; claim him now rather than waiting, since Freiermuth is merely on Pittsburgh's bye this week, not hurt. Prefer him over Ferguson: Ferguson's Ferguson suffered an ankle injury during Sunday's game against the Cardinals, status is TBD, and his route share fell below 60% for a consecutive week, ranking 31st among all TEs — a role in freefall, not just a bye. Bid 0‑2 (in range). Drop Marvin Harrison Jr. (lowest‑cost per the data, season_projection 0.0).
+
+Claim 2 — Cairo Santos, K: also fills the week‑11 K hole; grab early. Santos edges Bates on every number given: season_projection 148.2 vs 141.7, and next‑5‑week gain 8.7 vs 8.3. Bid 0‑2. Since Harrison is already spoken for, drop DeMario Douglas next (lowest season_projection, 80.9, among remaining bench WRs — Shaheed's 121.3 is more valuable to keep).
+
+Claim 3 — Justin Herbert, QB: his lineup_gain_rest_of_season of 29 is the highest of any available player in the data, well above Mayfield's 20 or Eagles D/ST's 23 — worth a speculative stash even though Bryce Young (15.7 week proj) starts ahead of him now. Bid 3‑6 (suggested range). Drop Rashid Shaheed, the last of the three listed drop candidates.
+
+Skip: Jake Bates (worse numbers than Santos), Jake Ferguson (injury + collapsing role), Baker Mayfield and Eagles D/ST (lower rest‑of‑season gain than Herbert, no open roster need right now).
+
+Sources:
+- Jake Ferguson NFL Stats & News
+  https://www.rotowire.com/football/player/jake-ferguson-15947
+- Jake Ferguson's Role Keeps Shrinking After 1-Target, 0-Catch Game
+  https://www.draftsharks.com/fantasy-football-news/83760/jake-fergusons-role-keeps-shrinking-after-1-target-0-catch-game
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-04 09:00:28 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 107.7
+Best legal lineup projects 107.7  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: David Montgomery would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-11-05 06:13:50 waivers.py --email --jev-shadow ---
+(usage lookup failed: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))); Jev will judge without it
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 1523s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Thu Nov 05, week 9
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:09 AM, Wed 4:09 AM, Wed 4:09 AM
+Bids priced off 123 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 10: RB short by 1 — available and playing that week: MarShawn Lloyd (GB), Keaton Mitchell (LAC)
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: FLEX short by 1 — available and playing that week: Dontayvion Wicks (PHI), Jake Ferguson (DAL)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Jake Bates (DET)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Keaton Mitchell      RB    LAC      11%   -0.4  out→31   5.5  +0.0 +12.1      +0  $3-6    Marvin Harrison Jr
+Cairo Santos         K     CHI      35%   +4.2     0→0   9.6  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Jake Bates           K     DET      48%   +4.0     0→0   9.9  +0.0  +8.3      +0  $0-2    Jason Myers
+Justin Herbert       QB    LAC      33%   -0.5 out→100  12.5  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Dontayvion Wicks     WR    PHI      19%   -1.0 out→out   0.0  +0.0  +6.8      +0  $0-2    Marvin Harrison Jr
+Jake Ferguson        TE    DAL      44%   -1.3    56→5   4.3  +0.0  +6.7      +0  $0-2    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      44%   -1.6   53→53   0.0  +0.0  +6.3      +0  $0-2    Marvin Harrison Jr
+MarShawn Lloyd       RB    GB       35%   -1.6   36→16   3.3  +0.0  +6.1      +0  $0-2    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-05 09:03:16 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 97.6
+Best legal lineup projects 107.0  (+9.3)
+
+  Bucky Irving              FLEX -> RB     14.3
+  DeMario Douglas             BE -> FLEX    9.3
+  David Montgomery            RB -> BE      0.0  [OUT]
+Watch: Treylon Burks would start and is listed QUESTIONABLE
+
+
+Applied and confirmed on ESPN: 3 move(s).
+exit 0
+
+--- 2026-11-05 18:00:00 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 107.0
+Best legal lineup projects 107.0  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Harold Fannin Jr. would start and is listed QUESTIONABLE
+Watch: Treylon Burks would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-11-05 19:50:10 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 107.0
+Best legal lineup projects 107.0  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Harold Fannin Jr. would start and is listed QUESTIONABLE
+Watch: Treylon Burks would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-11-06 06:12:05 waivers.py --email --jev-shadow ---
+(usage lookup failed: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))); Jev will judge without it
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Fri Nov 06, week 9
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:09 AM, Wed 4:09 AM, Wed 4:09 AM
+Bids priced off 123 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 10: RB short by 1 — available and playing that week: MarShawn Lloyd (GB), Keaton Mitchell (LAC)
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: FLEX short by 1 — available and playing that week: Dontayvion Wicks (PHI), Jake Ferguson (DAL)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Keaton Mitchell      RB    LAC      10%   -0.3  out→31   5.5  +0.0 +12.1      +0  $3-6    Marvin Harrison Jr
+Eddy Pineiro         K     SF       36%   -0.3   0→out   8.6  +0.0  +9.0      +0  $0-2    Jason Myers
+Cairo Santos         K     CHI      38%   +2.7     0→0   9.6  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Kyler Murray         QB    MIN      54%   -3.6 100→100   0.0  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Justin Herbert       QB    LAC      33%   -0.6 out→100  12.5  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Dontayvion Wicks     WR    PHI      18%   -0.9 out→out   0.0  +0.0  +6.8      +0  $0-2    Marvin Harrison Jr
+Jake Ferguson        TE    DAL      42%   -1.4    56→5   0.0  +0.0  +6.7      +0  $0-2    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      43%   -1.4   53→53   0.0  +0.0  +6.3      +0  $0-2    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+**Claim 1 — Pat Freiermuth (TE), bid $1 (in 0‑2 range), drop Marvin Harrison Jr.** This fills the Week 11 TE hole. Ferguson, the other TE option, is now a question mark: he suffered a low ankle sprain, was ruled out early Week 8, and did not practice Wednesday, working off to the side. His own snap data already shows the crash (5% last week). Freiermuth's snaps have stayed steady (53‑75%) all year, so claim him now rather than scrambling if Ferguson sits again in Week 11.
+
+**Claim 2 — Eddy Pineiro (K), bid $1, drop Rashid Shaheed (next-cheapest candidate; MHJ already used above).** Fills the Week 11 K hole (Myers' bye). Pineiro's 5‑week gain (9.0) edges out Cairo Santos (8.7) in the data, and both carry the same 0‑2 suggested bid, so take the slightly higher number for the same price.
+
+**Skip — Keaton Mitchell.** The hole sheet lists him for Week 10 RB, and his lineup_gain_next_5 (12.1) looks tempting, but fresh news undercuts it: he didn't see many opportunities Sunday, touching the ball just four times for six yards, and remains off the fantasy radar moving forward. MarShawn Lloyd isn't in the data with any numbers to compare, so don't bid blind on him either — leave this hole unfilled rather than spend FAAB on a declining role.
+
+Don't bother with Kyler Murray/Herbert — no QB hole exists in your lineup, and their "29" rest-of-season gain doesn't map to a start you need.
+
+Sources:
+- NFL Injury Report for Week 9: Latest Player Updates
+  https://dknetwork.draftkings.com/2026/11/03/nfl-injury-report-week-9
+- Keaton Mitchell Fantasy Football News, Rankings, Projections
+  https://www.fantasypros.com/nfl/players/keaton-mitchell.php
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-06 09:00:12 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 107.0
+Best legal lineup projects 107.0  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Harold Fannin Jr. would start and is listed QUESTIONABLE
+Watch: Treylon Burks would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-11-07 06:10:54 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 1475s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Sat Nov 07, week 9
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:09 AM, Wed 4:09 AM, Wed 4:09 AM
+Bids priced off 123 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 10: RB short by 1 — available and playing that week: MarShawn Lloyd (GB), Keaton Mitchell (LAC)
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: FLEX short by 2 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Keaton Mitchell      RB    LAC      10%   -0.1  31→out   5.5  +0.0 +14.7     +22  $3-6    Treylon Burks
+Jake Ferguson        TE    DAL      42%   -0.4   5→out   0.0  +0.0 +12.6     +33  $3-6    Treylon Burks
+Pat Freiermuth       TE    PIT      42%   -0.4  53→out   0.0  +0.0 +10.9     +26  $3-6    Treylon Burks
+Eddy Pineiro         K     SF       36%   -0.1 out→out   8.6  +0.0  +9.0      +0  $0-2    Jason Myers
+MarShawn Lloyd       RB    GB       33%   -0.5  16→out   3.3  +0.0  +8.8     +23  $3-6    Treylon Burks
+Cairo Santos         K     CHI      38%   +0.4   0→out   9.6  +0.0  +8.7      +0  $0-2    Treylon Burks
+Rashod Bateman       WR    BAL       9%   -0.0   76→62   3.4  +0.0  +7.4     +15  $3-6    Treylon Burks
+Kyler Murray         QB    MIN      53%   -1.0 100→out   0.0  +0.0  +6.9     +29  $3-6    Treylon Burks
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-07 09:03:00 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 98.5
+Best legal lineup projects 104.8  (+6.3)
+
+  Marvin Harrison Jr.         BE -> WR      6.3
+  Treylon Burks               WR -> BE      0.0  [OUT]
+
+
+Did NOT end up as asked: Marvin Harrison Jr., Treylon Burks
+exit 0
+
+--- 2026-11-08 06:05:38 waivers.py --email --jev-shadow ---
+(usage lookup failed: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))); Jev will judge without it
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 6313s: ConnectionError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer')))
+Waiver report — Sun Nov 08, week 9
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:09 AM, Wed 4:09 AM, Wed 4:09 AM
+Bids priced off 123 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: FLEX short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Jake Ferguson        TE    DAL      42%   -0.3   5→out   0.0  +0.0 +10.0     +11  $3-6    Treylon Burks
+Eddy Pineiro         K     SF       36%   -0.1 out→out   8.6  +0.0  +9.0      +0  $0-2    Jason Myers
+Cairo Santos         K     CHI      38%   +0.3   0→out   9.6  +0.0  +8.7      +0  $0-2    Treylon Burks
+Pat Freiermuth       TE    PIT      42%   -0.4  53→out   0.0  +0.0  +8.3      +4  $3-6    Treylon Burks
+Justin Herbert       QB    LAC      32%   -0.1 100→out  12.5  +0.0  +6.9     +29  $3-6    Treylon Burks
+Rashod Bateman       WR    BAL       9%   +0.0   76→62   3.4  +0.0  +6.5      +0  $3-6    Treylon Burks
+Calvin Ridley        WR    TEN       5%   -0.0  52→out   0.0  +0.0  +5.5      +0  $0-2    Treylon Burks
+Eagles D/ST          D/ST  PHI      34%   -0.1       -   5.1  +0.0  +4.1     +23  $0-2    Treylon Burks
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-08 08:15:11 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+exit 0
+
+--- 2026-11-08 09:03:05 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+exit 0
+
+--- 2026-11-08 11:36:38 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+exit 0
+
+--- 2026-11-08 12:47:31 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+exit 0
+
+--- 2026-11-08 15:07:35 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Harold Fannin Jr., KC Concepcion, Bryce Young, Treylon Burks, Giants D/ST
+exit 0
+
+--- 2026-11-08 16:11:41 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Omarion Hampton, Marvin Harrison Jr., Harold Fannin Jr., KC Concepcion, Bryce Young, David Montgomery, Treylon Burks, Quentin Johnston, Giants D/ST, Keaton Mitchell
+exit 0
+
+--- 2026-11-08 20:00:03 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Omarion Hampton, Marvin Harrison Jr., Harold Fannin Jr., KC Concepcion, Rashid Shaheed, Bryce Young, Jason Myers, David Montgomery, DeMario Douglas, Treylon Burks, Quentin Johnston, Giants D/ST, Keaton Mitchell
+exit 0
+
+--- 2026-11-09 06:03:28 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 2386s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Mon Nov 09, week 9
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:09 AM, Wed 4:09 AM, Wed 4:09 AM
+Bids priced off 123 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 10: RB short by 1 — available and playing that week: Corey Kiner (NE), Audric Estime (NO)
+  week 10: WR short by 1 — available and playing that week: Jerry Jeudy (CLE), Rashod Bateman (BAL)
+  week 11: WR short by 2 — available and playing that week: Rashod Bateman (BAL), Calvin Ridley (TEN)
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: FLEX short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+  week 12: WR short by 1 — available and playing that week: Jerry Jeudy (CLE), Rashod Bateman (BAL)
+  week 13: WR short by 1 — available and playing that week: Jerry Jeudy (CLE), Calvin Ridley (TEN)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eddy Pineiro         K     SF       35%   -0.1 out→out   8.6  +0.0  +9.0      +0  $0-2    Jason Myers
+Ryan Fitzgerald      K     CAR       8%   -0.2   0→out   7.6  +0.0  +7.4      +0  $0-2    Jason Myers
+Pat Freiermuth       TE    PIT      41%   -0.7  53→out   0.0  +0.0  +0.0      +0  $0-1    Treylon Burks
+Jake Ferguson        TE    DAL      41%   -0.4   5→out   6.8  +0.0  +0.0      +0  $0-1    Treylon Burks
+Emanuel Wilson       RB    SEA      34%   -1.9   0→out   0.0  +0.0  +0.0      +0  $0-1    Treylon Burks
+J.J. McCarthy        QB    NYG      34%   +1.0 out→out  17.5  +0.0  +0.0      +0  $0-1    Treylon Burks
+Eagles D/ST          D/ST  PHI      34%   -0.1       -   5.1  +0.0  +0.0      +0  $0-1    Treylon Burks
+Justin Herbert       QB    LAC      32%   -0.2 100→out  12.5  +0.0  +0.0      +0  $0-1    Treylon Burks
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-09 09:12:01 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Omarion Hampton, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Bryce Young, Jason Myers, David Montgomery, DeMario Douglas, Treylon Burks, Quentin Johnston, Giants D/ST, Keaton Mitchell
+exit 0
+
+--- 2026-11-09 18:00:00 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Omarion Hampton, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Bryce Young, Jason Myers, David Montgomery, DeMario Douglas, Treylon Burks, Quentin Johnston, Giants D/ST, Keaton Mitchell
+exit 0
+
+--- 2026-11-09 19:48:09 lineup.py --live ---
+Week 9 lineup
+
+Current starters project 104.9
+Best legal lineup projects 104.9  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Omarion Hampton, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Bryce Young, Jason Myers, David Montgomery, DeMario Douglas, Treylon Burks, Quentin Johnston, Giants D/ST, Keaton Mitchell
+exit 0
+
+--- 2026-11-10 06:11:50 waivers.py --email --jev-shadow ---
+(usage lookup failed: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))); Jev will judge without it
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Tue Nov 10, week 10
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:09 AM, Wed 4:09 AM, Wed 4:09 AM
+Bids priced off 123 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Pat Freiermuth (PIT), Kenyon Sadiq (NYJ)
+  week 11: FLEX short by 1 — available and playing that week: Pat Freiermuth (PIT), Kenyon Sadiq (NYJ)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eddy Pineiro         K     SF       35%   -0.0   out→0   7.3  +0.0  +9.0      +0  $0-2    Jason Myers
+Cairo Santos         K     CHI      39%   -0.1     0→0   0.0  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      41%   -0.2  53→out   6.7  +1.2  +8.2      +4  $3-6    Marvin Harrison Jr
+Justin Herbert       QB    LAC      32%   -0.0  100→79  12.0  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Chig Okonkwo         TE    WSH      14%   -0.0   77→74   6.6  +1.1  +6.3      +0  $3-6    Marvin Harrison Jr
+Rashod Bateman       WR    BAL       9%   -0.0   76→62   4.5  +0.0  +5.6      +0  $0-2    Marvin Harrison Jr
+Tank Dell            WR    HOU      23%   +0.0  out→47   7.1  +1.6  +5.5      +0  $3-6    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      34%   -0.0       -   0.0  +0.0  +5.4     +23  $0-2    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+**Claim 1 — Pat Freiermuth (TE), bid $4, drop Burks (not the default MHJ).** Fills the week 11 TE/FLEX hole directly; data shows 1.2 pts this week, 8.2 over the next five weeks, and 4 rest-of-season lineup gain. Use Burks instead of the suggested MHJ drop — Burks' season projection (73.9) is the lowest of your three drop candidates, so he costs less to lose than MHJ (0.0 season points so far but still unproven) once MHJ is needed elsewhere below. Grab Freiermuth now rather than scrambling on kickoff day in week 11.
+
+**Claim 2 — Eddy Pineiro (K), bid $1, drop MHJ.** Covers the week 11 K hole. Pineiro's 9.0 lineup gain over the next five weeks edges out Cairo Santos' 8.7, and his season projection (152.9) is nearly even with Myers' (154.0) — this is a bye-week fill-in, not a swap of your starting K. Don't drop Myers himself for this, as the data shows no production edge for Pineiro that justifies losing your better full-season kicker.
+
+**Claim 3 — Eagles D/ST, bid $1, drop Shaheed.** Highest rest-of-season lineup gain in the entire available list (23), and a better season projection (106.7) than your current Giants D/ST (83.7). Shaheed is the last of your three cleared drop candidates and has the highest season total among them (121.3), but Eagles' edge over Giants justifies spending him here rather than leaving a stronger D/ST on waivers.
+
+**Skip:** Herbert, Okonkwo, Bateman, Tank Dell — no lineup hole, no gain data that beats a current starter, and you have no extra drop slot once the three above are used.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-10 09:13:58 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 85.1
+Best legal lineup projects 91.1  (+6.0)
+
+  Keaton Mitchell             BE -> RB      5.6
+  Justin Jefferson          FLEX -> WR     12.8
+  DeMario Douglas           FLEX -> WR     10.1
+  KC Concepcion               WR -> FLEX    8.4
+  Quentin Johnston            BE -> FLEX    5.5
+  Bucky Irving                RB -> BE      0.0
+  Marvin Harrison Jr.         WR -> BE      5.1
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+
+
+Applied and confirmed on ESPN: 7 move(s).
+exit 0
+
+--- 2026-11-11 06:13:21 waivers.py --email --jev-shadow ---
+(usage lookup failed: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))); Jev will judge without it
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Wed Nov 11, week 10
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Wed 3:11 AM, Wed 3:11 AM, Wed 3:11 AM
+Bids priced off 132 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Pat Freiermuth (PIT), Kenyon Sadiq (NYJ)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eddy Pineiro         K     SF       35%   -0.3   out→0   7.3  +0.0  +9.0      +0  $0-2    Jason Myers
+Cairo Santos         K     CHI      33%   -6.1     0→0   0.0  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Seahawks D/ST        D/ST  SEA      97%   -0.2       -   7.1  +1.8  +7.2     +30  $0-2    Marvin Harrison Jr
+Justin Herbert       QB    LAC      31%   -0.7  100→79  12.1  +0.0  +6.9     +29  $3-7    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      40%   -0.7  53→out   6.7  +0.0  +6.3      +0  $0-2    Marvin Harrison Jr
+Kenyon Sadiq         TE    NYJ      19%   -0.5   48→57   3.1  +0.0  +5.9      +0  $0-2    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      32%   -1.1       -   0.0  +0.0  +5.4     +23  $0-2    Marvin Harrison Jr
+Baker Mayfield       QB    TB       22%   -1.0 100→100   0.0  +0.0  +4.8     +20  $0-2    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+**Add Seahawks D/ST** (bid $1, inside suggested 0–2): it already beats your Giants D/ST this week (1.8 gain) and for the rest of the season (30 gain, 114.2 vs Giants' 83.7 season total) — a real lineup upgrade, not just a hole-filler. Drop Marvin Harrison Jr., whose season projection sits at 0 — the correct, cheapest cut.
+
+**Add Pat Freiermuth** (bid $1) for the Week 11 TE hole. Freiermuth has no injury designation for Week 10 at the Bengals on Sunday, November 15, so he's on track to play. He also edges Kenyon Sadiq in 5-week outlook (6.3 vs 5.9). Grab him now rather than scrambling game-day — the hole is only a week out. Drop Treylon Burks (74.3 season proj, lowest of the three candidates after MHJ is used) instead of the suggested MHJ, since that slot is already spent above.
+
+**Add Eddy Pineiro** (bid $1) for the Week 11 K hole — he edges Cairo Santos in 5-week outlook (9.0 vs 8.7). Use Rashid Shaheed as the drop, not the system's suggested Jason Myers: Myers is your active starter (9.34 proj this week, 154.0 season) and Pineiro himself shows 0 projection this week, so swapping him in now would cost real points — only his Week 11 value matters here.
+
+**Skip Justin Herbert.** His X-rays came back negative for a fracture, "so he should be good to go," but the Chargers are 0-8 and you already start Bryce Young — no QB hole to fill, so the $3-7 price isn't worth it.
+
+Sources:
+- Pat Freiermuth Injury Update & History (Updated Oct 16)
+  https://statchasers.com/nfl/players/pat-freiermuth/injury/
+- Week 10 Fantasy Football Injury Report: Puka Nacua, Patrick Mahomes, Josh Jacobs And More
+  https://www.forbes.com/sites/bryantoporek/2026/11/09/week-10-fantasy-football-injury-report-puka-nacua-patrick-mahomes-josh-jacobs-and-more/
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-11 09:02:14 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 92.5
+Best legal lineup projects 96.5  (+4.1)
+
+  Carnell Tate                BE -> FLEX    9.6  [QUESTIONABLE]
+  Quentin Johnston          FLEX -> BE      5.5
+Watch: Carnell Tate would start and is listed QUESTIONABLE
+
+
+Applied and confirmed on ESPN: 2 move(s).
+exit 0
+
+--- 2026-11-12 06:11:53 waivers.py --email --jev-shadow ---
+(usage lookup failed: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))); Jev will judge without it
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Thu Nov 12, week 10
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Wed 3:11 AM, Thu 3:27 AM, Thu 3:27 AM
+Bids priced off 136 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Pat Freiermuth (PIT), Kenyon Sadiq (NYJ)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eddy Pineiro         K     SF       35%   -0.3   out→0   7.3  +0.0  +9.0      +0  $0-2    Jason Myers
+Cairo Santos         K     CHI      28%   -4.9     0→0   0.0  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Broncos D/ST         D/ST  DEN      78%   -4.2       -   0.0  +0.0  +8.0     +34  $0-2    Marvin Harrison Jr
+Justin Herbert       QB    LAC      31%   -0.5  100→79  12.1  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      40%   -0.4  53→out   6.7  +0.0  +6.3      +0  $0-2    Marvin Harrison Jr
+Kenyon Sadiq         TE    NYJ      18%   -0.6   48→57   3.1  +0.0  +5.9      +0  $0-2    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      31%   -1.4       -   0.0  +0.0  +5.4     +23  $0-2    Marvin Harrison Jr
+Baker Mayfield       QB    TB       21%   -0.7 100→100   0.0  +0.0  +4.8     +20  $0-2    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+Claim the depth for the week-11 byes a few days early rather than scrambling game day — Myers' bye is confirmed for week 11, and Fannin's Browns are also off that week.
+
+**Pat Freiermuth (TE)** — fills the week-11 TE hole. He's healthy and active now (not on PIT's injury report), and his season-long role (53-75% snaps weekly) and he ended up running 41 routes on Aaron Rodgers' 56 dropbacks beat Sadiq's choppier 19-58% range, matching Freiermuth's higher next-5-week gain (6.3 vs 5.9). Bid 2 (top of range). Drop: Marvin Harrison Jr. (0 season points, the suggested drop) — fine, he's been inactive all year per the data.
+
+**Eddy Pineiro (K)** — fills the week-11 K hole; slightly better 5-week gain (9.0 vs Santos' 8.7) and steadier rostered% (-0.3 vs Santos' -4.9, which suggests managers are souring on Santos). Bid 2. Override the suggested drop of Jason Myers — he's your actual starting K and projects well (9.3 this week); drop Treylon Burks instead, your weakest bench WR by season points.
+
+**Skip:** Herbert, Broncos/Eagles D/ST, Baker Mayfield, Sadiq, Santos — no current hole they fill (you already have Bryce Young, Giants D/ST), and their "rest of season" gain numbers are just what-if snapshots, not reasons to burn FAAB or a roster spot now. Keep Rashid Shaheed and Marvin Harrison Jr.'s keeper-round value in mind only if forced to pick between bench cuts later; today, Burks is the correct cut.
+
+Sources:
+- Pat Freiermuth - NFL News, Rumors, & Updates
+  https://www.foxsports.com/nfl/pat-freiermuth-player
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-12 09:15:56 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 96.5
+Best legal lineup projects 96.5  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Harold Fannin Jr. would start and is listed QUESTIONABLE
+Watch: Carnell Tate would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-11-12 18:00:00 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 95.0
+Best legal lineup projects 95.0  (+0.0)
+
+  Carnell Tate              FLEX -> WR      9.6  [QUESTIONABLE]
+  Justin Jefferson            WR -> FLEX   14.2
+
+Holding: +0.0 is under the 0.5 point bar.
+Watch: Harold Fannin Jr. would start and is listed QUESTIONABLE
+Watch: Carnell Tate would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-11-12 19:45:44 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 95.0
+Best legal lineup projects 95.0  (+0.0)
+
+  Carnell Tate              FLEX -> WR      9.6  [QUESTIONABLE]
+  Justin Jefferson            WR -> FLEX   14.2
+
+Holding: +0.0 is under the 0.5 point bar.
+Watch: Harold Fannin Jr. would start and is listed QUESTIONABLE
+Watch: Carnell Tate would start and is listed QUESTIONABLE
+Watch: Keaton Mitchell would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-11-13 06:07:27 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 3s: ConnectionError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer')))
+Waiver report — Fri Nov 13, week 10
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Thu 3:27 AM, Fri 3:09 AM, Fri 3:09 AM
+Bids priced off 138 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Pat Freiermuth (PIT), Kenyon Sadiq (NYJ)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eddy Pineiro         K     SF       34%   -0.4   out→0   7.3  +0.0  +9.0      +0  $0-2    Jason Myers
+Cairo Santos         K     CHI      24%   -4.2     0→0   0.0  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Justin Herbert       QB    LAC      30%   -0.5  100→79  12.1  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      40%   -0.1  53→out   6.7  +0.0  +6.3      +0  $0-2    Marvin Harrison Jr
+Kenyon Sadiq         TE    NYJ      18%   -0.6   48→57   3.1  +0.0  +5.9      +0  $0-2    Marvin Harrison Jr
+Baker Mayfield       QB    TB       20%   -0.7 100→100   0.0  +0.0  +4.8     +20  $0-2    Marvin Harrison Jr
+Lions D/ST           D/ST  DET      32%   -0.9       -   5.1  -0.2  +3.6      +0  $0-2    Giants D/ST
+Chris Godwin Jr.     WR    TB       44%   -1.4   82→91   0.0  +0.0  +0.3      +0  $0-2    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-13 09:10:27 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 95.0
+Best legal lineup projects 95.0  (+0.0)
+
+  Carnell Tate              FLEX -> WR      9.6  [QUESTIONABLE]
+  Justin Jefferson            WR -> FLEX   14.2
+
+Holding: +0.0 is under the 0.5 point bar.
+
+Locked, can't be moved: Treylon Burks, Giants D/ST
+Watch: Harold Fannin Jr. would start and is listed QUESTIONABLE
+Watch: Carnell Tate would start and is listed QUESTIONABLE
+Watch: Keaton Mitchell would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-11-14 06:11:13 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 2260s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Sat Nov 14, week 10
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Thu 3:27 AM, Fri 3:09 AM, Fri 3:09 AM
+Bids priced off 138 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Kenyon Sadiq (NYJ), Dalton Schultz (HOU)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eddy Pineiro         K     SF       34%   -0.1   0→out   7.3  +0.0  +9.0      +0  $0-2    Jason Myers
+Cairo Santos         K     CHI      23%   -0.7   0→out   0.0  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Justin Herbert       QB    LAC      30%   -0.1  79→out  12.1  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Kenyon Sadiq         TE    NYJ      18%   -0.2  57→out   3.1  +0.0  +5.9      +0  $0-2    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      22%   -0.1  44→out   5.8  +0.0  +5.7      +0  $0-2    Marvin Harrison Jr
+Baker Mayfield       QB    TB       20%   -0.1 100→out   0.0  +0.0  +4.8     +20  $0-2    Marvin Harrison Jr
+Lions D/ST           D/ST  DET      32%   -0.1       -   5.1  -0.3  +3.5      +0  $0-2    Giants D/ST
+Chris Godwin Jr.     WR    TB       43%   -0.4  91→out   0.0  +0.0  +2.7      +5  $0-2    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-14 09:03:02 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 85.8
+Best legal lineup projects 96.4  (+10.6)
+
+  David Montgomery            BE -> RB     10.2  [QUESTIONABLE]
+  Rashid Shaheed              BE -> FLEX    6.1
+  Carnell Tate              FLEX -> BE      0.0  [OUT]
+  Keaton Mitchell             RB -> BE      5.6  [QUESTIONABLE]
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+
+Locked, can't be moved: Treylon Burks, Giants D/ST
+Watch: David Montgomery would start and is listed QUESTIONABLE
+
+
+Applied and confirmed on ESPN: 4 move(s).
+exit 0
+
+--- 2026-11-15 06:01:02 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Sun Nov 15, week 10
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Thu 3:27 AM, Fri 3:09 AM, Fri 3:09 AM
+Bids priced off 138 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Kenyon Sadiq (NYJ), Dalton Schultz (HOU)
+  week 11: FLEX short by 1 — available and playing that week: Chris Godwin Jr. (TB), Tyjae Spears (TEN)
+  week 11: K short by 1 — available and playing that week: Eddy Pineiro (SF), Cairo Santos (CHI)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Chris Godwin Jr.     WR    TB       43%   -0.7  91→out   0.0  +0.0  +9.7     +11  $3-6    Marvin Harrison Jr
+Eddy Pineiro         K     SF       34%   -0.1   0→out   7.3  +0.0  +9.0      +0  $0-2    Jason Myers
+Cairo Santos         K     CHI      22%   -0.8   0→out   0.0  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Tyjae Spears         RB    TEN      19%   -0.2 out→out   4.9  +0.0  +7.6      +2  $3-6    Marvin Harrison Jr
+Xavier Hutchinson    WR    HOU       6%   +1.8  81→out   8.2  +2.2  +7.6      +0  $3-6    Marvin Harrison Jr
+Justin Herbert       QB    LAC      30%   -0.2  79→out  12.0  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Kenyon Sadiq         TE    NYJ      17%   -0.2  57→out   3.1  +0.0  +5.9      +0  $0-2    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      22%   -0.2  44→out   5.9  +0.0  +5.7      +0  $0-2    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+**Claim 1 — Chris Godwin Jr. (WR), bid $4 (mid suggested range 3–6), drop Marvin Harrison Jr.** Fills your Week 11 FLEX hole; data shows season-long 11-pt rest-of-season lineup gain and steady 82–91% snap share the last three games. Recent catch totals are thin, but volume is there — claim now rather than racing for him game-day week 11.
+
+**Claim 2 — Kenyon Sadiq (TE), bid $1 (suggested range 0–2), drop Marvin Harrison Jr.** Fixes the Week 11 TE hole. He edges Dalton Schultz on every number in the data: 5.9 vs 5.7 next-5-week gain, and a 57% snap share last game vs. Schultz's 44%. Grab him a few days early instead of scrambling Sunday morning.
+
+**Claim 3 — Eddy Pineiro (K), bid $1 (suggested range 0–2), drop Jason Myers.** Covers the Week 11 K hole. Pineiro projects 7.33 this week vs. Cairo Santos' 0.0, and tops him on next-5-week gain (9.0 vs 8.7) — the clear choice between the two kickers in the data.
+
+**Skip: Justin Herbert.** Harbaugh said Herbert's left middle finger injury "could be a fracture, we'll find out." He is scheduled to undergo further testing Monday to determine the extent of the injury, although he expressed optimism about being ready for Week 10. That's a real but unresolved injury risk on your own bench-clog pick, not a current absence — don't spend FAAB until his hand status is confirmed.
+
+Use Marvin Harrison Jr. as the drop for Godwin and Sadiq (he's projected for 0 points both this week and the season) — no reason to deviate from the suggested cheapest-cost drop here.
+
+Sources:
+- Jim Harbaugh delivers worrisome Justin Herbert injury update after Week 9 loss - Yahoo Sports
+  https://sports.yahoo.com/articles/jim-harbaugh-delivers-worrisome-justin-132923728.html
+- Jim Harbaugh delivers worrisome Justin Herbert injury update after Week 9 loss
+  https://www.thebiglead.com/jim-harbaugh-justin-herbert-injury-update-finger-week-9-loss/
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-15 08:15:04 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 86.2
+Best legal lineup projects 91.8  (+5.6)
+
+  Keaton Mitchell             BE -> RB      5.6
+  David Montgomery            RB -> BE      0.0  [OUT]
+
+Locked, can't be moved: Treylon Burks, Giants D/ST
+
+
+Applied and confirmed on ESPN: 2 move(s).
+exit 0
+
+--- 2026-11-15 09:00:01 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 91.8
+Best legal lineup projects 91.8  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Treylon Burks, Giants D/ST
+exit 0
+
+--- 2026-11-15 11:45:07 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 91.8
+Best legal lineup projects 91.8  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: DeMario Douglas, Treylon Burks, Giants D/ST
+exit 0
+
+--- 2026-11-15 12:51:32 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 92.7
+Best legal lineup projects 92.7  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: DeMario Douglas, Treylon Burks, Giants D/ST
+exit 0
+
+--- 2026-11-15 15:13:48 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 92.8
+Best legal lineup projects 93.7  (+0.9)
+
+  Quentin Johnston            BE -> FLEX    6.9
+  Rashid Shaheed            FLEX -> BE      6.1
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+
+Locked, can't be moved: Justin Jefferson, Marvin Harrison Jr., Harold Fannin Jr., KC Concepcion, Bryce Young, Carnell Tate, David Montgomery, DeMario Douglas, Treylon Burks, Giants D/ST
+
+
+Applied and confirmed on ESPN: 2 move(s).
+exit 0
+
+--- 2026-11-15 16:10:05 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 93.7
+Best legal lineup projects 93.7  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Marvin Harrison Jr., Harold Fannin Jr., KC Concepcion, Rashid Shaheed, Bryce Young, Jason Myers, Carnell Tate, David Montgomery, DeMario Douglas, Treylon Burks, Giants D/ST
+exit 0
+
+--- 2026-11-15 19:52:48 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 93.7
+Best legal lineup projects 93.7  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Marvin Harrison Jr., Harold Fannin Jr., KC Concepcion, Rashid Shaheed, Bryce Young, Jason Myers, Carnell Tate, David Montgomery, DeMario Douglas, Treylon Burks, Giants D/ST
+exit 0
+
+--- 2026-11-16 06:03:20 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Mon Nov 16, week 10
+
+Your FAAB: $65 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Thu 3:27 AM, Fri 3:09 AM, Fri 3:09 AM
+Bids priced off 138 claims in this league: median $2, top of market $39
+
+Lineup holes in the next 4 weeks:
+  week 11: WR short by 1 — available and playing that week: Kayshon Boutte (HOU), Xavier Hutchinson (HOU)
+  week 11: TE short by 1 — available and playing that week: Darren Waller (CAR), Darnell Washington (PIT)
+  week 11: FLEX short by 1 — available and playing that week: Darren Waller (CAR), Kayshon Boutte (HOU)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Chase McLaughlin (TB)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK LEVEL   NOW   5WK  SEASON  BID    DROP FOR HIM
+Jake Bates           K     DET      55%   +0.1   0→out   9.6     -  +0.0  +8.3      +0  $0-2    Jason Myers
+Ryan Fitzgerald      K     CAR       7%   -0.1   0→out   7.9     -  +0.0  +7.4      +0  $0-2    Jason Myers
+Darren Waller        TE    CAR      32%   +2.0  53→out   7.0   7.6  +0.0  +4.1     +17  $0-2    Marvin Harrison Jr
+Lions D/ST           D/ST  DET      32%   -0.1       -   5.1     -  -0.3  +3.6      +0  $0-2    Giants D/ST
+Kayshon Boutte       WR    HOU       4%   +0.1  33→out   6.1   7.4  +0.0  +3.4     +14  $0-2    Marvin Harrison Jr
+Xavier Hutchinson    WR    HOU       9%   +2.5  81→out   8.2   6.8  +1.3  +2.1      +3  $0-2    Marvin Harrison Jr
+J.K. Dobbins         RB    DEN      61%   -1.1  15→out   0.0   7.1  +0.0  +1.9      +8  $0-2    Marvin Harrison Jr
+MarShawn Lloyd       RB    GB       32%   +0.4 out→out   6.4   5.6  +0.7  +0.7      +0  $0-2    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+**Claim 1 – Darren Waller (TE), bid $2, drop Marvin Harrison Jr.** Fills your week‑11 TE/FLEX hole and shows the highest rest‑of‑season gain in your data (17). News backs it: he just caught a Week 9 outstanding performance and should see targets next week against the Ravens, considered a No. 2 fantasy tight end despite a quiet Week 10. Bid the top of the suggested $0–2 range since 11 rivals carry $50+ FAAB and TE is thin.
+
+**Claim 2 – Xavier Hutchinson (WR), bid $2, drop Rashid Shaheed, over Boutte.** Both fill the week‑11 WR hole, but take Hutchinson instead of Boutte even though the sheet's rest‑of‑season number favors Boutte (14 vs 3): Xavier Hutchinson played 57 snaps (81%) in Week 9, well ahead of Boutte's 23 (33%), and Hutchinson is scoring for a third straight week with Nico Collins back healthy — Boutte's snap trend in your own data is falling (46→72→69→62→59→41→31→33) for that same reason. Claim him now, a few days before the week‑11 scramble.
+
+**Claim 3 – Jake Bates (K), bid $0, drop Treylon Burks — not Jason Myers.** The hole is Myers' week‑11 bye. The system's default drop (Myers) costs more than it looks: Myers' level (9.1) beats Bates' (8.3), so keep him and clear room with Burks instead; stream Bates one week, then cut him back.
+
+**Skip:** Ryan Fitzgerald, Lions D/ST, Dobbins, Lloyd — no hole, no gain, and all showing falling or null snap weeks.
+
+Sources:
+- Darren Waller catches two passes in Week 10 - Yahoo Sports
+  https://sports.yahoo.com/articles/darren-waller-catches-two-passes-001716945.html
+- Texans Week 9 Snap Counts Highlight Kayshon Boutte Shining with 125 Yards in Dominant Win Over Chargers - Athlon
+  https://athlonsports.com/nfl/houston-texans/texans-week-nine-snap-count-chargers-kayshon-boutte-afc
+- Xavier Hutchinson scores for third week in a row - NBC Sports
+  https://www.nbcsports.com/fantasy/football/player-news/2026-11-15/xavier-hutchinson-scores-for-third-week-in-a-row
+
+WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's
+evidence (values.py), and it is what the weeks after this one are valued at.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-16 09:03:58 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 93.7
+Best legal lineup projects 93.7  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Marvin Harrison Jr., Harold Fannin Jr., KC Concepcion, Rashid Shaheed, Bryce Young, Jason Myers, Carnell Tate, David Montgomery, DeMario Douglas, Treylon Burks, Giants D/ST
+exit 0
+
+--- 2026-11-16 18:00:00 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 93.7
+Best legal lineup projects 93.7  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Marvin Harrison Jr., Harold Fannin Jr., KC Concepcion, Rashid Shaheed, Bryce Young, Jason Myers, Carnell Tate, David Montgomery, DeMario Douglas, Treylon Burks, Giants D/ST
+exit 0
+
+--- 2026-11-16 19:45:05 lineup.py --live ---
+Week 10 lineup
+
+Current starters project 93.7
+Best legal lineup projects 93.7  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Marvin Harrison Jr., Harold Fannin Jr., KC Concepcion, Rashid Shaheed, Bryce Young, Jason Myers, Carnell Tate, David Montgomery, DeMario Douglas, Treylon Burks, Giants D/ST
+exit 0
+
+--- 2026-11-17 06:05:30 waivers.py --email --jev-shadow ---
+power: Battery Power, lid closed
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 4778s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Tue Nov 17, week 11
+
+Your FAAB: $65 of $100   (minimum bid $0)
+  $9 a week for the 7 weeks of waivers left, this one included; $4 a week spent so far
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Thu 3:27 AM, Fri 3:09 AM, Fri 3:09 AM
+
+Next man up:
+  Emari Demercado is next up behind Woody Marks, who is tagged doubtful. He had 9 carries and targets in week 10 (usually 3).
+  Backs flagged this way averaged 9.5 a game over their next 4 weeks in 2025-26. Just under
+  half reached 10 a game and a quarter stayed under 5. They are listed even with no lineup gain.
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK LEVEL   NOW   5WK  SEASON  BID    DROP FOR HIM
+Wil Lutz             K     DEN       4%   -0.0   0→out  10.2     - +10.2 +10.2      +0  $2-4    Jason Myers
+Cairo Santos         K     CHI      21%   -0.1   0→out  10.1     - +10.1 +10.1      +0  $2-4    Jason Myers
+Emari Demercado      RB    HOU       0%   +0.0   23→33   7.6   0.6  +3.0  +9.0      +0  $18-31  Marvin Harrison Jr
+Chig Okonkwo         TE    WSH      16%   -0.1   74→59   7.8     -  +7.8  +7.8      +0  $3-5    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      22%   -0.1   44→66   7.1     -  +7.1  +7.1      +0  $3-5    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      27%   -0.1       -   5.0     -  +1.3  +6.7     +23  $2-4    Giants D/ST
+Lions D/ST           D/ST  DET      32%   -0.1       -   5.7     -  +2.1  +5.9     +16  $2-4    Giants D/ST
+J.K. Dobbins         RB    DEN      61%   -0.2  15→out   8.0   7.7  +1.5  +2.4      +4  $5-12   Marvin Harrison Jr
+
+What it has taken to win a claim in this league (bids.py):
+  Backs and receivers after a breakout game, and next men up (20 claims): $8 won half, $18 won three
+    in four, $31 won nine in ten
+  Everyone else at quarterback, back, receiver and tight end (62 claims): $3 won half, $5 won three
+    in four, $12 won nine in ten
+  Kickers and defenses (56 claims): $2 won half, $4 won three in four, $7 won nine in ten
+  For a player who would start for you, the range runs from the bid that won three in four to the
+    one that won nine in ten; for a stash, from half to three in four.
+  Priced as in demand today: Emari Demercado (next man up)
+
+------------------------------------------------------------
+
+No write-up today: the call to Claude failed, and the reason is in the log. The table is complete, but nobody has checked the news behind it.
+
+WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's
+evidence (values.py), and it is what the weeks after this one are valued at. A dash means
+ESPN's season projection is used as it is: tight ends, kickers and defenses.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-11-17 09:16:18 lineup.py --live ---
+power: Battery Power, lid closed
+Week 11 lineup
+
+Current starters project 59.2
+Best legal lineup projects 93.0  (+33.8)
+
+  Bucky Irving                BE -> RB     15.7
+  David Montgomery            BE -> RB     12.8
+  Carnell Tate                BE -> WR     10.7  [QUESTIONABLE]
+  Omarion Hampton             RB -> FLEX    9.4
+  Treylon Burks               BE -> FLEX    7.2
+  KC Concepcion             FLEX -> BE      0.0
+  DeMario Douglas             WR -> BE      0.0
+  Quentin Johnston          FLEX -> BE      6.0
+  Keaton Mitchell             RB -> BE      6.5
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+Watch: Carnell Tate would start and is listed QUESTIONABLE
+
+
+Applied and confirmed on ESPN: 9 move(s).
+exit 0
+

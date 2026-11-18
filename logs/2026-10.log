@@ -1,0 +1,2597 @@
+--- 2026-10-01 06:16:54 waivers.py --email --jev-shadow ---
+(usage lookup failed: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))); Jev will judge without it
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+Waiver report — Thu Oct 01, week 4
+
+Your FAAB: $78 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Thu 3:15 AM, Thu 3:15 AM
+Bids priced off 43 claims in this league: median $3, top of market $37
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Jets D/ST            D/ST  NYJ       8%       -   6.7  +0.4 +10.7      +0  $3-6    Bills D/ST
+Commanders D/ST      D/ST  WSH       2%       -   6.3  +0.0 +10.3      +0  $3-6    Bills D/ST
+Isaiah Davis         RB    NYJ       5%     0→0   8.3  +0.6  +0.6      +0  $0-3    Harrison Mevis
+Ryan Flournoy        WR    DAL       4%   76→66   7.7  +0.2  +0.2      +0  $0-3    Harrison Mevis
+Eddy Pineiro         K     SF       79%     0→0   9.6  +0.0  +0.0      +0  $0-1    Harrison Mevis
+Cairo Santos         K     CHI      29%     0→0   8.8  +0.0  +0.0      +0  $0-1    Harrison Mevis
+Rashod Bateman       WR    BAL      27%   93→88   6.7  +0.0  +0.0      +0  $0-1    Harrison Mevis
+Pat Freiermuth       TE    PIT      20%   66→60   6.4  +0.0  +0.0      +0  $0-1    Harrison Mevis
+
+------------------------------------------------------------
+
+**Jets D/ST** — bid 5 (mid suggested range 3–6), drop Bills D/ST. Buffalo's bye is Week 7, and the data already bakes that in: Jets D/ST project a Week 7 bye for Buffalo Bills, and the Jets carry a lineup_gain_next_5_weeks_byes_included of 10.7 plus a small positive gain this week (0.4) — both beat Commanders D/ST (10.3, 0.0 this week) on the same metric, so take the Jets over the Commanders.
+
+**Isaiah Davis** — bid 2 (low end of 0–3), drop Harrison Mevis (cheapest drop, kicker is replaceable). Reason is news, not the projection: Davis might finally get his first touches on offense in Week 4 against the Bears after starting RB Breece Hall left Sunday's loss late with a thigh injury, with the Jets considering Hall week-to-week. That said, this is speculative — Davis has 0 carries in three games this season, so keep the bid cheap and treat him as a free dart, not a league-winner.
+
+Skip everything else: Flournoy, Bateman, Freiermuth, and both kickers all show lineup_gain_this_week of 0.0 and 0.0 rest-of-season in the data — no projected lineup benefit to justify FAAB. No lineup_holes_ahead are listed, so there's no bye-week scramble to get ahead of beyond the D/ST slot already covered above. Keeper value doesn't change any of these calls — none of the adds are keeper-caliber, and none of your droppable bench pieces (Mevis, Ferguson, Shaheed) carry keeper equity worth protecting over a roster upgrade.
+
+Sources:
+- 2026 NFL Bye Weeks for Fantasy Football
+  https://ftnfantasy.com/nfl/2026-nfl-bye-weeks-for-fantasy-football
+- Isaiah Davis: Must-Add Waiver Wire Pickup for Week 4 Fantasy Football? - NFL News
+  https://www.rotoballer.com/player-news/isaiah-davis-could-get-involved-in-jets-backfield/1954050
+- Isaiah Davis - New York Jets Running Back - ESPN
+  https://www.espn.com/nfl/player/_/id/4695404/isaiah-davis
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-01 09:00:00 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 112.9
+Best legal lineup projects 113.5  (+0.6)
+
+  Bhayshul Tuten            FLEX -> RB     11.8
+  KC Concepcion             FLEX -> WR      7.6
+  Omarion Hampton             RB -> FLEX   10.1
+  Kyle Monangai               BE -> FLEX    7.7
+  Rashid Shaheed              WR -> BE      7.1
+
+Holding: +0.6 is under the 2.0 point bar.
+Watch: Justin Jefferson would start and is listed QUESTIONABLE
+Watch: Bucky Irving would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-01 18:00:00 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 112.8
+Best legal lineup projects 114.0  (+1.2)
+
+  Bhayshul Tuten            FLEX -> RB     11.8
+  KC Concepcion             FLEX -> WR      7.6
+  Omarion Hampton             RB -> FLEX   10.0
+  Isaiah Davis                BE -> FLEX    8.3
+  Rashid Shaheed              WR -> BE      7.1
+
+Holding: +1.2 is under the 2.0 point bar.
+Watch: Justin Jefferson would start and is listed QUESTIONABLE
+Watch: Bucky Irving would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-01 19:51:32 lineup.py --live ---
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 243, in <module>
+    main(live="--live" in sys.argv, force="--force" in sys.argv)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 187, in main
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-02 06:00:02 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed after 1291s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Fri Oct 02, week 4
+
+Your FAAB: $78 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Thu 3:15 AM, Thu 3:15 AM
+Bids priced off 43 claims in this league: median $3, top of market $37
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Jets D/ST            D/ST  NYJ      11%       -   6.7  +0.4 +10.7      +0  $3-6    Bills D/ST
+Commanders D/ST      D/ST  WSH       3%       -   6.3  +0.0 +10.3      +0  $3-6    Bills D/ST
+Ryan Flournoy        WR    DAL       4%   76→66   7.7  +0.7  +0.7      +0  $0-3    Isaiah Davis
+DeMario Douglas      WR    NE        2%   47→59   7.4  +0.4  +0.4      +0  $0-3    Isaiah Davis
+Eddy Pineiro         K     SF       79%     0→0   9.6  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Sam Darnold          QB    SEA      51% out→100  16.1  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Pat Freiermuth       TE    PIT      20%   66→60   6.4  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Keaton Mitchell      RB    LAC      18%   25→38   4.2  +0.0  +0.0      +0  $0-1    Isaiah Davis
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-02 09:00:02 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 112.8
+Best legal lineup projects 112.8  (+0.0)
+
+  Bhayshul Tuten            FLEX -> RB     11.8
+  Omarion Hampton             RB -> FLEX   10.0
+
+Holding: +0.0 is under the 2.0 point bar.
+
+Locked, can't be moved: Harold Fannin Jr., KC Concepcion
+Watch: Justin Jefferson would start and is listed QUESTIONABLE
+Watch: Bucky Irving would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-02 17:39:13 check.py ---
+Connected: Crack Baby Athletic Association (2026), week 4
+Your team: Champion Of Obamacare (team id 13)
+
+Lineup slots: QB x1, RB x2, WR x2, TE x1, FLEX x2, D/ST x1, K x1, BE x6, IR x1
+Teams: 14   Points per reception: 0.5   Keepers: 1
+FAAB: $78 left of $100 (minimum bid $0)
+Waivers process on: ['FRIDAY', 'THURSDAY', 'SATURDAY', 'MONDAY', 'WEDNESDAY', 'SUNDAY'] (hour setting: 11)
+
+SLOT  PLAYER                   POS   OPP  KICKOFF      STATUS           PROJ  LOCKED
+QB    Bryce Young              QB    DET  Sun 8:20PM   ACTIVE           20.2  
+RB    Bucky Irving             RB    GB   Sun 1:00PM   ACTIVE           14.7  
+RB    Omarion Hampton          RB    SEA  Sun 4:25PM   ACTIVE           10.0  
+WR    Rashid Shaheed           WR    LAC  Sun 4:25PM   ACTIVE            7.4  
+WR    Justin Jefferson         WR    MIA  Sun 4:05PM   OUT               0.0  
+TE    Harold Fannin Jr.        TE    PIT  Thu 8:15PM   ACTIVE            8.9  yes
+FLEX  Bhayshul Tuten           RB    CIN  Sun 1:00PM   ACTIVE           11.8  
+FLEX  KC Concepcion            WR    PIT  Thu 8:15PM   ACTIVE            7.6  yes
+D/ST  Bills D/ST               D/ST  NE   Sun 1:00PM   ACTIVE            6.4  
+K     Jason Myers              K     LAC  Sun 4:25PM   ACTIVE           10.1  
+BE    C.J. Stroud              QB    DAL  Sun 1:00PM   ACTIVE           16.8  
+BE    Isaiah Davis             RB    CHI  Sun 1:00PM   ACTIVE            8.3  
+BE    Kyle Monangai            RB    NYJ  Sun 1:00PM   ACTIVE            7.6  
+BE    Jake Ferguson            TE    HOU  Sun 1:00PM   ACTIVE            6.4  
+BE    Marvin Harrison Jr.      WR    NYG  Sun 1:00PM   ACTIVE            5.3  
+BE    Broncos D/ST             D/ST  SF   Sun 4:25PM   ACTIVE            3.2  
+
+Projections found for 16 of 16 players with a game this week
+Heads-up: Justin Jefferson is starting but listed OUT
+exit 0
+
+--- 2026-10-03 06:16:22 waivers.py --email --jev-shadow ---
+(Jev call failed for Malik Willis: TypeSafeAPITimeoutError)
+(shadow ranked by jev (jev-1.13.0), 1 of 20 calls failed; logged 19 judgments)
+(Claude call failed after 3289s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Sat Oct 03, week 4
+
+Your FAAB: $78 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Thu 3:15 AM, Thu 3:15 AM
+Bids priced off 43 claims in this league: median $3, top of market $37
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Ryan Flournoy        WR    DAL       4%  66→out   7.7  +2.4  +2.4      +0  $0-3    -
+DeMario Douglas      WR    NE        2%  59→out   7.4  +2.1  +2.1      +0  $0-3    -
+Eddy Pineiro         K     SF       79%   0→out   9.6  +0.0  -0.0      +0  $0-1    -
+Harrison Mevis       K     LAR      71%   0→out   8.8  +0.0  -0.0      +0  $0-1    -
+Eagles D/ST          D/ST  PHI      66%       -   4.0  +0.0  +0.0      +0  $0-1    -
+Sam Darnold          QB    SEA      52% 100→out  17.0  +0.0  +0.0      +0  $0-1    -
+Buccaneers D/ST      D/ST  TB       21%       -   5.9  +0.0  +0.0      +0  $0-1    -
+Pat Freiermuth       TE    PIT      20%   60→75   6.4  +0.0  +0.0      +0  $0-1    -
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-03 09:00:05 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 97.1
+Best legal lineup projects 102.4  (+5.3)
+
+  Bhayshul Tuten            FLEX -> RB     11.8
+  Marvin Harrison Jr.         BE -> WR      5.3
+  Omarion Hampton             RB -> FLEX   10.0
+  Justin Jefferson            WR -> IR      0.0  [OUT]
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+
+Locked, can't be moved: Harold Fannin Jr., KC Concepcion
+
+
+Applied and confirmed on ESPN: 4 move(s).
+exit 0
+
+--- 2026-10-04 06:10:30 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+Waiver report — Sun Oct 04, week 4
+
+Your FAAB: $78 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Thu 3:15 AM, Thu 3:15 AM
+Bids priced off 43 claims in this league: median $3, top of market $37
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      74% 100→out  12.5  +0.0  +4.8     +26  $0-3    -
+Ryan Flournoy        WR    DAL       5%  66→out   7.7  +2.4  +2.4      +0  $0-3    -
+DeMario Douglas      WR    NE        2%  59→out   7.4  +2.1  +2.1      +0  $0-3    -
+Eddy Pineiro         K     SF       79%   0→out   9.6  +0.0  -0.0      +0  $0-1    -
+Harrison Mevis       K     LAR      70%   0→out   8.8  +0.0  -0.0      +0  $0-1    -
+Eagles D/ST          D/ST  PHI      65%       -   4.1  +0.0  +0.0      +0  $0-1    -
+Sam Darnold          QB    SEA      52% 100→out  17.0  +0.0  +0.0      +0  $0-1    -
+Jaguars D/ST         D/ST  JAX      28%       -   5.1  +0.0  +0.0      +0  $0-1    -
+
+------------------------------------------------------------
+
+Claim Herbert (QB) at $1–2 — current data shows no 2026 in-season absence; he’s the clear weekly starter with "Not list[ed] on the latest injury report", and he carries the only positive rest-of-season lineup gain in the data (26 pts) versus 0 for every other add. He's pure QB3 depth/keeper stash, not a Week 4 start. No position-matched drop exists among the three candidates, so pull the cheapest, Kyle Monangai — you already have four backs (Hampton, Irving, Tuten, Davis) and don't need a fifth.
+
+Claim Ryan Flournoy (WR) at $2, the top of his suggested range. He's logged nine catches for 67 yards on 18 targets across three games while playing at least 66% of Dallas' offensive snaps in every game this season, and this week he draws "a great matchup against the Texans, who have allowed the third-most FPTS to WRs." That volume-over-production profile is exactly the kind of buy-low the lineup_gain_this_week (2.4) reflects. Drop Isaiah Davis — one-game rookie sample, same RB logjam issue as above.
+
+Skip DeMario Douglas: lower week gain (2.1) and shakier snap share (62/47/59) than Flournoy's steadier role — don't spend on both when roster/FAAB is tight. Skip Pineiro, Mevis, Darnold, Eagles/Jaguars D/ST — every one shows 0 projected lineup gain this week and rest of season; no reason to touch FAAB there with a 14-team thin wire.
+
+Sources:
+- Justin Herbert Latest Injury Status and Updates (2026)
+  https://fantasyfootballcalculator.com/players/justin-herbert/injury
+- Ryan Flournoy Week 4 Outlook for Fantasy Football (2026)
+  https://www.rotoballer.com/player-news/ryan-flournoy-remains-hard-to-trust-in-week-4/1957034
+- Fantasy Football WR Sleepers for Week 4: Five Wide Receivers to Consider
+  https://dknetwork.draftkings.com/2026/10/03/fantasy-football-wr-sleepers-for-week-4-five-wide-receivers-to-consider
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-04 08:17:32 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 102.3
+Best legal lineup projects 102.3  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Harold Fannin Jr., KC Concepcion
+exit 0
+
+--- 2026-10-04 09:09:08 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 102.3
+Best legal lineup projects 102.3  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Harold Fannin Jr., KC Concepcion
+exit 0
+
+--- 2026-10-04 11:41:08 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 104.8
+Best legal lineup projects 104.8  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Harold Fannin Jr., KC Concepcion
+exit 0
+
+--- 2026-10-04 12:45:09 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 104.8
+Best legal lineup projects 104.8  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Harold Fannin Jr., KC Concepcion
+exit 0
+
+--- 2026-10-04 15:11:06 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 104.8
+Best legal lineup projects 104.8  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Jake Ferguson, C.J. Stroud, Bills D/ST, Isaiah Davis, Ryan Flournoy
+exit 0
+
+--- 2026-10-04 16:13:47 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 104.6
+Best legal lineup projects 104.6  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Jake Ferguson, C.J. Stroud, Bills D/ST, Isaiah Davis, Ryan Flournoy
+exit 0
+
+--- 2026-10-04 19:57:17 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 104.6
+Best legal lineup projects 104.6  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, C.J. Stroud, Bills D/ST, Jason Myers, Isaiah Davis, Ryan Flournoy
+exit 0
+
+--- 2026-10-05 06:11:34 waivers.py --email --jev-shadow ---
+(Jev call failed for Calvin Ridley: TypeSafeAPITimeoutError)
+(shadow ranked by jev (jev-1.13.0), 1 of 20 calls failed; logged 19 judgments)
+Waiver report — Mon Oct 05, week 4
+
+Your FAAB: $78 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Thu 3:15 AM, Thu 3:15 AM
+Bids priced off 43 claims in this league: median $3, top of market $37
+
+Lineup holes in the next 4 weeks:
+  week 5: QB short by 1 — available and playing that week: Justin Herbert (LAC), Malik Willis (MIA)
+  week 7: RB short by 1 — available and playing that week: Chris Brooks (GB), Tyrone Tracy Jr. (NYG)
+  week 7: FLEX short by 1 — available and playing that week: Pat Freiermuth (PIT), Gunnar Helm (TEN)
+  week 7: D/ST short by 1 — available and playing that week: Eagles D/ST (PHI), Giants D/ST (NYG)
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eagles D/ST          D/ST  PHI      64%       -   4.0  -2.2 +12.4      +0  $0-3    Bills D/ST
+Jets D/ST            D/ST  NYJ      12%       -   5.7  -0.5  +8.1      +0  $0-3    Bills D/ST
+Eddy Pineiro         K     SF       78%   0→out   9.6  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Justin Herbert       QB    LAC      73% 100→out  12.5  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Sam Darnold          QB    SEA      53% 100→out  17.0  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Rashod Bateman       WR    BAL      24%  88→out   6.8  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Pat Freiermuth       TE    PIT      20%   60→75   6.4  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Jerry Jeudy          WR    CLE      15%   51→38   3.7  +0.0  +0.0      +0  $0-1    Isaiah Davis
+
+------------------------------------------------------------
+
+**1. Justin Herbert (QB)** — bid 1 (top of 0‑1 range). This directly fills the week 5 QB short by 1 hole; claim him now rather than scrambling on Sunday morning of week 5. Drop **Isaiah Davis** — he's the cheapest drop per the data and has no 2025 track record beyond one game, so losing him costs nothing at RB depth.
+
+**2. Eagles D/ST** — bid 3 (top of 0‑3 range). Unlike other free agents here, this one shows a real positive signal: lineup_gain_next_5_weeks_byes_included: 12.4, meaning it beats your current Bills D/ST over the Bills' coming bye stretch, and it also covers the week 7 D/ST short by 1 hole. This week's own projection is slightly negative, so don't start it yet — just bank it. Drop **Bills D/ST** (the listed room-maker) once Eagles clears waivers; keep Bills in the interim since they're still your better week‑4 start.
+
+**3. Pat Freiermuth (TE)** — bid 1 (top of 0‑1). Fills the week 7 FLEX short by 1 hole, and unlike Jeudy or Bateman his snap share is 73, 66, 60, 75 — steady, not falling, so the role looks safe through week 7. Drop **Jake Ferguson** instead of Isaiah Davis (already used above) — he's buried behind Fannin on your own roster and has no realistic path to starts.
+
+Skip Darnold, Bateman, Jeudy, Pineiro — no lineup hole, no gain, no role trend worth a claim.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-05 09:00:28 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 104.6
+Best legal lineup projects 104.6  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Bryce Young, C.J. Stroud, Bills D/ST, Jason Myers, Isaiah Davis, Ryan Flournoy
+exit 0
+
+--- 2026-10-05 18:00:01 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 104.6
+Best legal lineup projects 104.6  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Bryce Young, C.J. Stroud, Bills D/ST, Jason Myers, Isaiah Davis, Ryan Flournoy
+exit 0
+
+--- 2026-10-05 19:45:05 lineup.py --live ---
+Week 4 lineup
+
+Current starters project 104.6
+Best legal lineup projects 104.6  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Bryce Young, C.J. Stroud, Bills D/ST, Jason Myers, Isaiah Davis, Ryan Flournoy
+exit 0
+
+--- 2026-10-06 06:00:08 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed after 3305s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Tue Oct 06, week 5
+
+Your FAAB: $78 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Thu 3:15 AM, Thu 3:15 AM
+Bids priced off 43 claims in this league: median $3, top of market $37
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      73% 100→100  13.9  +0.0  +4.8     +26  $0-3    Isaiah Davis
+Jacoby Brissett      QB    ARI      10% 100→100  18.8  +3.5  +3.5      +0  $0-3    Isaiah Davis
+Jets D/ST            D/ST  NYJ      11%       -   7.7  +1.4  +1.4      +0  $0-3    Bills D/ST
+Commanders D/ST      D/ST  WSH       4%       -   7.4  +1.2  +1.2      +0  $0-3    Bills D/ST
+Eddy Pineiro         K     SF       78%     0→0   8.9  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Harrison Mevis       K     LAR      70%     0→0   9.7  +0.6  -0.0      +0  $0-3    Jason Myers
+Rashod Bateman       WR    BAL      24%   88→47   5.6  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Pat Freiermuth       TE    PIT      20%   60→75   6.7  +0.0  +0.0      +0  $0-1    Isaiah Davis
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-06 09:03:53 lineup.py --live ---
+Week 5 lineup
+
+Current starters project 83.6
+Best legal lineup projects 105.1  (+21.4)
+
+  C.J. Stroud                 BE -> QB     15.4
+  KC Concepcion             FLEX -> WR      8.8
+  Kyle Monangai               BE -> FLEX    9.9  [QUESTIONABLE]
+  Broncos D/ST                BE -> D/ST    6.2
+  Bryce Young                 QB -> BE      0.0
+  Bills D/ST                D/ST -> BE      3.2
+  Ryan Flournoy               WR -> BE      6.8
+Watch: Kyle Monangai would start and is listed QUESTIONABLE
+
+
+Applied and confirmed on ESPN: 7 move(s).
+exit 0
+
+--- 2026-10-07 06:11:05 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed after 3s: ConnectionError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer')))
+Waiver report — Wed Oct 07, week 5
+
+Your FAAB: $77 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Wed 3:28 AM, Wed 3:28 AM
+Bids priced off 54 claims in this league: median $3, top of market $38
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      68% 100→100  13.9  +0.0  +4.8     +26  $1-3    Isaiah Davis
+Deshaun Watson       QB    CLE      12%  99→100  16.9  +1.5  +1.5      +0  $1-3    Isaiah Davis
+Tyjae Spears         RB    TEN      38%   47→36   5.5  +0.0  +0.5      +0  $1-3    Isaiah Davis
+Eddy Pineiro         K     SF       76%     0→0   8.9  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Harrison Mevis       K     LAR      70%     0→0   9.7  +0.6  -0.0      +0  $1-3    Jason Myers
+Dalton Schultz       TE    HOU      51%   54→64   6.1  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Quentin Johnston     WR    LAC      49%   87→75   6.0  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Rashod Bateman       WR    BAL      22%   88→47   4.6  +0.0  +0.0      +0  $0-1    Isaiah Davis
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-07 09:13:15 lineup.py --live ---
+Week 5 lineup
+
+Current starters project 107.4
+Best legal lineup projects 107.4  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Kyle Monangai would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-08 06:10:43 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed after 1693s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Thu Oct 08, week 5
+
+Your FAAB: $77 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Wed 3:28 AM, Wed 3:28 AM
+Bids priced off 54 claims in this league: median $3, top of market $38
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      65% 100→100  13.9  +0.0  +5.2     +29  $1-3    Isaiah Davis
+C.J. Stroud          QB    HOU      41% 100→100  15.4  +0.0  +0.5      +3  $1-3    Isaiah Davis
+Tyjae Spears         RB    TEN      37%   47→36   5.5  +0.0  +0.5      +0  $1-3    Isaiah Davis
+Eddy Pineiro         K     SF       74%     0→0   8.9  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Harrison Mevis       K     LAR      71%     0→0   9.7  +0.6  -0.0      +0  $1-3    Jason Myers
+Dalton Schultz       TE    HOU      47%   54→64   6.1  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Quentin Johnston     WR    LAC      46%   87→75   6.0  +0.0  +0.0      +0  $0-1    Isaiah Davis
+Brenton Strange      TE    JAX      24%   77→87   7.8  +0.0  +0.0      +0  $0-1    Isaiah Davis
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-08 09:00:04 lineup.py --live ---
+Week 5 lineup
+
+Current starters project 107.4
+Best legal lineup projects 107.4  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Kyle Monangai would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-08 18:00:01 lineup.py --live ---
+Week 5 lineup
+
+Current starters project 107.4
+Best legal lineup projects 107.4  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Kyle Monangai would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-08 19:46:28 lineup.py --live ---
+waited 120s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 311, in <module>
+    main(live="--live" in sys.argv, force="--force" in sys.argv, near_kickoff="--near-kickoff" in sys.argv)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 254, in main
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-09 06:03:24 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+Waiver report — Fri Oct 09, week 5
+
+Your FAAB: $77 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Wed 3:28 AM, Wed 3:28 AM
+Bids priced off 54 claims in this league: median $3, top of market $38
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Tyjae Spears         RB    TEN      35%   47→36   5.5  +0.0  +6.8      +0  $1-3    Isaiah Davis
+Pat Freiermuth       TE    PIT      20%   60→75   6.6  +0.0  +5.9      +0  $1-3    Isaiah Davis
+Justice Hill         RB    BAL      10%   33→38   3.2  +0.0  +5.6      +0  $1-3    Isaiah Davis
+Gunnar Helm          TE    TEN       3%   82→72   4.6  +0.0  +5.4      +0  $1-3    Isaiah Davis
+Jerry Jeudy          WR    CLE      13%   51→38   3.8  +0.0  +5.3      +0  $1-3    Isaiah Davis
+Kayshon Boutte       WR    HOU       7%   69→62   3.9  +0.0  +5.3      +0  $1-3    Isaiah Davis
+Justin Herbert       QB    LAC      62% 100→100  13.9  +0.0  +5.2     +29  $1-3    Ryan Flournoy
+C.J. Stroud          QB    HOU      42% 100→100  15.4  +0.0  +0.5      +3  $1-3    Ryan Flournoy
+
+------------------------------------------------------------
+
+**Claim 1 — Justin Herbert, QB.** Data shows a rest-of-season lineup gain of 29, by far the largest number in the available list (next is 3). That's a real season-long upgrade over Watson/Young, not just bye-week fill. Recent news confirms Watson is active and not listed on the latest injury report, so this isn't an injury-driven move — it's the projection gap alone. Bid 4 (above the suggested 1–3) since the gain is 5–10x larger than any other target and faab is thin league-wide. Drop Ryan Flournoy (listed drop, lowest-value bench piece).
+
+**Claim 2 — Tyjae Spears, RB.** Next-5-week gain of 6.8, the best number among all available skill players. News confirms he's a No. 2 role behind Tony Pollard in Tennessee's backfield, consistent with the steady 36–50% snap share in the data — not a breakout, just a stable change-of-pace role worth the depth. Bid 2 (mid-range). Drop Isaiah Davis, the suggested, cheapest drop.
+
+**Claim 3 — Pat Freiermuth, TE.** Next-5 gain of 5.9, best of the two TE options (Helm is 5.4). Snap share has held 60–75% with a steady trend, matching the data-driven case for an upgrade. Don't use Isaiah Davis here — he's already spent on Spears. Instead drop Jake Ferguson, since he's the same position and is the lowest-producing bench piece by season projection outside the keeper-locked spots. Bid 2.
+
+**Skip:** Justice Hill, Gunnar Helm, Jerry Jeudy (falling snaps), Boutte, and Stroud — all show smaller next-5 gains and zero rest-of-season gain, no edge over what's already rostered.
+
+Sources:
+- Deshaun Watson Latest Injury Status and Updates (2026)
+  https://fantasyfootballcalculator.com/players/deshaun-watson/injury
+- Tyjae Spears - NFL News, Rumors, & Updates
+  https://www.foxsports.com/nfl/tyjae-spears-player
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-09 09:12:54 lineup.py --live ---
+waited 120s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 311, in <module>
+    main(live="--live" in sys.argv, force="--force" in sys.argv, near_kickoff="--near-kickoff" in sys.argv)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 254, in main
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-10 06:13:05 waivers.py --email --jev-shadow ---
+waited 120s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/waivers.py", line 742, in <module>
+    main(email="--email" in sys.argv, ranker=ranker_from(sys.argv))
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/waivers.py", line 730, in main
+    context = gather(espn, ranker)
+  File "/Users/hari/Projects/fantasy_football_bot/waivers.py", line 637, in gather
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-10 09:16:56 lineup.py --live ---
+waited 120s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 311, in <module>
+    main(live="--live" in sys.argv, force="--force" in sys.argv, near_kickoff="--near-kickoff" in sys.argv)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 254, in main
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-11 06:11:45 waivers.py --email --jev-shadow ---
+waited 120s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/waivers.py", line 742, in <module>
+    main(email="--email" in sys.argv, ranker=ranker_from(sys.argv))
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/waivers.py", line 730, in main
+    context = gather(espn, ranker)
+  File "/Users/hari/Projects/fantasy_football_bot/waivers.py", line 637, in gather
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-11 08:27:16 lineup.py --live ---
+waited 120s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 311, in <module>
+    main(live="--live" in sys.argv, force="--force" in sys.argv, near_kickoff="--near-kickoff" in sys.argv)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 254, in main
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-11 11:38:20 lineup.py --live ---
+waited 20s for the network
+Week 5 lineup
+
+Current starters project 105.1
+Best legal lineup projects 113.0  (+7.8)
+
+  Justin Jefferson            IR -> WR     15.1
+  Rashid Shaheed              WR -> FLEX    8.2
+  Isaiah Davis              FLEX -> BE      7.3
+  Kyle Monangai               BE -> IR      0.0  [OUT]
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+
+Locked, can't be moved: Bucky Irving, Bhayshul Tuten, Jake Ferguson, Ryan Flournoy
+
+
+Applied and confirmed on ESPN: 4 move(s).
+exit 0
+
+--- 2026-10-11 12:45:05 lineup.py --live ---
+Week 5 lineup
+
+Current starters project 113.4
+Best legal lineup projects 113.4  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Bucky Irving, Bhayshul Tuten, Jake Ferguson, Ryan Flournoy
+exit 0
+
+--- 2026-10-11 19:47:38 lineup.py --live ---
+waited 10s for the network
+Week 5 lineup
+
+Current starters project 113.4
+Best legal lineup projects 113.4  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Jason Myers, Isaiah Davis, Ryan Flournoy, Jets D/ST, Deshaun Watson
+Watch: KC Concepcion would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-11 19:50:05 lineup.py --live ---
+Week 5 lineup
+
+Current starters project 113.4
+Best legal lineup projects 113.4  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Jason Myers, Isaiah Davis, Ryan Flournoy, Jets D/ST, Deshaun Watson
+Watch: KC Concepcion would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-12 06:12:47 waivers.py --email --jev-shadow ---
+(Jev call failed for Mike Gesicki: TypeSafeAPITimeoutError)
+(shadow ranked by jev (jev-1.13.0), 1 of 20 calls failed; logged 19 judgments)
+(Claude call failed after 3616s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Mon Oct 12, week 5
+
+Your FAAB: $77 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Wed 3:28 AM, Wed 3:28 AM
+Bids priced off 54 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 6: WR short by 1 — available and playing that week: Jerry Jeudy (CLE), Kayshon Boutte (HOU)
+  week 7: RB short by 1 — available and playing that week: Tyjae Spears (TEN), Justice Hill (BAL)
+  week 7: FLEX short by 1 — available and playing that week: Tyjae Spears (TEN), Pat Freiermuth (PIT)
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Eagles D/ST          D/ST  PHI      52%       -   3.8  -3.7  +2.3      +0  $1-3    Jets D/ST
+Harrison Mevis       K     LAR      73%   0→out   9.7  +0.6  -0.0      +0  $1-3    Jason Myers
+Eddy Pineiro         K     SF       71%   0→out   8.9  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Justin Herbert       QB    LAC      60% 100→out  14.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Sam Darnold          QB    SEA      48% 100→out  15.5  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      42%  64→out   6.1  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Tyjae Spears         RB    TEN      34%  36→out   6.6  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Chiefs D/ST          D/ST  KC       34%       -   0.0  +0.0  +0.0      +0  $0-1    Broncos D/ST
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-12 09:15:19 lineup.py --live ---
+Week 5 lineup
+
+Current starters project 113.4
+Best legal lineup projects 113.4  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Jason Myers, Isaiah Davis, Ryan Flournoy, Jets D/ST, Deshaun Watson
+Watch: KC Concepcion would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-12 18:00:01 lineup.py --live ---
+Week 5 lineup
+
+Current starters project 113.4
+Best legal lineup projects 113.4  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Jason Myers, Isaiah Davis, Ryan Flournoy, Jets D/ST, Deshaun Watson
+Watch: KC Concepcion would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-12 19:53:36 lineup.py --live ---
+Week 5 lineup
+
+Current starters project 113.4
+Best legal lineup projects 113.4  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Bhayshul Tuten, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Jason Myers, Isaiah Davis, Ryan Flournoy, Jets D/ST, Deshaun Watson
+Watch: KC Concepcion would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-13 06:05:10 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed; sending the numbers without a write-up)
+Waiver report — Tue Oct 13, week 6
+
+Your FAAB: $77 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $100
+Claims processed: Wed 3:28 AM, Wed 3:28 AM, Wed 3:28 AM
+Bids priced off 54 claims in this league: median $3, top of market $38
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Germie Bernard       WR    PIT       3%   40→92   8.6  +5.8  +5.8      +0  $1-3    Deshaun Watson
+Pat Freiermuth       TE    PIT      20%   75→68   8.2  +5.4  +5.4      +0  $1-3    Deshaun Watson
+Justin Herbert       QB    LAC      60% 100→100  11.5  +0.0  +5.2     +29  $1-3    Deshaun Watson
+Tyjae Spears         RB    TEN      34%   36→54   7.5  +4.7  +5.0      +0  $3-6    Deshaun Watson
+Brenton Strange      TE    JAX      27%   87→81   7.7  +4.9  +4.9      +0  $1-3    Deshaun Watson
+Jerry Jeudy          WR    CLE      12%   38→81   6.9  +4.1  +4.1      +0  $1-3    Deshaun Watson
+Chiefs D/ST          D/ST  KC       34%       -   7.0  +1.5  +2.8      +0  $1-3    Jets D/ST
+Dominic Zvada        K     NYG       4%     0→0  11.3  +2.4  +2.4      +0  $1-3    Deshaun Watson
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-13 09:05:56 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 70.0
+Best legal lineup projects 87.9  (+17.9)
+
+  Omarion Hampton           FLEX -> RB      8.4
+  Marvin Harrison Jr.         BE -> WR      2.8
+  Rashid Shaheed            FLEX -> WR      7.0
+  Jake Ferguson               BE -> FLEX    5.3
+  Carnell Tate                BE -> FLEX    9.7
+  Broncos D/ST                BE -> D/ST    5.5
+  Justin Jefferson            WR -> BE      0.0
+  KC Concepcion               WR -> BE      0.1  [QUESTIONABLE]
+  Jets D/ST                 D/ST -> BE      5.3
+  David Montgomery            RB -> BE      0.0  [DOUBTFUL]
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+
+
+Did NOT end up as asked: Justin Jefferson, Omarion Hampton, Marvin Harrison Jr., KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Jets D/ST, Carnell Tate, David Montgomery
+exit 0
+
+--- 2026-10-14 06:03:54 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed; sending the numbers without a write-up)
+Waiver report — Wed Oct 14, week 6
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $95
+Claims processed: Wed 3:20 AM, Wed 3:20 AM, Wed 3:20 AM
+Bids priced off 70 claims in this league: median $3, top of market $38
+
+PLAYER               POS   TEAM    OWN%   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      56% 100→100  11.5  +0.0  +5.2     +29  $0-3    Deshaun Watson
+Dominic Zvada        K     NYG      21%     0→0  11.3  +2.4  +2.4      +0  $0-3    Deshaun Watson
+DeMario Douglas      WR    NE        6%   46→49   7.5  +2.2  +2.2      +0  $0-3    Deshaun Watson
+Quentin Johnston     WR    LAC      39%  75→out   6.2  +0.9  +1.7      +0  $0-3    Deshaun Watson
+AJ Barner            TE    SEA       7%   90→95   6.7  +1.4  +1.4      +0  $0-3    Deshaun Watson
+Michael Mayer        TE    LV       16%   88→65   6.3  +1.0  +1.0      +0  $0-3    Deshaun Watson
+Chargers D/ST        D/ST  LAC      16%       -   3.4  +0.0  +0.1      +0  $0-3    Jets D/ST
+Jake Bates           K     DET      60%     0→0   0.0  +0.0  +0.0      +0  $0-1    Deshaun Watson
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-14 09:00:01 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 92.5
+Best legal lineup projects 94.7  (+2.2)
+
+  Tyjae Spears                BE -> RB      7.5
+  Omarion Hampton             RB -> FLEX    8.4
+  Jake Ferguson             FLEX -> BE      5.3
+
+
+Applied and confirmed on ESPN: 3 move(s).
+exit 0
+
+--- 2026-10-15 06:14:34 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+Waiver report — Thu Oct 15, week 6
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $95
+Claims processed: Wed 3:20 AM, Thu 3:56 AM, Thu 3:56 AM
+Bids priced off 73 claims in this league: median $3, top of market $38
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      53%   -3.2 100→100  11.5  +0.0  +5.2     +29  $0-3    Marvin Harrison Jr
+Baker Mayfield       QB    TB       28%   -1.2 out→out   0.0  +0.0  +3.6     +20  $0-3    Marvin Harrison Jr
+Quentin Johnston     WR    LAC      37%   -1.8  75→out   6.1  +0.0  +0.8      +0  $0-3    Marvin Harrison Jr
+Chargers D/ST        D/ST  LAC      15%   -0.6       -   3.3  +0.0  +0.1      +0  $0-3    Jets D/ST
+Jake Bates           K     DET      52%   -8.6     0→0   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Harrison Mevis       K     FA       47%  -12.9     0→0   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      36%   -2.8   64→52   5.6  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Travis Hunter        WR    JAX      31%   -0.9     0→8   0.9  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+Skip Travis Hunter, Quentin Johnston, Chargers D/ST, both kickers, and Dalton Schultz — all show 0 rest-of-season lineup gain in the data, and the Hunter search confirms why: Jaguars coach Liam Coen said Hunter was too important to the defense on a day when cornerbacks were both out with injuries, and the staff had plays ready for him on offense but did not want to risk an injury there — he's a CB in fantasy terms right now, not a WR play.
+
+The one real claim: **Justin Herbert**, QB. Data shows lineup_gain_next_5_weeks_byes_included 5.2, lineup_gain_rest_of_season 29 — the only free agent with meaningful, positive rest-of-season lineup gain in the whole list. His season projection (276.1) also tops Bryce Young's (246.9), and 100% snap share across the last five weeks shows no role risk. Bid 3 FAAB (top of the suggested 0–3 range) given the degree of edge — this is a stash/trade-up QB, not urgent, so no need to overbid against deeper-pocketed rivals. Drop Marvin Harrison Jr. as suggested; he's shown 0.0 season production so far and is the correct bench cut.
+
+Everything else (Mayfield, Johnston, both D/STs, both kickers, Schultz, Hunter) carries a 0 rest-of-season gain figure — pass on all of them this week. No lineup_holes_ahead were flagged, so there's no early-claim-for-a-future-bye argument to make. Single claim, modest bid, cheap insurance at QB.
+
+Sources:
+- Did Travis Hunter Play Any Snaps on Offense At All? Jaguars CB’s Snap Count vs. Bengals - Yahoo Sports
+  https://sports.yahoo.com/articles/did-travis-hunter-play-snaps-151921955.html
+- Travis Hunter's Every-Snap Day at Cornerback Lets the Jaguars' Thin Secondary Exhale - Yahoo Sports
+  https://sports.yahoo.com/articles/travis-hunters-every-snap-day-190000873.html
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-15 09:00:04 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 95.1
+Best legal lineup projects 95.1  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Tyjae Spears would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-15 18:00:01 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 93.9
+Best legal lineup projects 93.9  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Tyjae Spears would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-15 19:48:54 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 93.9
+Best legal lineup projects 93.9  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Tyjae Spears would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-16 06:08:24 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed after 1979s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Fri Oct 16, week 6
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $95
+Claims processed: Wed 3:20 AM, Thu 3:56 AM, Thu 3:56 AM
+Bids priced off 73 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 10: D/ST short by 1 — available and playing that week: Chargers D/ST (LAC), Bengals D/ST (CIN)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      50%   -2.9 100→100  11.5  +0.0  +5.2     +29  $0-3    Marvin Harrison Jr
+Baker Mayfield       QB    TB       26%   -1.6 out→out   0.0  +0.0  +3.6     +20  $0-3    Marvin Harrison Jr
+Quentin Johnston     WR    LAC      35%   -1.9  75→out   6.0  +0.0  +0.7      +0  $0-3    Marvin Harrison Jr
+Darius Cooper        WR    PHI      13%   +2.1   90→85   7.6  +0.1  +0.1      +0  $0-3    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      48%   -1.6       -   4.7  +0.0  +0.0      +0  $0-1    Jets D/ST
+Jake Bates           K     DET      45%   -7.0     0→0   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Harrison Mevis       K     FA       36%  -11.0     0→0   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      34%   -2.0   64→52   5.4  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-16 09:00:20 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 93.9
+Best legal lineup projects 93.9  (+0.0)
+
+  Carnell Tate              FLEX -> WR      8.7
+  DeMario Douglas             WR -> FLEX    7.8
+
+Holding: +0.0 is under the 0.5 point bar.
+
+Locked, can't be moved: Rashid Shaheed, Broncos D/ST, Jason Myers
+Watch: Tyjae Spears would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-17 06:12:10 waivers.py --email --jev-shadow ---
+(Jev call failed for Jameis Winston: TypeSafeAPITimeoutError)
+(shadow ranked by jev (jev-1.13.0), 1 of 20 calls failed; logged 19 judgments)
+Waiver report — Sat Oct 17, week 6
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $100, $95
+Claims processed: Wed 3:20 AM, Thu 3:56 AM, Thu 3:56 AM
+Bids priced off 73 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 10: D/ST short by 1 — available and playing that week: Chargers D/ST (LAC), Jaguars D/ST (JAX)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      49%   -1.0 100→out  11.5  +0.0  +5.2     +29  $0-3    Marvin Harrison Jr
+Quentin Johnston     WR    LAC      34%   -0.7 out→out   6.0  +0.0  +0.7      +0  $0-3    Marvin Harrison Jr
+AJ Barner            TE    SEA       8%   +0.0   95→93   6.7  +0.3  +0.3      +0  $0-3    Marvin Harrison Jr
+Jaguars D/ST         D/ST  JAX      63%   +0.5       -   6.1  +0.0  +0.0      +0  $0-1    Jets D/ST
+Eagles D/ST          D/ST  PHI      48%   -0.5       -   4.5  +0.0  +0.0      +0  $0-1    Jets D/ST
+Jake Bates           K     DET      43%   -1.6   0→out   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Sam Darnold          QB    SEA      40%   -0.1 100→100  13.6  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Harrison Mevis       K     FA       34%   -2.2   0→out   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+**Claim: Jaguars D/ST** — bid $1 (within suggested 0-1). This directly fills the week‑10 D/ST hole flagged in your data (short by 1, Jaguars D/ST available and playing that week). Grab it now rather than scrambling on game day, since 14‑team waivers are thin. Drop **Jets D/ST** — that's already the cheapest-cost drop per the data, and Jaguars projects higher in-season (82.2 vs 81.5) with no downside to moving early.
+
+**Skip Justin Herbert**, despite the data showing a 29‑point rest‑of‑season lineup gain. That number looks stale: Herbert is "limited" on the injury report and told reporters the ankle brace probably won't come off this week, and with both starting tackles out for the Chargers, the Chiefs should be able to get home against Herbert in Week 6. Beyond this week, his next seven games are against defenses all ranked 16th or better in dropback EPA allowed. Bryce Young already outprojects him weekly anyway — not worth a bid or the Marvin Harrison Jr. drop.
+
+**Skip AJ Barner.** His snap share is real — he leads Seattle's skill players with an 89% snap share — but production hasn't followed: he got just four targets on 48 routes, dropping his TPRR to 14%. Your data backs this up: only a 0.3 lineup gain this week and 0 rest of season. With Fannin and Ferguson already rostered, this isn't worth FAAB or the Harrison drop.
+
+Keeper value doesn't change any of these calls — none of the drop candidates or targets are keeper-caliber.
+
+Sources:
+- Charger Report
+  https://www.si.com/nfl/chargers/justin-herbert-injury-update-latest-news-los-angeles-chargers
+- Chargers vs. Chiefs Week 6 tracker: Injury updates, predictions, storylines and more
+  https://arrowheadaddict.com/chargers-vs-chiefs-week-6-tracker-injury-updates-predictions-storylines-and-more-01m531sfxfyt
+- Justin Herbert Headlines Fantasy Football Players to Drop in Week 6
+  https://www.si.com/onsi/fantasy/waiver-wire/justin-herbert-headlines-fantasy-football-players-to-drop-in-week-6
+- TNF Touchdown Predictions: The 4 Best NFL TD Bets for Broncos vs. Seahawks
+  https://www.hardrock.bet/news/tnf-touchdown-predictions-the-4-best-nfl-td-bets-for-thursday-night-broncos-vs-seahawks/
+- NFL Box Scores Thursday Night Football: Snaps, Routes & Usage Breakdown
+  https://rotowire.com/football/article/nfl-box-score-breakdown-seahawks-broncos-recap-usage-stats-tnf-141447
+
+Bids are suggestions only. Place claims yourself in ESPN.
+(email failed: SMTPServerDisconnected: Connection unexpectedly closed: The read operation timed out)
+exit 0
+
+--- 2026-10-17 09:04:21 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 92.1
+Best legal lineup projects 92.3  (+0.2)
+
+  Carnell Tate              FLEX -> WR      8.7
+  KC Concepcion               BE -> FLEX    6.4
+  DeMario Douglas             WR -> BE      6.2
+
+Holding: +0.2 is under the 0.5 point bar.
+
+Locked, can't be moved: Rashid Shaheed, Broncos D/ST, Jason Myers
+Watch: Tyjae Spears would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-18 06:11:42 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed after 3273s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Sun Oct 18, week 6
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $95
+Claims processed: Thu 3:56 AM, Thu 3:56 AM, Sun 3:49 AM
+Bids priced off 74 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 10: D/ST short by 1 — available and playing that week: Lions D/ST (DET), Chargers D/ST (LAC)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      48%   -0.7 100→out  11.5  +0.0  +5.2     +29  $0-3    Marvin Harrison Jr
+Quentin Johnston     WR    LAC      34%   -0.5 out→out   6.0  +0.0  +0.7      +0  $0-3    Marvin Harrison Jr
+AJ Barner            TE    SEA       8%   +0.0   95→93   6.7  +0.3  +0.3      +0  $0-3    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      47%   -0.5       -   4.5  +0.0  +0.0      +0  $0-1    Jets D/ST
+Jake Bates           K     DET      42%   -1.3   0→out   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Sam Darnold          QB    SEA      40%   -0.0 100→100  13.6  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Harrison Mevis       K     FA       32%   -1.7   0→out   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      32%   -0.6  52→out   5.4  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+(email failed: SMTPServerDisconnected: Connection unexpectedly closed: [Errno 54] Connection reset by peer)
+exit 0
+
+--- 2026-10-18 08:24:22 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 92.1
+Best legal lineup projects 92.3  (+0.2)
+
+  Tyjae Spears              FLEX -> RB      7.4  [QUESTIONABLE]
+  Carnell Tate              FLEX -> WR      8.7
+  Omarion Hampton             RB -> FLEX    8.3
+  KC Concepcion               BE -> FLEX    6.4
+  DeMario Douglas             WR -> BE      6.2
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+
+Locked, can't be moved: Rashid Shaheed, Broncos D/ST, Jason Myers
+Watch: Tyjae Spears would start and is listed QUESTIONABLE
+
+
+Applied and confirmed on ESPN: 5 move(s).
+exit 0
+
+--- 2026-10-18 09:04:23 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 92.3
+Best legal lineup projects 92.3  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Rashid Shaheed, Broncos D/ST, Jason Myers
+Watch: Tyjae Spears would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-18 11:38:54 lineup.py --live ---
+waited 120s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 315, in <module>
+    main(live="--live" in sys.argv, force="--force" in sys.argv, near_kickoff="--near-kickoff" in sys.argv)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 258, in main
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-18 16:23:31 lineup.py --live ---
+waited 120s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 315, in <module>
+    main(live="--live" in sys.argv, force="--force" in sys.argv, near_kickoff="--near-kickoff" in sys.argv)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 258, in main
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-18 19:57:53 lineup.py --live ---
+Week 6 lineup
+
+Current starters project 91.6
+Best legal lineup projects 91.6  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Omarion Hampton, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Broncos D/ST, Bryce Young, Jason Myers, Jets D/ST, Carnell Tate, David Montgomery, Tyjae Spears, DeMario Douglas
+exit 0
+
+--- 2026-10-19 06:02:57 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed after 2253s: ConnectionError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer')))
+Waiver report — Mon Oct 19, week 6
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $95
+Claims processed: Thu 3:56 AM, Thu 3:56 AM, Sun 3:49 AM
+Bids priced off 74 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 7: RB short by 1 — available and playing that week: Justice Hill (BAL), Jaylen Wright (MIA)
+  week 9: WR short by 1 — available and playing that week: Jerry Jeudy (CLE), Kayshon Boutte (HOU)
+  week 9: FLEX short by 1 — available and playing that week: Justice Hill (BAL), Jerry Jeudy (CLE)
+  week 10: RB short by 1 — available and playing that week: Justice Hill (BAL), Ray Davis (BUF)
+  week 10: D/ST short by 1 — available and playing that week: Lions D/ST (DET), Chargers D/ST (LAC)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Justin Herbert       QB    LAC      47%   -1.0 100→out  11.5  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      46%   -0.6       -   4.5  +0.0  +0.0      +0  $0-1    Jets D/ST
+Sam Darnold          QB    SEA      40%   -0.0 100→100  13.8  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Jake Bates           K     DET      39%   -2.7   0→out   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      32%   -0.2  52→out   5.7  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Travis Hunter        WR    JAX      29%   -0.1   8→out   0.9  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Harrison Mevis       K     FA       28%   -3.8   0→out   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Buccaneers D/ST      D/ST  TB       27%   +0.8       -   5.8  +0.0  +0.0      +0  $0-1    Jets D/ST
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-19 09:12:02 lineup.py --live ---
+waited 10s for the network
+Week 6 lineup
+
+Current starters project 91.6
+Best legal lineup projects 91.6  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Omarion Hampton, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Jake Ferguson, Broncos D/ST, Bryce Young, Jason Myers, Jets D/ST, Carnell Tate, David Montgomery, Tyjae Spears, DeMario Douglas
+exit 0
+
+--- 2026-10-20 09:03:35 lineup.py --live ---
+waited 10s for the network
+Week 7 lineup
+
+Current starters project 81.1
+Best legal lineup projects 99.5  (+18.4)
+
+  Tyjae Spears              FLEX -> RB      5.5
+  DeMario Douglas             BE -> WR      8.7
+  Justin Jefferson            BE -> FLEX   15.4
+  Jets D/ST                   BE -> D/ST    7.3
+  Omarion Hampton             RB -> BE      0.0
+  Rashid Shaheed              WR -> BE      6.6
+  Broncos D/ST              D/ST -> BE      6.3
+
+
+Applied and confirmed on ESPN: 7 move(s).
+exit 0
+
+--- 2026-10-20 09:03:35 waivers.py --email --jev-shadow ---
+waited 10s for the network
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed after 3s: ConnectionError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer')))
+Waiver report — Tue Oct 20, week 7
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $95
+Claims processed: Thu 3:56 AM, Thu 3:56 AM, Sun 3:49 AM
+Bids priced off 74 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: FLEX short by 1 — available and playing that week: Makai Lemon (PHI), Justice Hill (BAL)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Harrison Butker (KC)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      25%   -0.1     0→0   9.0  +0.0  +8.7      +0  $0-3    Marvin Harrison Jr
+Harrison Butker      K     KC       61%   -0.1   out→0  10.7  +0.0  +8.5      +0  $0-3    Jason Myers
+Makai Lemon          WR    PHI      42%   -0.1   81→81   5.0  +0.0  +7.4      +0  $3-6    Marvin Harrison Jr
+Justin Herbert       QB    LAC      47%   -0.1 100→100   0.0  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Justice Hill         RB    BAL       9%   -0.0   46→42   5.2  +0.0  +6.0      +0  $0-3    Marvin Harrison Jr
+Dalton Schultz       TE    HOU      32%   -0.1   52→40   6.7  +0.1  +5.8      +0  $0-3    Marvin Harrison Jr
+Kayshon Boutte       WR    HOU       5%   -0.0   59→41   2.5  +0.0  +5.7      +0  $0-3    Marvin Harrison Jr
+Mike Gesicki         TE    CIN      15%   -0.1  45→out   5.8  +0.0  +5.2      +0  $0-3    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-21 06:01:20 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.13.0); logged 20 judgments)
+(Claude call failed after 4035s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Wed Oct 21, week 7
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $95
+Claims processed: Wed 3:22 AM, Wed 3:22 AM, Wed 3:22 AM
+Bids priced off 87 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Harrison Butker (KC)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      25%   -0.3     0→0   9.0  +0.0  +8.7      +0  $0-3    Marvin Harrison Jr
+Cam Little           K     JAX      78%   -8.6     0→0   0.0  +0.0  +8.5      +0  $0-3    Marvin Harrison Jr
+Justin Herbert       QB    LAC      44%   -2.8 100→100   0.0  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Baker Mayfield       QB    TB       25%   +0.2 out→out  15.1  +0.0  +3.6     +20  $0-3    Marvin Harrison Jr
+Quentin Johnston     WR    LAC      32%   -1.6  out→82   0.0  +0.0  +1.0      +0  $0-3    Marvin Harrison Jr
+Lions D/ST           D/ST  DET      24%   -0.5       -   4.5  -0.9  +0.2      +0  $0-3    Jets D/ST
+MarShawn Lloyd       RB    GB       62%  -12.5   44→40   2.7  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Brenton Strange      TE    JAX      41%   -2.8   81→76   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-21 09:13:28 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 99.5
+Best legal lineup projects 106.6  (+7.0)
+
+  David Montgomery            BE -> RB     12.5  [QUESTIONABLE]
+  Tyjae Spears                RB -> BE      5.5
+Watch: David Montgomery would start and is listed QUESTIONABLE
+
+
+Applied and confirmed on ESPN: 2 move(s).
+exit 0
+
+--- 2026-10-22 06:05:46 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 926s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Thu Oct 22, week 7
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 3:22 AM, Wed 3:22 AM, Thu 3:52 AM
+Bids priced off 88 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Cam Little (JAX)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      25%   -0.3     0→0   9.0  +0.0  +8.7      +0  $0-3    Marvin Harrison Jr
+Cam Little           K     JAX      70%   -7.7     0→0   0.0  +0.0  +8.5      +0  $0-3    Marvin Harrison Jr
+Justin Herbert       QB    LAC      42%   -2.1 100→100   0.0  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Baker Mayfield       QB    TB       25%   +0.4 out→out  15.1  +0.0  +3.6     +20  $0-3    Marvin Harrison Jr
+Quentin Johnston     WR    LAC      31%   -1.2  out→82   0.0  +0.0  +1.0      +0  $0-3    Marvin Harrison Jr
+MarShawn Lloyd       RB    GB       55%   -7.7   44→40   2.7  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Brenton Strange      TE    JAX      39%   -2.0   81→76   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Makai Lemon          WR    PHI      38%   -1.7   81→81   5.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-22 09:12:52 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 94.1
+Best legal lineup projects 99.5  (+5.5)
+
+  Tyjae Spears                BE -> RB      5.5
+  David Montgomery            RB -> BE      0.0  [QUESTIONABLE]
+Watch: Justin Jefferson would start and is listed QUESTIONABLE
+Watch: Bucky Irving would start and is listed QUESTIONABLE
+Watch: KC Concepcion would start and is listed QUESTIONABLE
+
+
+Did NOT end up as asked: David Montgomery, Tyjae Spears
+exit 0
+
+--- 2026-10-22 18:00:02 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 99.4
+Best legal lineup projects 99.4  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Bucky Irving would start and is listed QUESTIONABLE
+Watch: KC Concepcion would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-22 19:45:49 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 99.4
+Best legal lineup projects 99.4  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Bucky Irving would start and is listed QUESTIONABLE
+Watch: KC Concepcion would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-23 06:07:46 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 2547s: ConnectionError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer')))
+Waiver report — Fri Oct 23, week 7
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 3:22 AM, Wed 3:22 AM, Thu 3:52 AM
+Bids priced off 88 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: WR short by 1 — available and playing that week: Quentin Johnston (LAC), Makai Lemon (PHI)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Cam Little (JAX)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      25%   -0.0     0→0   9.0  +0.0  +8.7      +0  $0-3    Marvin Harrison Jr
+Cam Little           K     JAX      64%   -5.9     0→0   0.0  +0.0  +8.5      +0  $0-3    Marvin Harrison Jr
+Justin Herbert       QB    LAC      40%   -2.0 100→100   0.0  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Baker Mayfield       QB    TB       25%   +0.1 out→out  15.1  +0.0  +3.6     +20  $0-3    Marvin Harrison Jr
+Bam Knight           RB    ARI       5%   +4.0    8→44   6.2  +0.8  +0.8      +0  $0-3    Marvin Harrison Jr
+Lions D/ST           D/ST  DET      23%   -0.4       -   4.4  -0.9  +0.2      +0  $0-3    Jets D/ST
+Colby Parkinson      TE    LAR       4%   +1.5   65→62   6.7  +0.2  +0.2      +0  $0-3    Marvin Harrison Jr
+MarShawn Lloyd       RB    GB       50%   -5.3   44→40   2.7  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-23 09:11:18 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 99.4
+Best legal lineup projects 99.4  (+0.0)
+
+  Justin Jefferson          FLEX -> WR     15.4
+  Carnell Tate                WR -> FLEX    8.9
+
+Holding: +0.0 is under the 0.5 point bar.
+
+Locked, can't be moved: Kyle Monangai, DeMario Douglas
+Watch: Bucky Irving would start and is listed QUESTIONABLE
+Watch: KC Concepcion would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-24 06:00:05 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Sat Oct 24, week 7
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 3:22 AM, Wed 3:22 AM, Thu 3:52 AM
+Bids priced off 88 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: WR short by 1 — available and playing that week: Quentin Johnston (LAC), Makai Lemon (PHI)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Cam Little (JAX)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      25%   +0.0     0→0   9.0  +0.0  +8.7      +0  $0-3    Marvin Harrison Jr
+Cam Little           K     JAX      63%   -1.2   0→out   0.0  +0.0  +8.5      +0  $0-3    Marvin Harrison Jr
+Justin Herbert       QB    LAC      40%   -0.5 100→out   0.0  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Baker Mayfield       QB    TB       25%   +0.1 out→out  15.1  +0.0  +3.6     +20  $0-3    Marvin Harrison Jr
+Bam Knight           RB    ARI       8%   +3.4  44→out   7.5  +2.0  +2.0      +0  $0-3    Marvin Harrison Jr
+Darius Cooper        WR    PHI       8%   +0.7  61→out   8.3  +1.5  +1.5      +0  $0-3    Marvin Harrison Jr
+Konata Mumpfield     WR    LAR       6%   +2.5  47→out   8.2  +1.3  +1.3      +0  $0-3    Marvin Harrison Jr
+Colby Parkinson      TE    LAR       5%   +0.8  62→out   7.7  +1.2  +1.2      +0  $0-3    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+**Claim 1 — Cairo Santos (K), bid 2, drop Marvin Harrison Jr.:** Fills the Week 11 K hole (available data confirms this). He projects higher this week (9.04) and carries the same next-5-week gain (8.7) as Cam Little (8.5, 0 week projection), so take the better side of a thin position now rather than scrambling in Week 11.
+
+**Claim 2 — Quentin Johnston (WR), bid 3, drop Rashid Shaheed:** Not in the available-player data, but he's named as the Week 11 WR-hole filler and the Chargers' receiver room is thinning — "Ladd McConkey was ruled out with a head injury in the first half", opening targets. Claim a few days early rather than fighting the Week 11 scramble. Use Shaheed, not Harrison Jr. (already spent above) — Shaheed's season total (121.3) is replaceable and he's seeing no current role bump in your data.
+
+**Skip Justin Herbert:** His data shows a season-rest-of-year gain of 29, but current reporting contradicts that number: "Herbert should be dropped in most one-QB fantasy formats ahead of the Chargers' Week 7 bye week", and the Chargers have started 0-6 with Herbert among the league's most-sacked passers. Bryce Young's 17.66 week projection already outperforms him — no reason to spend FAAB here.
+
+**Skip Darius Cooper too:** your snap-share column (90→85→61) looks like a rise, but it's actually the tail of a fade — recent news confirms his paltry targets total through four appearances means he's not about to push for WR4 status now that Smith is back. Not worth FAAB over your two claims above.
+
+Sources:
+- Nightmare season continues for Herbert - NBC Sports
+  https://www.nbcsports.com/fantasy/football/player-news/2026-10-18/nightmare-season-continues-for-herbert
+- Bye Week Check-Ins: Week 7 - Yahoo Sports
+  https://sports.yahoo.com/articles/bye-week-check-ins-week-113543094.html
+- Cooper sees role reduced with DeVonta Smith back - NBC Sports
+  https://www.nbcsports.com/fantasy/football/player-news/2026-10-18/cooper-sees-role-reduced-with-devonta-smith-back
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-24 09:02:51 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 99.5
+Best legal lineup projects 101.5  (+2.0)
+
+  Bam Knight                  BE -> RB      7.5
+  Justin Jefferson          FLEX -> WR     15.4
+  Carnell Tate                WR -> FLEX    9.0
+  Tyjae Spears                RB -> BE      5.4  [QUESTIONABLE]
+
+Locked, can't be moved: Kyle Monangai, DeMario Douglas
+
+
+Applied and confirmed on ESPN: 4 move(s).
+exit 0
+
+--- 2026-10-25 06:00:48 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Sun Oct 25, week 7
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 3:22 AM, Wed 3:22 AM, Thu 3:52 AM
+Bids priced off 88 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: WR short by 1 — available and playing that week: Quentin Johnston (LAC), Caleb Douglas (MIA)
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Brenton Strange (JAX)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Cam Little (JAX)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      25%   +0.0     0→0   9.0  +0.0  +8.7      +0  $0-3    Marvin Harrison Jr
+Cam Little           K     JAX      62%   -1.2   0→out   0.0  +0.0  +8.5      +0  $0-3    Marvin Harrison Jr
+Justin Herbert       QB    LAC      39%   -0.5 100→out   0.0  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Jake Ferguson        TE    DAL      54%   -0.6  54→out   4.6  +0.0  +6.7      +0  $0-3    Marvin Harrison Jr
+Brenton Strange      TE    JAX      37%   -0.5  76→out   0.0  +0.0  +6.4      +0  $0-3    Marvin Harrison Jr
+Baker Mayfield       QB    TB       25%   +0.1 out→out  15.1  +0.0  +3.6     +20  $0-3    Marvin Harrison Jr
+Konata Mumpfield     WR    LAR      10%   +3.2  47→out   8.2  +1.3  +1.3      +0  $0-3    Marvin Harrison Jr
+Darius Cooper        WR    PHI      10%   +2.1  61→out   7.7  +0.9  +0.9      +0  $0-3    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+Two claims, no third — the WR hole (Quentin Johnston/Caleb Douglas) can't be priced since neither appears in your "available" data with real numbers, so skip bidding blind on either.
+
+**Cairo Santos (K), bid $1.** Fills the Week 11 K hole (you're short by 1) — he's projected and playing that week, with a lineup gain over the next 5 weeks of 8.7 points in the data, edging out Cam Little's 8.5, and unlike Little he actually has a Week 7 projection (9.0) rather than a bye/no-data week. Claim him now rather than scrambling Week 11 waivers. Drop: Marvin Harrison Jr. — he's the listed low-cost drop and his own data shows a 0.0 season projection, so no reason to deviate.
+
+**Brenton Strange (TE), bid $1.** This covers the Week 11 TE hole instead of Jake Ferguson. The data already flags Ferguson's snap trend as "falling", and current news confirms it: Brevyn Spann-Ford was moved into the starting lineup, replacing two-time Pro Bowler Jake Ferguson, and Schottenheimer has to reduce Ferguson's snap share going forward. Strange's snap share is steady (68–87% across his last six weeks), making him the safer bet for Week 11. Drop: Broncos D/ST — it's a bench backup with no starting role (Jets are your starter), cheaper to lose than touching David Montgomery, who retains keeper/trade value.
+
+Skip Darius Cooper and Konata Mumpfield — their positive week-only "lineup_gain_this_week" doesn't translate to a hole you have, and Cooper's role is reportedly being reduced now that DeVonta Smith is back.
+
+Sources:
+- Darius Cooper, Philadelphia Eagles, WR - News, Stats, Bio - CBS Sports
+  https://www.cbssports.com/nfl/players/3165205/darius-cooper/
+- Darius Cooper Fantasy Stats
+  https://fantasydata.com/nfl/darius-cooper-fantasy/25307
+- Cowboys Bench $50 Million Pro Bowler After Costly Mistakes - HEAVY
+  https://heavy.com/sports/nfl/dallas-cowboys/cowboys-bench-50-million-pro-bowler-after-costly-mistakes/
+- Cowboys lit $20 million on fire paying Jake Ferguson to spite Micah Parsons
+  https://thelandryhat.com/cowboys-lit-20-million-on-fire-paying-jake-ferguson-to-spite-micah-parsons
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-25 08:16:06 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 101.5
+Best legal lineup projects 101.5  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Kyle Monangai, DeMario Douglas
+exit 0
+
+--- 2026-10-25 09:06:21 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 101.5
+Best legal lineup projects 101.5  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Kyle Monangai, DeMario Douglas
+exit 0
+
+--- 2026-10-25 11:35:29 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 101.5
+Best legal lineup projects 101.5  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Kyle Monangai, DeMario Douglas
+exit 0
+
+--- 2026-10-25 12:46:01 lineup.py --live ---
+waited 10s for the network
+Week 7 lineup
+
+Current starters project 101.5
+Best legal lineup projects 101.5  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Kyle Monangai, DeMario Douglas
+exit 0
+
+--- 2026-10-25 15:05:00 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 101.5
+Best legal lineup projects 101.5  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Bryce Young, Jets D/ST, Carnell Tate, David Montgomery, Tyjae Spears, DeMario Douglas
+exit 0
+
+--- 2026-10-25 16:10:04 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 101.3
+Best legal lineup projects 101.3  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Broncos D/ST, Bryce Young, Jets D/ST, Carnell Tate, David Montgomery, Tyjae Spears, DeMario Douglas, Bam Knight
+exit 0
+
+--- 2026-10-25 19:51:54 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 101.3
+Best legal lineup projects 101.3  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Broncos D/ST, Bryce Young, Jets D/ST, Carnell Tate, David Montgomery, Tyjae Spears, DeMario Douglas, Bam Knight
+exit 0
+
+--- 2026-10-26 06:06:08 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 1035s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Mon Oct 26, week 7
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 3:22 AM, Wed 3:22 AM, Thu 3:52 AM
+Bids priced off 88 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 8: RB short by 1 — available and playing that week: MarShawn Lloyd (GB), Ray Davis (BUF)
+  week 9: RB short by 1 — available and playing that week: MarShawn Lloyd (GB), Ray Davis (BUF)
+  week 9: FLEX short by 1 — available and playing that week: Quentin Johnston (LAC), Caleb Douglas (MIA)
+  week 10: RB short by 2 — available and playing that week: MarShawn Lloyd (GB), Ray Davis (BUF)
+  week 11: RB short by 1 — available and playing that week: Ray Davis (BUF)
+  week 11: WR short by 1 — available and playing that week: Quentin Johnston (LAC), Caleb Douglas (MIA)
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Brenton Strange (JAX)
+  week 11: FLEX short by 1 — available and playing that week: Quentin Johnston (LAC), Caleb Douglas (MIA)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Cam Little (JAX)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Matt Gay             K     LV       48%   +1.3   0→out  10.1  +0.0  +7.6      +0  $0-3    Jason Myers
+Chad Ryland          K     ARI       9%   +0.6   0→out   9.8  +0.0  +7.5      +0  $0-3    Jason Myers
+Lions D/ST           D/ST  DET      22%   -0.1       -   4.3  -2.8  +1.5      +0  $0-3    Jets D/ST
+Jake Ferguson        TE    DAL      54%   -0.7  54→out   4.6  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+MarShawn Lloyd       RB    GB       45%   -1.7  40→out   2.7  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      41%   -0.6       -   4.4  +0.0  +0.0      +0  $0-1    Broncos D/ST
+Justin Herbert       QB    LAC      39%   -0.8 100→out   0.0  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+Makai Lemon          WR    PHI      37%   +0.4  81→out   6.5  +0.0  +0.0      +0  $0-1    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-26 09:14:02 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 101.3
+Best legal lineup projects 101.3  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Broncos D/ST, Bryce Young, Jason Myers, Jets D/ST, Carnell Tate, David Montgomery, Tyjae Spears, DeMario Douglas, Bam Knight
+exit 0
+
+--- 2026-10-26 18:00:00 lineup.py --live ---
+Week 7 lineup
+
+Current starters project 101.3
+Best legal lineup projects 101.3  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Justin Jefferson, Bucky Irving, Marvin Harrison Jr., Harold Fannin Jr., Kyle Monangai, KC Concepcion, Rashid Shaheed, Broncos D/ST, Bryce Young, Jason Myers, Jets D/ST, Carnell Tate, David Montgomery, Tyjae Spears, DeMario Douglas, Bam Knight
+exit 0
+
+--- 2026-10-26 19:50:43 lineup.py --live ---
+waited 15s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/response.py", line 929, in _error_catcher
+    yield
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/response.py", line 1459, in read_chunked
+    self._update_chunk_length()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/response.py", line 1367, in _update_chunk_length
+    line = self._fp.fp.readline(_MAX_CHUNK_LINE_LENGTH + 1)  # type: ignore[union-attr]
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 725, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/ssl.py", line 1304, in recv_into
+    return self.read(nbytes, buffer)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/ssl.py", line 1138, in read
+    return self._sslobj.read(len, buffer)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/models.py", line 937, in generate
+    yield from self.raw.stream(chunk_size, decode_content=True)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/response.py", line 1284, in stream
+    yield from self.read_chunked(amt, decode_content=decode_content)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/response.py", line 1436, in read_chunked
+    with self._error_catcher():
+         ~~~~~~~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/response.py", line 934, in _error_catcher
+    raise ReadTimeoutError(self._pool, None, "Read timed out.") from e  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Read timed out.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 315, in <module>
+    main(live="--live" in sys.argv, force="--force" in sys.argv, near_kickoff="--near-kickoff" in sys.argv)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 262, in main
+    players = [parse_roster_entry(e, week, espn.season) for e in espn.roster_entries(team["id"], week)]
+                                                                 ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 195, in roster_entries
+    data = self.league("mRoster", week=week)
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 827, in send
+    r.content
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/models.py", line 1042, in content
+    self._content = b"".join(self.iter_content(CONTENT_CHUNK_SIZE)) or b""
+                    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/models.py", line 943, in generate
+    raise ConnectionError(e)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Read timed out.
+exit 1
+
+--- 2026-10-27 06:12:16 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Tue Oct 27, week 8
+
+Your FAAB: $74 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 3:22 AM, Wed 3:22 AM, Thu 3:52 AM
+Bids priced off 88 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 10: RB short by 1 — available and playing that week: MarShawn Lloyd (GB), Ray Davis (BUF)
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Brenton Strange (JAX)
+  week 11: FLEX short by 2 — available and playing that week: Quentin Johnston (LAC), Caleb Douglas (MIA)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Cam Little (JAX)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Quentin Johnston     WR    LAC      28%   -0.1  82→out   5.1  +0.0 +10.8      +6  $3-6    Marvin Harrison Jr
+Caleb Douglas        WR    MIA      10%   +0.0  out→68   8.1  +0.1 +10.1      +2  $3-6    Marvin Harrison Jr
+Brenton Strange      TE    JAX      36%   -0.1  76→out   7.9  +0.9  +8.9      +0  $3-6    Marvin Harrison Jr
+Jake Ferguson        TE    DAL      54%   -0.1  54→out   4.9  +0.0  +8.7      +0  $3-6    Marvin Harrison Jr
+Cairo Santos         K     CHI      25%   -0.0     0→0   8.8  +0.0  +8.7      +0  $0-3    Marvin Harrison Jr
+Cam Little           K     JAX      59%   -0.2   0→out   9.4  +0.0  +8.5      +0  $0-3    Jason Myers
+MarShawn Lloyd       RB    GB       44%   -0.1   40→36   4.2  +0.0  +7.4      +0  $3-6    Marvin Harrison Jr
+Justin Herbert       QB    LAC      38%   -0.1 100→out  10.9  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+**Add Justin Herbert, bid 10 (above the 3‑6 range)** — his rest‑of‑season lineup gain is 29, by far the highest number in the data, dwarfing every other add. A chest injury to McConkey could leave Johnston as Herbert's top target, and Herbert's own line shows 100% snap share every week he's played. Drop Marvin Harrison Jr. (0 projection, standard suggested drop).
+
+**Add Quentin Johnston, bid 6 (top of range) for the Week 11 FLEX hole** — his next‑5 gain (10.8) and steady snap share beat Caleb Douglas (10.1, falling snap trend). He played on 60 of the team's 69 snaps and ran a route on 37 of their 43 dropbacks before his injury, and is now not on Los Angeles' final Week 6 injury report. Claim a few days early rather than waiting until Week 11 game day. Drop Broncos D/ST — it's bench depth behind Jets D/ST, cheaper to cut than touching Herbert's slot.
+
+**Add MarShawn Lloyd, bid 5, for the Week 10 RB hole** — he's the only RB in the data with a positive next‑5 gain (7.4) among the hole‑fillers; he returned to the Week 6 game and showed no lingering issue. Claim now rather than scrambling Week 10. Drop Bam Knight (0 projection, matches position, cheapest remaining cut).
+
+Skip Ferguson, Strange, Santos, Little, Douglas — all show 0 rest‑of‑season gain; Ferguson's snaps are falling too. Don't burn FAAB chasing bye-week fillers with no real edge.
+
+Sources:
+- Quentin Johnston Injury: Remains limited Thursday
+  https://www.rotowire.com/football/headlines/quentin-johnston-injury-remains-limited-thursday-641413
+- Quentin Johnston - NFL News, Rumors, & Updates
+  https://www.foxsports.com/nfl/quentin-johnston-player
+- Quentin Johnston (chest) cleared off injury report - NBC Sports
+  https://www.nbcsports.com/fantasy/football/player-news/2026-10-16/quentin-johnston-chest-cleared-off-injury-report
+- MarShawn Lloyd injury update: Latest news on Packers RB's status in Week 6 game - Yahoo Sports
+  https://sports.yahoo.com/articles/marshawn-lloyd-injury-latest-news-010019799.html
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-27 09:13:16 lineup.py --live ---
+Week 8 lineup
+
+Current starters project 95.2
+Best legal lineup projects 102.6  (+7.5)
+
+  Omarion Hampton             BE -> RB      7.5
+  Carnell Tate              FLEX -> WR      9.3
+  DeMario Douglas             WR -> FLEX    8.8
+  Bam Knight                  RB -> BE      0.0
+
+Later kickoffs go to FLEX, so a late scratch there can be covered from any position.
+
+
+Applied and confirmed on ESPN: 4 move(s).
+exit 0
+
+--- 2026-10-28 06:02:43 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Wed Oct 28, week 8
+
+Your FAAB: $67 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:05 AM, Wed 4:05 AM, Wed 4:05 AM
+Bids priced off 107 claims in this league: median $3, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Evan McPherson (CIN)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      25%   +0.4     0→0   8.8  +0.0  +8.7      +0  $0-3    Marvin Harrison Jr
+Evan McPherson       K     CIN      21%   +0.1   out→0   8.4  +0.0  +8.3      +0  $0-3    Jason Myers
+Justin Herbert       QB    LAC      37%   -1.2 100→out  10.9  -0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Jake Ferguson        TE    DAL      51%   -2.4   54→56   4.4  -0.0  +6.7      +0  $0-3    Marvin Harrison Jr
+Broncos D/ST         D/ST  DEN      88%   -2.1       -   5.1  +0.0  +6.4     +36  $0-3    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      55%   -5.2   72→53   7.0  +0.0  +6.3      +0  $3-6    Marvin Harrison Jr
+Lions D/ST           D/ST  DET      23%   +0.7       -   5.6  +0.5  +4.8     +19  $0-3    Jets D/ST
+Baker Mayfield       QB    TB       26%   +0.1  out→90  15.7  -0.0  +3.6     +20  $0-3    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+Three moves, all cheap given your 67 FAAB and a thin wire:
+
+**Cairo Santos (K), bid $1, drop Marvin Harrison Jr.** You're short a kicker in Week 11; Santos projects an 8.7-point lineup gain over the next 5 weeks, the top K option in the data. Claim now rather than scrambling game-day in Week 11 — the wire will be gone by then with 14 teams.
+
+**Pat Freiermuth (TE), bid $5, drop Rashid Shaheed (not the suggested MHJ, since that slot is used on Santos).** This also fills your Week 11 TE hole. Skip Ferguson despite his similar data (6.7 vs 6.3 gain): recent news favors Freiermuth — Ferguson failed to record a catch and his offensive snaps were only two more than Brevyn Spann-Ford, whose role has grown over the last few weeks at Ferguson's expense, while Freiermuth is now hard to sit for most other tight ends, with only Mark Andrews, Dallas Goedert, and George Kittle clearly ranked ahead of him. Note his snap trend is listed as falling in your data, so don't overpay beyond mid-range.
+
+**Justin Herbert (QB), bid $4, drop Treylon Burks.** He's worth adding purely as rest-of-season insurance: his data shows the highest rest-of-season lineup gain (29) of any available player, useful if Bryce Young hits a bye or slump. Caution: the Chargers are a shock 0-6 out of their bye, and Herbert has looked lost — this is a stash, not a start.
+
+Skip Jake Ferguson, McPherson, Mayfield, both D/STs — each is dominated in-data or role by one of the three above. Keeper value doesn't change any of these calls.
+
+Sources:
+- Fantasy football Week 8 waiver wire: Jonah Coleman, Rachaad White headline must-add running backs
+  https://www.cbssports.com/fantasy/football/news/fantasy-football-2026-week-8-waiver-wire/
+- Jake Ferguson News: Blanked on MNF
+  https://www.rotowire.com/football/headlines/jake-ferguson-news-blanked-on-mnf-644665
+- fantasy football week 8 tight end rankings pat freiermuth making a push for the must start tier
+  https://www.cbssports.com/fantasy/football/news/fantasy-football-week-8-tight-end-rankings-pat-freiermuth-making-a-push-for-the-must-start-tier
+- Justin Herbert Injury - Updates, Status, History and News
+  https://www.foxsports.com/nfl/justin-herbert-player-injuries
+- NFL Week 8 Predictions and Picks: Who We're Backing Against the Spread
+  https://news.sportsinteraction.com/nfl/story/nfl-week-8-predictions-who-were-backing-against-the-spread-in-every-matchup-125710
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-28 09:00:03 lineup.py --live ---
+Week 8 lineup
+
+Current starters project 103.2
+Best legal lineup projects 103.2  (+0.0)
+
+Already the best legal lineup. No moves.
+exit 0
+
+--- 2026-10-29 06:12:47 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(Claude call failed after 4174s: ReadTimeout: HTTPSConnectionPool(host='api.anthropic.com', port=443): Read timed out. (read timeout=120))
+Waiver report — Thu Oct 29, week 8
+
+Your FAAB: $67 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:05 AM, Thu 3:05 AM, Thu 3:05 AM
+Bids priced off 109 claims in this league: median $2, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Evan McPherson (CIN)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      25%   +0.3     0→0   8.8  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Evan McPherson       K     CIN      22%   +0.4   out→0   8.4  +0.0  +8.3      +0  $0-2    Jason Myers
+Justin Herbert       QB    LAC      36%   -0.9 100→out  10.9  +0.0  +6.9     +29  $3-6    Marvin Harrison Jr
+Jake Ferguson        TE    DAL      49%   -1.8   54→56   4.4  +0.0  +6.7      +0  $0-2    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      52%   -3.4   72→53   7.0  +0.0  +6.3      +0  $3-6    Marvin Harrison Jr
+Lions D/ST           D/ST  DET      25%   +2.2       -   5.6  +0.5  +4.8     +19  $0-2    Jets D/ST
+Eagles D/ST          D/ST  PHI      38%   -1.4       -   3.7  +0.0  +4.5     +25  $0-2    Marvin Harrison Jr
+Baker Mayfield       QB    TB       26%   +0.4  out→90  15.7  +0.0  +3.6     +20  $0-2    Marvin Harrison Jr
+
+Bids are suggestions only. Place claims yourself in ESPN.
+(email failed: gaierror: [Errno 8] nodename nor servname provided, or not known)
+exit 0
+
+--- 2026-10-29 09:13:33 lineup.py --live ---
+Week 8 lineup
+
+Current starters project 103.2
+Best legal lineup projects 103.2  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Carnell Tate would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-29 18:00:00 lineup.py --live ---
+Week 8 lineup
+
+Current starters project 103.1
+Best legal lineup projects 103.1  (+0.0)
+
+Already the best legal lineup. No moves.
+Watch: Carnell Tate would start and is listed QUESTIONABLE
+exit 0
+
+--- 2026-10-29 19:48:47 lineup.py --live ---
+waited 120s for the network
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 239, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 494, in _make_request
+    raise new_e
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 470, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 1125, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 827, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connection.py", line 246, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 315, in <module>
+    main(live="--live" in sys.argv, force="--force" in sys.argv, near_kickoff="--near-kickoff" in sys.argv)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/lineup.py", line 258, in main
+    league = espn.league("mSettings", "mTeam")
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 80, in league
+    return self._get(f"{READ_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}", params, headers)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/espn.py", line 67, in _get
+    resp = self.session.get(url, params=params, headers=headers, timeout=30)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+  File "/Users/hari/Projects/fantasy_football_bot/.venv/lib/python3.14/site-packages/requests/adapters.py", line 729, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='lm-api-reads.fantasy.espn.com', port=443): Max retries exceeded with url: /apis/v3/games/ffl/seasons/2026/segments/0/leagues/330052?view=mSettings&view=mTeam (Caused by NameResolutionError("HTTPSConnection(host='lm-api-reads.fantasy.espn.com', port=443): Failed to resolve 'lm-api-reads.fantasy.espn.com' ([Errno 8] nodename nor servname provided, or not known)"))
+exit 1
+
+--- 2026-10-30 06:08:16 waivers.py --email --jev-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+Waiver report — Fri Oct 30, week 8
+
+Your FAAB: $67 of $100   (minimum bid $0)
+Rivals with the most FAAB: $100, $95, $90
+Claims processed: Wed 4:05 AM, Thu 3:05 AM, Thu 3:05 AM
+Bids priced off 109 claims in this league: median $2, top of market $38
+
+Lineup holes in the next 4 weeks:
+  week 11: TE short by 1 — available and playing that week: Jake Ferguson (DAL), Pat Freiermuth (PIT)
+  week 11: K short by 1 — available and playing that week: Cairo Santos (CHI), Evan McPherson (CIN)
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK   NOW   5WK  SEASON  BID    DROP FOR HIM
+Cairo Santos         K     CHI      25%   +0.2     0→0   8.8  +0.0  +8.7      +0  $0-2    Marvin Harrison Jr
+Evan McPherson       K     CIN      22%   +0.5   out→0   8.6  +0.0  +8.3      +0  $0-2    Jason Myers
+Jake Ferguson        TE    DAL      48%   -1.5   54→56   4.4  +0.0  +6.7      +0  $0-2    Marvin Harrison Jr
+Pat Freiermuth       TE    PIT      50%   -1.8   72→53   7.0  +0.0  +6.3      +0  $3-6    Marvin Harrison Jr
+Lions D/ST           D/ST  DET      27%   +1.9       -   5.6  +0.5  +4.9     +19  $0-2    Jets D/ST
+Courtland Sutton     WR    DEN      62%   -0.8   77→70   7.3  +0.0  +4.8     +23  $0-2    Marvin Harrison Jr
+Eagles D/ST          D/ST  PHI      37%   -1.5       -   3.7  +0.0  +4.5     +25  $0-2    Marvin Harrison Jr
+Chris Godwin Jr.     WR    TB       53%   -0.6   92→73   7.1  +0.0  +0.6      +0  $0-2    Marvin Harrison Jr
+
+------------------------------------------------------------
+
+**Claim Ferguson (TE), $1.** Fills the Week 11 TE hole; snap trend is labeled steady and he's logged 71-83% snaps most weeks versus Freiermuth, whose snap share decrease in each of the past two games and recent calf issue (Freiermuth was added to the injury report Saturday and is listed as questionable for Sunday's game against Tampa Bay) make him the riskier stash. Grab Ferguson now, a few days early, rather than scrambling game-day week 11. Drop: Marvin Harrison Jr. (already the cheapest drop).
+
+**Claim Santos (K), $1.** Fills the Week 11 K hole; projected lineup gain over the next 5 weeks (8.7) edges out McPherson (8.3), the only numeric difference between the two options. No urgency to go higher. Drop: Marvin Harrison Jr.
+
+**Claim Courtland Sutton (WR), $2** (top of suggested 0-2 range). Highest rest-of-season lineup gain among non-hole adds (23) with real news behind it: Sutton could see an expanded role in the Denver offense if Pat Bryant is out long term following his leg injury in Week 4, and separately Jaylen Waddle (chest) is questionable to return... which could open additional opportunities for Courtland Sutton. Drop: Marvin Harrison Jr. (least-cost drop, no reason to deviate).
+
+**Skip:** Freiermuth (falling snaps + lingering calf risk make him worse value than Ferguson for the same hole), Eagles/Lions D/ST (you already start Jets D/ST; no bye or performance gap justifies a stream), and Chris Godwin (lineup_gain_this_week and rest_of_season both 0 — no case). Harrison Jr. stays the drop across the board since it's pre-identified as cheapest and nothing above argues otherwise.
+
+Sources:
+- Pat Freiermuth Fantasy Stats
+  https://fantasydata.com/nfl/pat-freiermuth-fantasy/22507
+- Pat Freiermuth, Pittsburgh Steelers, TE - News, Stats, Bio - CBS Sports
+  https://www.cbssports.com/nfl/players/2961270/pat-freiermuth/
+- Courtland Sutton: Player News - NBC Sports
+  https://www.nbcsports.com/nfl/courtland-sutton/5734/news
+- Courtland Sutton Week 7 Outlook for Fantasy Football (2026)
+  https://www.rotoballer.com/player-news/courtland-sutton-remains-a-week-7-bench-option/1974695
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
+--- 2026-10-30 09:00:55 lineup.py --live ---
+Week 8 lineup
+
+Current starters project 103.1
+Best legal lineup projects 103.1  (+0.0)
+
+Already the best legal lineup. No moves.
+
+Locked, can't be moved: Bryce Young
+Watch: Carnell Tate would start and is listed QUESTIONABLE
+exit 0
+
