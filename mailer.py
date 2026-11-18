@@ -19,7 +19,15 @@ def _tls_context():
 
 
 def send(subject, body, html=None):
-    """Send one email, plain text with an optional HTML version. Returns True if it went out."""
+    """Send one email, plain text with an optional HTML version. Returns True if it went out.
+
+    With MAIL_TO_LOG set, as in a shadow run on GitHub (hosted_run.sh), nothing is sent: the
+    subject is printed and the email counts as delivered, so a trade it has reported on once
+    isn't reported again when the runs go live.
+    """
+    if os.getenv("MAIL_TO_LOG"):
+        print(f'(shadow run: would have emailed "{subject}")')
+        return True
     load_dotenv(Path(__file__).with_name(".env"))
     address = os.getenv("GMAIL_ADDRESS")
     password = (os.getenv("GMAIL_APP_PASSWORD") or "").replace(" ", "")  # Google shows it in groups of four

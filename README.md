@@ -54,6 +54,7 @@ python3 snap_test.py [season]       whether a rising snap share beats ESPN's pro
 python3 value_test.py               whether player levels beat ESPN's season projection, on ESPN's numbers
 python3 lineup_test.py [season]     whether lineups set some other way would have outscored ESPN's projection
 python3 hosted_check.py             whether every outside service the bot needs answers from this machine
+bash seed_state.sh                  copy this Mac's logs and trade-watch memory to GitHub, once
 python3 role_probe.py               every next man up right now, and how deep the free-agent list goes, read-only
 python3 test_lineup.py              optimizer and IR tests
 python3 test_waivers.py             waiver scoring tests
@@ -120,6 +121,50 @@ So:
   write-up is missing.
 - macOS lists these under System Settings > General > Login Items & Extensions as
   background items. They need to stay allowed.
+
+## Running on GitHub instead of the Mac
+
+The Mac can't keep a schedule with its lid closed on battery, so the same jobs can run on
+GitHub's machines (Actions), which never sleep. `.github/workflows/bot.yml` holds the schedule, in
+New York time:
+
+| Job | When | Runs |
+| --- | --- | --- |
+| Waiver report | daily 6:07 | `waivers.py --email --jev-shadow` |
+| Morning lineup pass | daily 9:05 | `lineup.py --live` |
+| Game-day check-ins | every 15 min: Sunday 7:00-21:00, Monday 17:00-21:00, Thursday to Saturday 11:00-21:00 | `lineup.py --live --near-kickoff` |
+| Trade watch | 8:03 and 23:03 | `trades.py --watch` |
+
+The check-ins run only in those windows, not all day as on the Mac, to stay inside GitHub's free
+allowance for a private repository ($12 of machine time a month). `lineup.py --near-kickoff`
+still acts only within 95 minutes of a real kickoff, and the windows cover Sunday's London games,
+Thanksgiving, Christmas and the late-season Saturdays. At a minute a run that is about $2.50 a
+month: everything runs on the 1-CPU `ubuntu-slim` machine ($0.002 a minute) except the waiver
+report, which goes to the standard one ($0.006) because its Claude call can outlast the small
+machine's 15-minute limit. If the allowance ever runs out, GitHub stops the runs for the rest of
+the month; it doesn't bill you unless a payment method is on file.
+
+`hosted_run.sh` runs each job. GitHub starts every run on a fresh machine, so the files the bot
+reads back (`logs/`, and the trade watch's memory in `cache/`) live on a branch of their own,
+`bot-state`, and every run that changes them saves them there. `git fetch origin bot-state` and
+`git show origin/bot-state:logs/2026-11.log` read them from the Mac. `seed_state.sh` starts that
+branch from the Mac's files, once.
+
+Until the repository variable `BOT_LIVE` is `true` (Settings > Secrets and variables > Actions >
+Variables), every run is a shadow: no email goes out (`mailer.py` prints the subject instead) and
+no lineup is changed (`--live` is left off). That lets GitHub run beside the Mac until it has
+proved itself. Going live means setting `BOT_LIVE` to `true` and stopping the Mac's jobs, so the
+two don't both email you:
+
+```
+for job in lineup gameday waivers trades; do launchctl bootout gui/$UID/local.fantasy.$job; done
+```
+
+`./install_schedule.sh` puts them back. A run can also be started by hand: Actions > Bot > Run
+workflow, and pick the job. GitHub schedules can start a few minutes late when it is busy, which
+the 95-minute kickoff window absorbs, and a failed run is emailed to you by GitHub as well as by
+`run.sh`. The ESPN cookies, API keys and Gmail app password are repository secrets; when the ESPN
+cookies are renewed in `.env`, renew the secrets too.
 
 ## Tuning
 

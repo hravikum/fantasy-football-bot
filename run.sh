@@ -1,24 +1,29 @@
 #!/bin/bash
 # Runs one bot script with this project's venv, logs it, and emails if it fails.
-# launchd calls this; it never depends on your shell environment.
+# launchd calls this; it never depends on your shell environment. On GitHub, hosted_run.sh
+# calls it with PYTHON set, since there is no venv there.
 set -uo pipefail
 cd "$(dirname "$0")" || exit 1
 
-# Keep the Mac awake until this run finishes; otherwise one started during a brief
-# maintenance wake can be put back to sleep halfway. -s only works on power.
-caffeinate -i -s -w "$$" &
+ON_MAC=""
+if [ "$(uname)" = "Darwin" ]; then
+    ON_MAC=1
+    # Keep the Mac awake until this run finishes; otherwise one started during a brief
+    # maintenance wake can be put back to sleep halfway. -s only works on power.
+    caffeinate -i -s -w "$$" &
 
-# What the Mac was running on, for the log. With the lid closed and no charger it goes back to
-# sleep mid-run whatever caffeinate asks; that cost 24 of the first 53 waiver reports their write-up.
-POWER="$(pmset -g batt 2>/dev/null | sed -n "1s/.*'\(.*\)'.*/\1/p")"
-LID_CLOSED="$(ioreg -r -k AppleClamshellState -d 4 2>/dev/null | grep -c '"AppleClamshellState" = Yes')"
+    # What the Mac was running on, for the log. With the lid closed and no charger it goes back to
+    # sleep mid-run whatever caffeinate asks; that cost 24 of the first 53 waiver reports their write-up.
+    POWER="$(pmset -g batt 2>/dev/null | sed -n "1s/.*'\(.*\)'.*/\1/p")"
+    LID_CLOSED="$(ioreg -r -k AppleClamshellState -d 4 2>/dev/null | grep -c '"AppleClamshellState" = Yes')"
+fi
 
-PYTHON="./.venv/bin/python3"
+PYTHON="${PYTHON:-./.venv/bin/python3}"
 mkdir -p logs
 LOG="logs/$(date +%Y-%m).log"
 
 HEADER="--- $(date '+%F %T') $* ---"
-if [ ! -x "$PYTHON" ]; then
+if ! command -v "$PYTHON" >/dev/null; then
     # Without the venv there's no Python to send the failure email, so say it where you'll see it.
     printf '%s\nno virtual environment at %s/.venv, so nothing ran\n' "$HEADER" "$PWD" >>"$LOG"
     osascript -e 'display notification "No .venv in the project folder, so nothing ran." with title "Fantasy bot"' 2>/dev/null
@@ -41,7 +46,8 @@ if [ -n "$OUTPUT" ] || [ "$STATUS" -ne 0 ]; then
     {
         echo "$HEADER"
         [ "$waited" -gt 0 ] && echo "waited ${waited}s for the network"
-        if [ "${LID_CLOSED:-0}" = "0" ]; then echo "power: ${POWER:-unknown}, lid open"
+        if [ -z "$ON_MAC" ]; then :
+        elif [ "${LID_CLOSED:-0}" = "0" ]; then echo "power: ${POWER:-unknown}, lid open"
         else echo "power: ${POWER:-unknown}, lid closed"; fi
         printf '%s\nexit %s\n\n' "$OUTPUT" "$STATUS"
     } >>"$LOG"

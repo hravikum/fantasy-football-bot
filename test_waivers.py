@@ -590,6 +590,24 @@ def test_email_carries_both_a_text_and_an_html_version():
         os.environ["GMAIL_APP_PASSWORD"] = saved_env or ""
 
 
+def test_a_shadow_run_prints_the_subject_and_sends_nothing():
+    import contextlib, io, os, smtplib
+    import mailer
+    class NoSMTP:
+        def __init__(self, *a, **k): raise AssertionError("a shadow run connected to Gmail")
+    saved_smtp, printed = smtplib.SMTP, io.StringIO()
+    smtplib.SMTP = NoSMTP
+    os.environ["MAIL_TO_LOG"] = "1"
+    try:
+        with contextlib.redirect_stdout(printed):
+            assert mailer.send("Waiver report, week 11", "body", "<p>body</p>") is True, \
+                "counts as delivered, so the trade watch marks a proposal as reported"
+        assert printed.getvalue() == '(shadow run: would have emailed "Waiver report, week 11")\n'
+    finally:
+        smtplib.SMTP = saved_smtp
+        del os.environ["MAIL_TO_LOG"]
+
+
 def test_faab_spend_falls_back_to_the_claims_when_espn_reports_zero():
     """Your league: the counter said nothing was spent while 27 claims had been paid for."""
     from collections import Counter as Tally

@@ -1,0 +1,58 @@
+name: Bot
+
+# Runs the bot on GitHub's machines instead of the Mac. hosted_run.sh turns each schedule below
+# into a job, keeps the bot's files on the bot-state branch, and runs in shadow (no email sent,
+# no lineup changed) until the repository variable BOT_LIVE is set to true.
+on:
+  schedule:
+    - cron: "7 6 * * *"                 # waiver report
+      timezone: America/New_York
+    - cron: "5 9 * * *"                 # morning lineup pass
+      timezone: America/New_York
+    - cron: "2,17,32,47 7-20 * * 0"     # game-day check-ins, Sunday
+      timezone: America/New_York
+    - cron: "2,17,32,47 17-20 * * 1"    # Monday night
+      timezone: America/New_York
+    - cron: "2,17,32,47 11-20 * * 4-6"  # Thursday to Saturday: holidays and late-season Saturdays
+      timezone: America/New_York
+    - cron: "3 8,23 * * *"              # trade watch
+      timezone: America/New_York
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which job to run now
+        type: choice
+        options: [waivers, lineup, gameday, trades]
+
+permissions:
+  contents: write     # to save logs to the bot-state branch
+
+concurrency:
+  group: bot          # one run at a time, so two never save over each other
+  cancel-in-progress: false
+
+jobs:
+  run:
+    # The waiver report's Claude call can run long, past the 1-CPU runner's 15-minute limit.
+    runs-on: ${{ (github.event.schedule == '7 6 * * *' || inputs.job == 'waivers') && 'ubuntu-latest' || 'ubuntu-slim' }}
+    timeout-minutes: 14
+    env:
+      TZ: America/New_York
+      BOT_LIVE: ${{ vars.BOT_LIVE }}
+      JOB: ${{ github.event.schedule || inputs.job }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: bash hosted_run.sh "$JOB"
+        env:
+          LEAGUE_ID: ${{ secrets.LEAGUE_ID }}
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          SWID: ${{ secrets.SWID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
