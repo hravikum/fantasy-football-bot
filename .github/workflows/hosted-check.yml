@@ -1,0 +1,36 @@
+name: Hosted check
+
+# Can the bot run on GitHub's machines instead of the Mac? Start it by hand from the Actions tab.
+# It only reads: no lineup change, no email sent. hosted_check.py says what each line means.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        # The 1-CPU runner costs a third of the standard one, but has fewer tools and a 15-minute cap.
+        runner: [ubuntu-slim, ubuntu-latest]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    env:
+      TZ: America/New_York
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python hosted_check.py
+        env:
+          LEAGUE_ID: ${{ secrets.LEAGUE_ID }}
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          SWID: ${{ secrets.SWID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}

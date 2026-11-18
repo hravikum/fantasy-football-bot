@@ -53,6 +53,7 @@ python3 accuracy.py [season]        how good ESPN's projections have been, by po
 python3 snap_test.py [season]       whether a rising snap share beats ESPN's projection
 python3 value_test.py               whether player levels beat ESPN's season projection, on ESPN's numbers
 python3 lineup_test.py [season]     whether lineups set some other way would have outscored ESPN's projection
+python3 hosted_check.py             whether every outside service the bot needs answers from this machine
 python3 role_probe.py               every next man up right now, and how deep the free-agent list goes, read-only
 python3 test_lineup.py              optimizer and IR tests
 python3 test_waivers.py             waiver scoring tests
