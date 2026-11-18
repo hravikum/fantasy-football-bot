@@ -289,7 +289,7 @@ list ended near 3% rostered, above a receiver and a back the league went on to p
 Nearly every claim in this league is decided in one run, Wednesday at 3am: 112 of the first 131
 auctions and $469 of the $496 spent. A player nobody claims then becomes a free agent anyone can
 add at once, for nothing, until his next game starts. ESPN says which state each player is in,
-and the report shows `add now` in place of a bid for one who has cleared.
+and the report shows `free` in place of a bid for one who has cleared.
 
 Only players worth a bid are listed. When nobody added to your lineup, the list used to fill up
 with the most widely rostered free agents at +0.0 and $0-1, which is how Justin Herbert sat on it
@@ -305,6 +305,28 @@ the season, or is a next man up is never held. The
 "Lineup holes" block still names every hole in the window, so you can see them coming. Claude
 is told the same: a hole in a later week is not a claim today, and a kicker or defense replaces
 the one you have and never costs a player at another position.
+
+## One verdict: the table and the write-up agree (Nov 18)
+
+In week 11 the table led with two kickers while the write-up said to skip them, "no gain over
+Myers". Myers was on bye, so the table was right. The causes, and what changed:
+
+- The write-up was never told about this week's holes, only later weeks'. Now the report and
+  Claude's brief both list them, with who is out and why (`holes_now`), and Claude is told to
+  compare a fill-in with zero, not with the starter he stands in for.
+- A fill-in for this week only (he helps now, in no later week, and not over the season) headed
+  the table because ten points of kicker for one week sorts above everything. Fill-ins now sit
+  in their own section, "This week only", under the players worth more (`this_week_only`).
+- Claude could change bids and drops, and the table never showed it. Claude now ends its
+  write-up with a call on every row (add, bid or skip, the bid, the drop, a short reason),
+  which the report strips from the text and prints in a Call column, adds and bids first
+  (`split_calls`, `attach_calls`). A free agent is always "add", whatever the call says, and
+  the Bid column then reads `free`. The subject line counts the calls. With no write-up, or a
+  calls block that won't parse, the table shows the numbers alone, as before.
+- A kicker or defense add now always drops your kicker or defense (`drop_for`), as the prompt
+  and the old docstring said. It used to fall back to a bench player when the swap opened a
+  hole in a later week, which offered Treylon Burks for Jason Sanders one row below Myers for
+  Santos. The swap's value already counts that later week as lost.
 
 Two things made the reports from Thursday night to Tuesday morning wrong, and Monday's most of
 all, because ESPN stays on the finished week until Tuesday. A free agent whose game had already

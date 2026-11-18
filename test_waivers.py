@@ -143,13 +143,13 @@ def test_held_kickers_leave_their_places_to_players_you_can_use():
 
 def test_a_free_agent_who_cleared_waivers_is_added_not_bid_on():
     context = _sample_context()
-    assert "add now" not in waivers.build_report(context) and "add now" not in waivers.build_html(context)
+    assert waivers.FREE_NOTE not in waivers.build_report(context) and "$8&ndash;15" in waivers.build_html(context)
     assert waivers.brief_for_claude(context)["available"][0]["availability"].startswith("on waivers")
     context["candidates"][0]["free_now"] = True
     text, html = waivers.build_report(context), waivers.build_html(context)
     row = next(line for line in text.splitlines() if line.startswith(context["candidates"][0]["name"]))
-    assert "add now" in row and "$8" not in row, "no bid is shown for a player who costs nothing"
-    assert waivers.FREE_NOTE in text and "add now" in html and "$8&ndash;15" not in html
+    assert f" {waivers.FREE} " in row and "$8" not in row, "no bid is shown for a player who costs nothing"
+    assert waivers.FREE_NOTE in text and f">{waivers.FREE}<" in html and "$8&ndash;15" not in html
     assert waivers.brief_for_claude(context)["available"][0]["availability"].startswith("free agent")
 
 
@@ -838,6 +838,153 @@ def test_both_reports_say_so_when_the_write_up_failed():
     assert "No write-up today: the call to Claude failed" in waivers.build_html(context)
     context.update(advice="Bid $3 on Somebody.", advice_failed=False)
     assert "No write-up" not in waivers.build_report(context) and "Bid $3 on Somebody." in waivers.build_html(context)
+
+
+
+def test_this_weeks_hole_is_named_with_who_is_out():
+    """Week 11: Myers (Seattle) and Fannin (Cleveland) were both off, and the write-up was never told."""
+    from espn import PRO_TEAMS
+    roster = full_roster(k=player("K", 17, 8.0, bye=True), te=player("TE", 6, 9.0, status="OUT"))
+    assert waivers.holes_now(list(roster.values()), SLOTS, GAMES, 11) == [
+        f"week 11: TE short by 1 — {roster['te']['name']} ({PRO_TEAMS.get(1, '?')}, out)",
+        f"week 11: K short by 1 — {roster['k']['name']} ({PRO_TEAMS.get(0, '?')}, bye)"]
+    assert waivers.holes_now(list(full_roster().values()), SLOTS, GAMES, 11) == []
+
+
+def test_both_reports_and_the_brief_carry_this_weeks_holes():
+    hole = "week 3: K short by 1 — Jason Myers (SEA, bye)"
+    context = _sample_context(holes_now=[hole])
+    text, html = waivers.build_report(context), waivers.build_html(context)
+    assert "Lineup holes this week:" in text and hole in text
+    assert "Lineup holes this week<" in html and "Jason Myers (SEA, bye)" in html
+    assert waivers.brief_for_claude(context)["lineup_holes_this_week"] == [hole]
+    assert "Lineup holes this week" not in waivers.build_report(_sample_context()), "none, so no block"
+    prompt = _prompt_sent()
+    assert "lineup_holes_this_week names each starting slot" in prompt
+    assert "compare him with zero, not with that starter" in prompt
+    assert "Kickers are interchangeable in any week both play" in prompt
+
+
+def test_a_kicker_add_drops_your_kicker_even_when_his_bye_comes_later():
+    """Week 11: Jason Sanders (off in week 13) was offered for Treylon Burks, so you'd carry two kickers."""
+    roster = roster_at_capacity(k=on_team(player("K", 17, 8.0), 30))
+    this_week = {team: game for team, game in GAMES.items() if team != 30}        # yours is off this week
+    sanders = on_team(free_agent("K", 9.9, season=131.0), 31)                     # and he is off in week 4
+    ranked = waivers.score_pool(list(roster.values()), [sanders], SLOTS, this_week, byes={30: {2}, 31: {4}}, week=2)
+    assert ranked[0]["drop"]["name"] == roster["k"]["name"], "a kicker pays for a kicker, never a receiver"
+    assert ranked[0]["gain"] == 9.9 and ranked[0]["ahead_gain"] < ranked[0]["gain"], "his own bye counts against him"
+
+
+CALLS_TEXT = ('Add Cade Otton: Fannin is off.\n\n```json\n{"calls": [{"player": "Cade Otton", "call": "add", '
+              '"drop": "Treylon Burks", "why": "Fannin is on bye"}, {"player": "Jets D/ST", "call": "skip", '
+              '"why": "Eagles are better"}, {"player": "Somebody", "call": "maybe"}]}\n```'
+              '\n\nSources:\n- Story\n  https://example.com/a')
+
+
+def test_the_write_ups_calls_are_read_and_taken_out_of_its_text():
+    import contextlib, io
+    prose, calls = waivers.split_calls(CALLS_TEXT)
+    assert prose == "Add Cade Otton: Fannin is off.\n\nSources:\n- Story\n  https://example.com/a"
+    assert set(calls) == {"Cade Otton", "Jets D/ST"}, "a call that isn't add, bid or skip is ignored"
+    assert waivers.split_calls("No block here.") == ("No block here.", {})
+    assert waivers.split_calls(None) == (None, {})
+    with contextlib.redirect_stdout(io.StringIO()) as log:
+        broken = waivers.split_calls('Text.\n\n```json\n{"calls": [oops]}\n```')
+    assert broken == ("Text.", {}) and "didn't parse" in log.getvalue(), "the table falls back to the numbers"
+
+
+def test_a_call_is_held_to_what_the_table_knows():
+    """Nov 18: the write-up said to bid $5 on Cade Otton, who had cleared waivers and cost nothing."""
+    otton = dict(free_agent("TE", 6.0), name="Cade Otton", free_now=True, bid=(3, 5))
+    hutchinson = dict(free_agent("WR", 9.4), name="Xavier Hutchinson", bid=(8, 18))
+    demercado = dict(free_agent("RB", 7.6), name="Emari Demercado", bid=(18, 31))
+    jets = dict(free_agent("D/ST", 6.2), name="Jets D/ST", bid=(1, 4))
+    unnamed = dict(free_agent("WR", 3.0), name="Not Mentioned", bid=(0, 1))
+    waivers.attach_calls([otton, hutchinson, demercado, jets, unnamed], {
+        "Cade Otton": {"call": "bid", "bid": 5, "drop": "Treylon Burks", "why": "Fannin is on bye"},
+        "xavier hutchinson": {"call": "bid", "bid": "$11"},
+        "Emari Demercado": {"call": "add", "drop": "Keaton Mitchell"},
+        "Jets D/ST": {"call": "skip", "drop": "Giants D/ST"}})
+    assert otton["call"] == {"call": "add", "bid": None, "drop": "Treylon Burks", "why": "Fannin is on bye"}
+    assert hutchinson["call"]["bid"] == 11, "matched whatever the case, and the dollar sign read"
+    assert demercado["call"]["call"] == "bid" and demercado["call"]["bid"] == 18, "on waivers: a bid, the low end"
+    assert jets["call"]["drop"] is None, "a skip drops nobody"
+    assert "call" not in unnamed
+
+
+def test_this_weeks_fill_ins_sit_under_the_players_worth_more():
+    """Week 11: two kickers covering Myers' bye headed the table and read as the picks of the day."""
+    context = _sample_context()
+    keeper = context["candidates"][0]                          # helps this week and all season
+    kicker = dict(free_agent("K", 10.1), name="Cairo Santos", gain=10.1, ahead_gain=10.1, weeks_helped=1,
+                  season_gain=0, bid=(1, 4), drop=None)
+    context["candidates"] = [kicker, keeper]
+    assert waivers.this_week_only(kicker) and not waivers.this_week_only(keeper)
+    assert not waivers.this_week_only(dict(kicker, role={"touches": 9})), "a next man up is never a rental"
+    text, html = waivers.build_report(context), waivers.build_html(context)
+    assert text.index(keeper["name"]) < text.index(waivers.THIS_WEEK_ONLY) < text.index("Cairo Santos")
+    assert html.index(keeper["name"]) < html.index(waivers.THIS_WEEK_ONLY) < html.index("Cairo Santos")
+    assert ">Call<" not in html and "CALL" not in text, "no write-up, no call column"
+    context["candidates"] = [kicker]
+    assert waivers.THIS_WEEK_ONLY in waivers.build_report(context), "the heading stands even with nothing above it"
+
+
+def test_the_table_shows_each_call_with_adds_and_bids_first():
+    context = _sample_context()
+    first = context["candidates"][0]
+    skipped = dict(free_agent("WR", 12.0, season=170.0), name="Skipped Guy", gain=2.0, ahead_gain=4.0,
+                   weeks_helped=2, season_gain=5, bid=(3, 5), drop=None)
+    context["candidates"] = [skipped, first]
+    waivers.attach_calls(context["candidates"], {
+        "Skipped Guy": {"call": "skip", "why": "the other one is better"},
+        first["name"]: {"call": "bid", "bid": 9, "drop": "Somebody Else", "why": "news: <starter> is out"}})
+    text, html = waivers.build_report(context), waivers.build_html(context)
+    assert text.index(first["name"] + " ") < text.index("Skipped Guy") and html.index(first["name"] + "<") < html.index("Skipped Guy")
+    row = next(line for line in text.splitlines() if line.startswith(first["name"] + " "))
+    assert "bid $9" in row and "$8-15" in row and "Somebody Else" in row, "the call beside the range it leaves"
+    assert "    the other one is better" in text
+    assert ">Call<" in html and "bid $9" in html and "news: &lt;starter&gt; is out" in html
+
+
+def test_the_subject_counts_the_write_ups_adds_and_bids():
+    a, b, c = {"gain": 1.0}, {"gain": 0.0}, {"gain": 3.0}
+    assert waivers.headline([a, b, c]) == "2 worth a claim", "no calls: the table's count, as before"
+    a["call"], b["call"], c["call"] = {"call": "add"}, {"call": "skip"}, {"call": "bid"}
+    assert waivers.headline([a, b, c]) == "1 to add, 1 to bid on"
+    a["call"] = c["call"] = {"call": "skip"}
+    assert waivers.headline([a, b, c]) == "nothing to add or bid on"
+    assert waivers.headline([]) == "nothing worth a claim"
+
+
+def test_claude_is_asked_for_a_call_on_every_row_and_told_the_table_shows_them():
+    prompt = _prompt_sent()
+    assert "```json" in prompt and '"call": "add" (a free agent)' in prompt
+    assert "the text must agree with those calls" in prompt and "doesn't count toward the three" in prompt
+    brief = waivers.brief_for_claude(_sample_context())
+    assert brief["available"][0]["helps_only_this_week"] is False
+
+
+def test_main_puts_the_write_ups_calls_in_the_table_and_the_subject():
+    import contextlib, io
+    context = _sample_context()
+    name = context["candidates"][0]["name"]
+    reply = (f"Bid on {name}.\n\n```json\n" + '{"calls": [{"player": "' + name + '", "call": "bid", "bid": 9, '
+             '"why": "starter out"}]}\n```')
+    sent = []
+    saved = (waivers.ESPN.__dict__["from_env"], waivers.gather, waivers.ask_claude, waivers.mailer.send)
+    waivers.ESPN.from_env = lambda: None
+    waivers.gather = lambda espn, ranker: context
+    waivers.ask_claude = lambda brief: reply
+    waivers.mailer.send = lambda subject, body, html=None: sent.append((subject, body, html)) or True
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            waivers.main(email=True)
+    finally:
+        waivers.ESPN.from_env, waivers.gather, waivers.ask_claude, waivers.mailer.send = saved
+    subject, body, html = sent[0]
+    assert subject == "Waivers week 3: 1 to bid on"
+    assert "bid $9" in body and "bid $9" in html and "starter out" in html
+    assert "```" not in body and "```" not in html and f"Bid on {name}." in body
 
 
 if __name__ == "__main__":
