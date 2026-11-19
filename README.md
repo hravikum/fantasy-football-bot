@@ -55,9 +55,11 @@ python3 value_test.py               whether player levels beat ESPN's season pro
 python3 lineup_test.py [season]     whether lineups set some other way would have outscored ESPN's projection
 python3 hosted_check.py             whether every outside service the bot needs answers from this machine
 bash seed_state.sh                  copy this Mac's logs and trade-watch memory to GitHub, once
+.venv/bin/python3 timers.py          set up the cron-job.org timers that start the GitHub runs
 python3 role_probe.py               every next man up right now, and how deep the free-agent list goes, read-only
 python3 test_lineup.py              optimizer and IR tests
 python3 test_waivers.py             waiver scoring tests
+python3 test_timers.py              cron-job.org timer tests
 python3 test_jev.py                 Jev scorer tests (needs typesafe-sdk)
 python3 test_pricing.py             claim pricing and projection accuracy tests
 python3 test_snaps.py               snap share tests
@@ -161,10 +163,34 @@ for job in lineup gameday waivers trades; do launchctl bootout gui/$UID/local.fa
 ```
 
 `./install_schedule.sh` puts them back. A run can also be started by hand: Actions > Bot > Run
-workflow, and pick the job. GitHub schedules can start a few minutes late when it is busy, which
-the 95-minute kickoff window absorbs, and a failed run is emailed to you by GitHub as well as by
-`run.sh`. The ESPN cookies, API keys and Gmail app password are repository secrets; when the ESPN
-cookies are renewed in `.env`, renew the secrets too.
+workflow, and pick the job. A failed run is emailed to you by GitHub as well as by `run.sh`. The
+ESPN cookies, API keys and Gmail app password are repository secrets; when the ESPN cookies are
+renewed in `.env`, renew the secrets too.
+
+### Starting the runs from cron-job.org (Nov 19)
+
+GitHub's own schedule started every job 7 1/2 to 9 hours late in its first two days: the 6:07
+waiver report at 2:21pm, the 9:05 lineup pass at 4:43pm. A run started through GitHub's API (the
+same as Run workflow) starts within seconds, so cron-job.org, a free scheduling service, sends
+that request at each time in the table above. `timers.py` sets up its six jobs, in New York time,
+and can be run again whenever the times change: it updates its own jobs (titles starting
+"Fantasy bot: "), removes ones it no longer lists, and leaves anything else alone. It needs two
+lines in `.env`:
+
+```
+CRONJOB_API_KEY=          # cron-job.org > Console > Settings > API
+GITHUB_DISPATCH_TOKEN=    # fine-grained token: this repository only, Actions: read and write
+```
+
+```
+.venv/bin/python3 timers.py --dry-run     # what it would send, token hidden
+.venv/bin/python3 timers.py               # create or update the jobs; prints each one's next run
+```
+
+cron-job.org keeps the GitHub token and emails you when a request fails and when it works again.
+The token can start and cancel this repository's runs, nothing else; it expires within a year,
+and an expired one shows up as those failure emails. Once the timers have run on time for a day,
+the `schedule:` block comes out of `bot.yml`, so GitHub's late runs don't double them.
 
 ## Tuning
 
