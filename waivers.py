@@ -676,10 +676,16 @@ def _call(candidate):
 
 
 def _drop(candidate):
-    """Who goes for him: the write-up's choice when it named one, else the cheapest drop."""
-    said = (candidate.get("call") or {}).get("drop")
-    if said:
-        return said
+    """Who goes for him: the write-up's choice when it named one, else the cheapest drop.
+
+    Nobody, for a player the write-up skips: on Nov 19 Baker Mayfield's skip row still offered
+    Emari Demercado, the same drop as Justin Herbert's add just above it.
+    """
+    said = candidate.get("call") or {}
+    if said.get("call") == "skip":
+        return None
+    if said.get("drop"):
+        return said["drop"]
     return candidate["drop"]["name"] if candidate.get("drop") else None
 
 

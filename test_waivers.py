@@ -946,6 +946,21 @@ def test_the_table_shows_each_call_with_adds_and_bids_first():
     assert ">Call<" in html and "bid $9" in html and "news: &lt;starter&gt; is out" in html
 
 
+def test_a_skipped_player_offers_nobody_to_drop():
+    """Nov 19: Baker Mayfield, skipped, still showed Emari Demercado, the drop for Herbert above him."""
+    context = _sample_context()
+    scored = dict(free_now=True, bid=(3, 5), gain=0.0, ahead_gain=6.0, season_gain=20, weeks_helped=4,
+                  drop={"name": "Emari Demercado"})
+    herbert = dict(free_agent("QB", 14.7), name="Justin Herbert", **scored)
+    mayfield = dict(free_agent("QB", 0.0), name="Baker Mayfield", **scored)
+    context["candidates"] = [herbert, mayfield]
+    waivers.attach_calls(context["candidates"], {"Justin Herbert": {"call": "add"},
+                                                 "Baker Mayfield": {"call": "skip", "drop": "Emari Demercado"}})
+    text, html = waivers.build_report(context), waivers.build_html(context)
+    rows = {line.split()[1]: line for line in text.splitlines() if line.startswith(("Justin", "Baker"))}
+    assert rows["Herbert"].endswith("Emari Demercado") and rows["Mayfield"].rstrip().endswith(" -")
+    assert html.count("Emari Demercado") == 1
+
 def test_the_subject_counts_the_write_ups_adds_and_bids():
     a, b, c = {"gain": 1.0}, {"gain": 0.0}, {"gain": 3.0}
     assert waivers.headline([a, b, c]) == "2 worth a claim", "no calls: the table's count, as before"
