@@ -1384,3 +1384,65 @@ Holding: +0.0 is under the 0.5 point bar.
 Watch: Carnell Tate would start and is listed QUESTIONABLE
 exit 0
 
+--- 2026-11-20 06:07:17 waivers.py --email --jev-shadow ---
+(Jev call failed for Chris Godwin Jr.: TypeSafeAuthenticationError)
+(Jev call failed for Justin Herbert: TypeSafeAuthenticationError)
+(Jev call failed for Brian Thomas Jr.: TypeSafeAuthenticationError)
+(Jev call failed for MarShawn Lloyd: TypeSafeAuthenticationError)
+(Jev call failed for J.J. McCarthy: TypeSafeAuthenticationError)
+(Jev call failed for Travis Hunter: TypeSafeAuthenticationError)
+(Jev call failed for Corey Kiner: TypeSafeAuthenticationError)
+(Jev call failed for Fernando Mendoza: TypeSafeAuthenticationError)
+(Jev call failed for Mack Hollins: TypeSafeAuthenticationError)
+(Jev call failed for Rashid Shaheed: TypeSafeAuthenticationError)
+(Jev call failed for Baker Mayfield: TypeSafeAuthenticationError)
+(Jev call failed for Emanuel Wilson: TypeSafeAuthenticationError)
+(Jev call failed for Geno Smith: TypeSafeAuthenticationError)
+(Jev call failed for Keon Coleman: TypeSafeAuthenticationError)
+(Jev call failed for Devin Singletary: TypeSafeAuthenticationError)
+(Jev call failed for Kenyon Sadiq: TypeSafeAuthenticationError)
+(Jev call failed for Jacoby Brissett: TypeSafeAuthenticationError)
+(Jev call failed for Tyreek Hill: TypeSafeAuthenticationError)
+(Jev call failed for Dontayvion Wicks: TypeSafeAuthenticationError)
+(Jev call failed for Drew Lock: TypeSafeAuthenticationError)
+(shadow jev ranking failed; falling back to the projection ranking; logged 0 judgments)
+Waiver report — Fri Nov 20, week 11
+
+Your FAAB: $55 of $100   (minimum bid $0)
+  $8 a week for the 7 weeks of waivers left, this one included; $4 a week spent so far
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Wed 3:33 AM, Thu 3:42 AM, Fri 3:24 AM
+
+Lineup holes in the next 4 weeks:
+  week 13: D/ST short by 1 — available and playing that week: Eagles D/ST (PHI), Patriots D/ST (NE)
+  week 13: K short by 1 — available and playing that week: Jason Myers (SEA), Cairo Santos (CHI)
+  A kicker, defense or one-week fill-in is listed in the week you need him, not before.
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK LEVEL   NOW   5WK  SEASON  BID     DROP FOR HIM
+Nobody on the wire is worth a bid today.
+
+What it has taken to win a claim in this league (bids.py):
+  Backs and receivers after a breakout game, and next men up (22 claims): $8 won half, $18 won three
+    in four, $31 won nine in ten
+  Everyone else at quarterback, back, receiver and tight end (72 claims): $3 won half, $5 won three
+    in four, $12 won nine in ten
+  Kickers and defenses (60 claims): $1 won half, $4 won three in four, $6 won nine in ten
+  For a player who would start for you, the range runs from the bid that won three in four to the
+    one that won nine in ten; for a stash, from half to three in four.
+
+------------------------------------------------------------
+
+No free agents are listed as available this week, and lineup_holes_this_week is empty — every starting slot is covered, so there's nothing to claim or fill today. The two holes you flagged are for week 13 (D/ST and K), and per the rules those aren't claims yet: the players tied to them (Eagles/Patriots D/ST, Myers/Santos) will be priced on the Tuesday report before week 13's run, not now. None of them would start for you before then, so there's no reason to jump the queue early.
+
+With no viable targets, the drop candidates (Demercado, Mitchell, Johnston) stay put — a drop only makes sense against a specific pickup, and there's no replacement on the board to justify moving any of them. Demercado's 0.6 level_per_game is the weakest asset on your roster and the first to go once a real need or add appears, but cutting him with nothing to add in his place gains you nothing.
+
+FAAB-wise, you're sitting on $55 against an $8/week pace with 7 weeks left ($56 projected spend) — right in line, so there's no urgency to force a bid just to spend money. Best move this week is to hold, watch Tuesday's week-13 report for the K/D targets, and keep Demercado/Mitchell/Johnston as your drop fodder when a real wire player shows up.
+
+WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's
+evidence (values.py), and it is what the weeks after this one are valued at. A dash means
+ESPN's season projection is used as it is: tight ends, kickers and defenses.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+(shadow run: would have emailed "Fantasy Football: Waivers week 11: nothing worth a claim")
+exit 0
+
