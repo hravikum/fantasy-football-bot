@@ -127,8 +127,8 @@ So:
 ## Running on GitHub instead of the Mac
 
 The Mac can't keep a schedule with its lid closed on battery, so the same jobs can run on
-GitHub's machines (Actions), which never sleep. `.github/workflows/bot.yml` holds the schedule, in
-New York time:
+GitHub's machines (Actions), which never sleep. `timers.py` holds the schedule, in New York
+time, and cron-job.org starts each run (below):
 
 | Job | When | Runs |
 | --- | --- | --- |
@@ -189,8 +189,8 @@ GITHUB_DISPATCH_TOKEN=    # fine-grained token: this repository only, Actions: r
 
 cron-job.org keeps the GitHub token and emails you when a request fails and when it works again.
 The token can start and cancel this repository's runs, nothing else; it expires within a year,
-and an expired one shows up as those failure emails. Once the timers have run on time for a day,
-the `schedule:` block comes out of `bot.yml`, so GitHub's late runs don't double them.
+and an expired one shows up as those failure emails. They are the only schedule: `bot.yml` has no
+`schedule:` block, so GitHub's late runs can't double them.
 
 ## Tuning
 
