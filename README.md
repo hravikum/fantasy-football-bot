@@ -449,23 +449,26 @@ they've shown they help:
 | Rank correlation with what those players scored | 0.25 | **0.31** |
 
 Quarterbacks did worse with a rate on the second test, so they stay on the level. Where the rate
-put one of those backs or receivers 2+ a game over ESPN's projection (24 player-weeks, 17
-players), ESPN said 2.4 a game, the level 4.1 and the rate 5.7; they scored 4.8, and 10 of the 24
-scored 2+ over ESPN's number. The wire rows count only games played after the run that listed
-each player: a Monday run comes after that week's Sunday games. Making the rate react faster to a
-jump in work (more drift, or ESPN's projection worth 1 game instead of 2) was no better on the
-replay and worse on the wire, worst in players' first two games, because most jumps don't last;
-part 3 of `rate_test.py` shows it. nflverse's points, rebuilt in half PPR, matched this league's
-ESPN points to the tenth in 97% of rostered player-weeks of 2025 and 2026.
+put one of those backs or receivers 2+ a game over ESPN's projection and at 5 a game or more (15
+player-weeks, 9 players), ESPN said 3.5 a game, the level 5.4 and the rate 6.9; they scored 5.2,
+and 5 of the 15 scored 2+ over ESPN's number. The 9 player-weeks left out for a rate under 5
+scored 4.0. The wire rows count only games played after the run that listed each player: a Monday
+run comes after that week's Sunday games. Making the rate react faster to a jump in work (more
+drift, or ESPN's projection worth 1 game instead of 2) was no better on the replay and worse on
+the wire, worst in players' first two games, because most jumps don't last; part 3 of
+`rate_test.py` shows it. nflverse's points, rebuilt in half PPR, matched this league's ESPN
+points to the tenth in 97% of rostered player-weeks of 2025 and 2026.
 
 With `--rate-shadow`, each waiver run also ranks the wire three more ways (points by rate, wins
 by level, wins by rate) and logs every scored free agent to `logs/shadow.csv`; the report, the
 bids and Claude's brief don't change. All four lists break ties on points or wins added by their
 own points a game, then ownership: on a day nobody on the wire improves your lineup, the report's
-own order is just who is most rostered. On Tuesdays a run that emails also sends "Rate shadow
-week N", the comparison: today's four lists side by side, numbered among quarterbacks, backs,
-receivers and tight ends; the hidden value, backs and receivers who played in one of their team's
-last two games, whose rate beats your worst healthy bench player at the position, and is 2+ a
+own order is just who is most rostered. Wins are compared to the thousandth, so a hair under zero
+ties with zero. Each run is stamped to the second and holds one row a player. On Tuesdays a run
+that emails also sends "Rate shadow week N", the comparison: today's four lists side by side,
+backs and receivers only, since quarterbacks and tight ends are valued the same in every list;
+the hidden value, backs and receivers who played in one of their team's last two games, whose
+rate is at least 5 a game, beats your worst healthy bench player at the position, and is 2+ a
 game over ESPN's season projection a game, with this week's ESPN projection and their work over
 the last two games against the season, and a tally of how every earlier flag has scored since;
 where the rate and the level disagree most and why (work and beyond); and a scorecard of what

@@ -34,7 +34,7 @@ WORK_CHECKS, BEYOND_CHECKS = (1, 2, 4, 8), (8, 16, 32, 64)
 DRIFT_CHECKS = (0.02, 0.05, 0.1, 0.2, 0.4)
 LEVEL_CHECKS = (1, 2, 4, 8, 16)
 JEV_LOG = Path(__file__).with_name("logs") / "jev_scores.csv"
-HIDDEN = 2.0                           # shadow.HIDDEN; not imported, so this runs without ESPN's modules
+HIDDEN, MIN_RATE = 2.0, 5.0            # shadow.HIDDEN and MIN_RATE; not imported, so this runs without ESPN's modules
 
 
 def season_rows(season):
@@ -205,11 +205,13 @@ def wire_report(cases):
              f"  Rank correlation with what they scored, average of {len(weeks)} weeks: "
              f"level {correlation(level_now):.3f}, rate {correlation(rate_of):.3f}",
              ]
-    flagged = [c for c in cases if c["active"] and rate_of(c) - c["prior"] >= HIDDEN]
-    idle = [c for c in cases if not c["active"] and rate_of(c) - c["prior"] >= HIDDEN]
+    flagged = [c for c in cases if c["active"] and rate_of(c) - c["prior"] >= HIDDEN and rate_of(c) >= MIN_RATE]
+    idle = [c for c in cases if not c["active"] and rate_of(c) - c["prior"] >= HIDDEN and rate_of(c) >= MIN_RATE]
+    thin = [c for c in cases if c["active"] and rate_of(c) - c["prior"] >= HIDDEN and rate_of(c) < MIN_RATE]
     if flagged:
         paid = sum(1 for c in flagged if c["actual"] >= c["prior"] + HIDDEN)
-        lines.append(f"  Hidden value (rate {HIDDEN:.0f}+ a game over ESPN's projection, shadow.py): {len(flagged)} player-weeks, "
+        lines.append(f"  Hidden value (rate {HIDDEN:.0f}+ a game over ESPN's projection and at least {MIN_RATE:.0f}, "
+                     f"shadow.py): {len(flagged)} player-weeks, "
                      f"{len({c['name'] for c in flagged})} players. ESPN said "
                      f"{statistics.fmean(c['prior'] for c in flagged):.1f}, level "
                      f"{statistics.fmean(level_now(c) for c in flagged):.1f}, rate "
@@ -219,6 +221,11 @@ def wire_report(cases):
                      f"{rates.RECENT} games; {len(idle)} more who hadn't were left out"
                      + (f" (they scored {statistics.fmean(c['actual'] for c in idle):.1f} when they did play)." if idle else ".")
                      + " The bench-floor part of the flag can't be replayed: past rosters aren't logged.")
+    if thin:
+        lines.append(f"  Left out for a rate under {MIN_RATE:.0f}: {len(thin)} player-weeks; ESPN said "
+                     f"{statistics.fmean(c['prior'] for c in thin):.1f}, rate {statistics.fmean(rate_of(c) for c in thin):.1f}, "
+                     f"they scored {statistics.fmean(c['actual'] for c in thin):.1f}, and "
+                     f"{sum(1 for c in thin if c['actual'] >= c['prior'] + HIDDEN)} scored {HIDDEN:.0f}+ over ESPN's number.")
     lines.append("  Where the two disagreed most:")
     for case in sorted(cases, key=lambda c: -abs(rate_of(c) - level_now(c)))[:8]:
         lines.append(f"    week {case['week']:<3} {case['name'][:22]:<22} {case['position']}  "

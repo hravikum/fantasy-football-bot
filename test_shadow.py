@@ -74,7 +74,7 @@ def test_record_logs_every_free_agent_four_ways_and_leaves_the_report_alone():
         rates.load = saved
     assert "1 backs and receivers rated" in note and "through week 4" in note
     assert [c["id"] for c in current] == order, "the report's order is untouched"
-    assert len(rows) == 3 and {r["logged_at"] for r in rows} == {"2026-10-06T06:07"}
+    assert len(rows) == 3 and {r["logged_at"] for r in rows} == {"2026-10-06T06:07:00"}
     back = next(r for r in rows if r["position"] == "RB")
     assert float(back["rate"]) > float(back["level"]) + 3, "four games of starter's work show in the rate"
     assert float(back["points_new"]) > float(back["points_now"]), "this week counts at his rate too"
@@ -214,6 +214,35 @@ def test_a_player_who_has_stopped_playing_is_shown_idle_and_left_out_of_the_disa
     assert "idle" in table.split("Hurt Since Week 7")[1].splitlines()[0]
     disagreements = text[text.index("WHERE THE RATE"):text.index("SCORECARD")]
     assert "Hurt Since Week 7" not in disagreements and "Playing" in disagreements
+
+
+def test_a_flag_needs_at_least_five_a_game():
+    rows = run_rows("2026-11-24T06:07:00", 12, {key: [1, 2] for key in shadow.LISTS}, {1: "Worth It", 2: "Thin"})
+    rows[0].update(espn="0.0", rate="5.0", bench_floor="1.8")
+    rows[1].update(espn="0.0", rate="4.9", bench_floor="1.8")
+    assert [r["name"] for r in rows if shadow.flagged(r)] == ["Worth It"]
+
+
+def test_quarterbacks_and_tight_ends_stay_out_of_the_comparison():
+    rows = run_rows("2026-11-24T06:07:00", 12, {key: [1, 2, 3] for key in shadow.LISTS},
+                    {1: "A Quarterback", 2: "A Tight End", 3: "A Receiver"})
+    rows[0]["position"], rows[1]["position"] = "QB", "TE"
+    text = shadow.summary(rows, {})[1]
+    assert "A Receiver" in text and "A Quarterback" not in text and "A Tight End" not in text
+    assert shadow.skill_places(rows)["points_now"] == {"3": 1}
+
+
+def test_two_logs_of_one_player_in_one_run_count_once():
+    rows = run_rows("2026-11-24T06:07:00", 12, {key: [1, 2] for key in shadow.LISTS}, {1: "Once", 2: "Other"})
+    text = shadow.summary(rows + [dict(rows[0])], {})[1]
+    table = text[text.index("TODAY'S TOP"):text.index("HIDDEN VALUE")]
+    assert table.count("Once") == 1
+
+
+def test_a_hair_under_zero_wins_ties_with_zero():
+    tied = [dict(id=1, wins_now=-0.0002, ahead_gain=0.0, season_gain=0, percent_owned=5, level=9.0, season_projection=0.0),
+            dict(id=2, wins_now=0.0, ahead_gain=0.0, season_gain=0, percent_owned=50, level=3.0, season_projection=0.0)]
+    assert shadow.ranks(tied, "wins_now") == {1: 1, 2: 2}, "the better player a game wins the tie"
 
 
 def test_nothing_logged_says_so():

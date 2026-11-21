@@ -37,18 +37,23 @@ FIELDS = ["logged_at", "week", "player_id", "name", "position", "percent_owned",
           "rank_points_now", "rank_points_new", "rank_wins_now", "rank_wins_new", "xfp_through"]
 LISTS = {"points_now": "points, level (the report)", "points_new": "points, rate",
          "wins_now": "wins, level", "wins_new": "wins, rate"}
-SKILL = ("QB", "RB", "WR", "TE")   # kickers and defenses rank the same every way, so they're left out
+# Only backs and receivers are valued differently by the level and the rate, so the email compares
+# them alone. With quarterbacks and tight ends in, a day when nobody adds lineup points filled every
+# list with quarterbacks (13 a game against 6 for the best back), the same in all four.
+SKILL = tuple(sorted(rates.RATED))
 TOP = 8               # how deep the email compares today's lists
 PICKS = 5             # how many of each list's top the scorecard follows
 AHEAD = 4             # weeks after a run that a pick's points count over
 SUMMARY_WEEKDAY = 1   # Tuesday: the week's games are in, and it's the day before the main waiver run
-# A free agent is hidden value when he has played lately (rates.recently_played), his rate beats
-# your worst healthy bench player at his position (bench_floors), and it is this many points a
-# game over ESPN's season projection a game. On the 2026 wire replay (rate_test.py, 24
-# player-weeks, all of them playing) such players were projected 2.4 by ESPN and 5.7 by the
-# rate, and scored 4.8 over their next four games; 10 of the 24 scored 2+ over ESPN's number.
-# The bench floor isn't in that replay: past rosters aren't logged.
+# A free agent is hidden value when he has played lately (rates.recently_played), his rate is at
+# least MIN_RATE and beats your worst healthy bench player at his position (bench_floors), and it is
+# HIDDEN points a game over ESPN's season projection a game. MIN_RATE is there because a bench as
+# thin as 1.8 a game lets through backs worth 2. On the 2026 wire replay (rate_test.py, 15
+# player-weeks, 9 players) such players were projected 3.5 by ESPN and 6.9 by the rate, and scored
+# 5.2 over their next four games; 5 of the 15 scored 2+ over ESPN's number. The 9 left out for a
+# rate under 5 scored 4.0. The bench floor isn't in that replay: past rosters aren't logged.
 HIDDEN = 2.0
+MIN_RATE = 5.0
 HIDDEN_SHOWN = 10
 
 
@@ -88,7 +93,9 @@ def ranks(scored, key):
     improves your lineup, every back and receiver ties at zero, and its order is just who is most
     rostered; each list's own points a game keeps the comparison about value.
     """
-    order = sorted(scored, key=lambda c: (-c[key], -c["ahead_gain"], -c["season_gain"], -per_game(c),
+    # Wins to the thousandth: a player whose points added round to zero can come out a hair under
+    # zero in wins, which would otherwise sink him below every exact zero.
+    order = sorted(scored, key=lambda c: (-round(c[key], 3), -c["ahead_gain"], -c["season_gain"], -per_game(c),
                                           -c["percent_owned"]))
     return {c["id"]: place for place, c in enumerate(order, start=1)}
 
@@ -153,7 +160,7 @@ def log(current, new, pool, place, listed, week, through, floors, path=None, now
     path.parent.mkdir(exist_ok=True)
     upgrade(path)
     new_file = not path.exists()
-    stamp = (now or datetime.now()).isoformat(timespec="minutes")
+    stamp = (now or datetime.now()).isoformat(timespec="seconds")   # two runs in a minute stay apart
     by_id = {p["id"]: p for p in pool}
     shadow = {c["id"]: c for c in new}
     with open(path, "a", newline="") as handle:
@@ -208,7 +215,7 @@ def top(run, key, count=None):
 
 
 def skill_places(run):
-    """{list: {player id: place among quarterbacks, backs, receivers and tight ends}}."""
+    """{list: {player id: place among backs and receivers}}."""
     return {key: {r["player_id"]: place for place, r in enumerate(top(run, key), start=1)} for key in LISTS}
 
 
@@ -259,9 +266,11 @@ def gap(row):
 
 
 def flagged(row):
-    """Hidden value: playing lately, better than your worst bench player there, and HIDDEN over ESPN."""
+    """Hidden value: playing lately, better than your worst bench player there and than MIN_RATE, and
+    HIDDEN over ESPN."""
     return (row["position"] in rates.RATED and row.get("active") == "1" and gap(row) is not None
-            and gap(row) >= HIDDEN and (not row.get("bench_floor") or float(row["rate"]) > float(row["bench_floor"])))
+            and gap(row) >= HIDDEN and float(row["rate"]) >= MIN_RATE
+            and (not row.get("bench_floor") or float(row["rate"]) > float(row["bench_floor"])))
 
 
 def hidden_value(run, rows, by_player):
@@ -269,10 +278,10 @@ def hidden_value(run, rows, by_player):
     today = sorted((r for r in run if flagged(r)), key=lambda r: -gap(r))
     place = skill_places(run)["points_new"]
     lines = [f"HIDDEN VALUE: backs and receivers who have played in one of their team's last {rates.RECENT} games,",
-             "whose rate beats your worst healthy bench player at the position (BENCH), and is "
-             f"{HIDDEN:.0f}+ a game",
-             "over ESPN's season projection a game. ESPN never revises that number; ESPN WK is this week's",
-             "projection, which does move, and is 0 for a player on bye or not expected to play."]
+             f"whose rate is at least {MIN_RATE:.0f} a game, beats your worst healthy bench player at the position",
+             f"(BENCH), and is {HIDDEN:.0f}+ a game over ESPN's season projection a game. ESPN never revises that",
+             "number; ESPN WK is this week's projection, which does move, and is 0 for a player on bye or not",
+             "expected to play."]
     if today:
         lines.append(f"  {'PLAYER':<24}{'POS':<4}{'OWN%':>5}{'ESPN':>6}{'ESPN WK':>8}{'LEVEL':>7}{'RATE':>6}"
                      f"{'BENCH':>7}{'WORK LAST 2/SEASON':>20}{'PTS/RATE':>10}")
@@ -317,7 +326,7 @@ def summary(rows, by_player):
     if not rows:
         return "rate shadow: nothing logged yet", "No shadow runs logged yet (waivers.py --rate-shadow logs them)."
     latest = max(r["logged_at"] for r in rows)
-    run = [r for r in rows if r["logged_at"] == latest]
+    run = list({r["player_id"]: r for r in rows if r["logged_at"] == latest}.values())   # one row a player
     week, through = run[0]["week"], run[0]["xfp_through"]
     lists = {key: top(run, key, TOP) for key in LISTS}
     agree = len({r["player_id"] for r in lists["points_now"]} & {r["player_id"] for r in lists["points_new"]})
@@ -331,11 +340,12 @@ def summary(rows, by_player):
              "  too, in place of ESPN's projection, except where ESPN has him at zero.",
              "  Wins: each week's points turned into wins, your matchup plus the median game, so a point",
              "  counts most in a close week (wins.py).",
-             "Quarterbacks and tight ends are valued the same in every list. Expected points are in through",
-             f"week {through}. Nothing here changes the report or its bids.",
+             "Quarterbacks and tight ends are valued the same in every list, so this compares backs and",
+             f"receivers only. Expected points are in through week {through}. Nothing here changes the report",
+             "or its bids.",
              "",
-             f"TODAY'S TOP {TOP} (quarterbacks, backs, receivers, tight ends). Place in each list, counting only",
-             "these positions; ties on points or wins added go to the list's own points a game:",
+             f"TODAY'S TOP {TOP} BACKS AND RECEIVERS. Place in each list among backs and receivers; ties on",
+             "points or wins added go to the list's own points a game:",
              f"  {'PLAYER':<24}{'POS':<4}{'OWN%':>5}{'LEVEL':>7}{'RATE':>6}  "
              + "".join(f"{label:>12}" for label in ("PTS/LEVEL", "PTS/RATE", "WINS/LEVEL", "WINS/RATE")),
              ]
