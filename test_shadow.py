@@ -114,19 +114,20 @@ def test_the_summary_lines_up_today_s_lists_and_scores_past_picks():
     assert subject == "Rate shadow week 5: 0 hidden-value free agents; the report and the rate share 7 of their top 8"
     assert "Player 6" in text and "= 7.5 + 0.5" in text
     chosen = shadow.picks(rows)
-    assert chosen["points_new"] == {(5, p): 5 for p in (6, 1, 2, 3, 4)}, "two runs in one week count once"
+    assert chosen["points_new"] == {(5, p): "2026-10-06T06:07" for p in (6, 1, 2, 3, 4)}, \
+        "two runs in one week count once, from the first"
     only_rate = {k: v for k, v in chosen["points_new"].items() if k not in chosen["points_now"]}
     only_level = {k: v for k, v in chosen["points_now"].items() if k not in chosen["points_new"]}
     assert shadow.average(only_rate, by_player) == (1, 11.0)
     assert shadow.average(only_level, by_player) == (1, 2.0)
 
 
-def test_a_monday_run_counts_from_the_next_week():
-    """ESPN is still on the week just played on Monday morning, so its Sunday games are already in."""
-    assert shadow.first_week_after(5, "2026-10-06T06:07") == 5, "Tuesday: the week's games are all ahead"
-    assert shadow.first_week_after(5, "2026-10-12T06:07") == 6, "Monday: Sunday's games are over"
-    by_player = {1: {5: (9.0, 30.0)}}
-    assert shadow.scored_after(5, 1, by_player) == 30.0 and shadow.scored_after(6, 1, by_player) is None
+def test_only_games_after_the_pick_count():
+    """A Saturday run in week 5: Thursday night's game came before it, Sunday's after."""
+    weeks = {5: (9.0, 30.0, datetime(2026, 10, 8, 20, 15)), 6: (9.0, 10.0, datetime(2026, 10, 18, 13, 0))}
+    assert shadow.scored_after(5, "2026-10-10T06:07:00", 1, {1: weeks}) == 10.0
+    weeks[5] = (9.0, 30.0, datetime(2026, 10, 11, 13, 0))
+    assert shadow.scored_after(5, "2026-10-10T06:07:00", 1, {1: weeks}) == 20.0
 
 
 def test_hidden_value_lists_today_s_flags_and_scores_the_earlier_ones():

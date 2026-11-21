@@ -50,7 +50,7 @@ SUMMARY_WEEKDAY = 1   # Tuesday: the week's games are in, and it's the day befor
 # HIDDEN points a game over ESPN's season projection a game. MIN_RATE is there because a bench as
 # thin as 1.8 a game lets through backs worth 2. On the 2026 wire replay (rate_test.py, 15
 # player-weeks, 9 players) such players were projected 3.5 by ESPN and 6.9 by the rate, and scored
-# 5.2 over their next four games; 5 of the 15 scored 2+ over ESPN's number. The 9 left out for a
+# 4.8 over their next four games; 5 of the 15 scored 2+ over ESPN's number. The 9 left out for a
 # rate under 5 scored 4.0. The bench floor isn't in that replay: past rosters aren't logged.
 HIDDEN = 2.0
 MIN_RATE = 5.0
@@ -219,15 +219,9 @@ def skill_places(run):
     return {key: {r["player_id"]: place for place, r in enumerate(top(run, key), start=1)} for key in LISTS}
 
 
-def first_week_after(week, logged_at):
-    """The first week whose games all come after a run: the run's own week, unless the run was on
-    a Monday, when ESPN is still on the week whose Sunday games are already in."""
-    return week + 1 if datetime.fromisoformat(logged_at).weekday() == 0 else week
-
-
 def picks(rows):
-    """{list: {(week, player id): first week after}}: each list's top PICKS at every run, once a
-    week per player, counted from the first run that picked him that week."""
+    """{list: {(week, player id): when}}: each list's top PICKS at every run, once a week per
+    player, counted from the first run that picked him that week."""
     runs = defaultdict(list)
     for row in rows:
         runs[row["logged_at"]].append(row)
@@ -236,19 +230,20 @@ def picks(rows):
         for key in LISTS:
             for r in top(runs[stamp], key, PICKS):
                 week = int(r["week"])
-                found[key].setdefault((week, int(r["player_id"])), first_week_after(week, stamp))
+                found[key].setdefault((week, int(r["player_id"])), stamp)
     return found
 
 
-def scored_after(start, player_id, by_player):
-    """Points a game over the games he played in the AHEAD weeks from start, or None."""
-    later = [points for w, (_, points) in by_player.get(player_id, {}).items() if start <= w < start + AHEAD]
+def scored_after(week, logged_at, player_id, by_player):
+    """Points a game over his games that kicked off after the run, in its week and the next three, or None."""
+    later = rates.scored_after(by_player.get(player_id, {}), week, logged_at, AHEAD)
     return fmean(later) if later else None
 
 
 def average(chosen, by_player):
-    """(how many have played since, their points a game) for {(week, player id): first week after}."""
-    found = [s for s in (scored_after(start, pid, by_player) for (_, pid), start in chosen.items()) if s is not None]
+    """(how many have played since, their points a game) for {(week, player id): when picked}."""
+    found = [s for s in (scored_after(week, stamp, pid, by_player) for (week, pid), stamp in chosen.items())
+             if s is not None]
     return len(found), (fmean(found) if found else None)
 
 
@@ -303,7 +298,7 @@ def hidden_value(run, rows, by_player):
     for row in sorted(rows, key=lambda r: r["logged_at"]):
         if flagged(row):
             first.setdefault((int(row["week"]), int(row["player_id"])), row)
-    since = [(row, scored_after(first_week_after(week, row["logged_at"]), pid, by_player))
+    since = [(row, scored_after(week, row["logged_at"], pid, by_player))
              for (week, pid), row in first.items()]
     since = [(row, scored) for row, scored in since if scored is not None]
     lines += ["", f"  How the flags have done: {len(first)} flagged so far (once a week per player), "
@@ -373,9 +368,9 @@ def summary(rows, by_player):
                   "  over that, held near the position's average because it rarely repeats.", ""]
 
     chosen = picks(rows)
-    lines += [f"SCORECARD: what each list's top {PICKS} have scored a game since, over the {AHEAD} weeks from the",
-              "first one whose games came after the pick (games played; a player picked on several days of a",
-              "week counts once):"]
+    lines += [f"SCORECARD: what each list's top {PICKS} have scored a game since, in games that kicked off after",
+              f"the pick, over its week and the next {AHEAD - 1} (games played; a player picked on several days of",
+              "a week counts once):"]
     for key, label in LISTS.items():
         lines.append(f"  {label:<34}{_a_game(*average(chosen[key], by_player))}")
     for first, second, title in (("points_new", "points_now", "rate against level, by points"),

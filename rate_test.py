@@ -18,7 +18,6 @@ Usage: python3 rate_test.py
 import csv
 import statistics
 from collections import defaultdict
-from datetime import datetime
 from itertools import product
 from pathlib import Path
 
@@ -176,11 +175,9 @@ def wire_cases(path=JEV_LOG):
                 continue
             seen.add(key)
             week = int(row["week"])
-            # A Monday run comes after that week's Sunday games (ESPN is still on the week just
-            # played), so they don't count as ahead of it; shadow.first_week_after does the same.
-            start = week + 1 if datetime.fromisoformat(row["logged_at"]).weekday() == 0 else week
-            before = sorted((w, p) for w, (_, p) in weeks.items() if w < week)
-            ahead = [p for w, (_, p) in weeks.items() if start <= w < start + AHEAD]
+            # Only games that kicked off after the run, as the email's scorecard counts them.
+            before = sorted((w, game[1]) for w, game in weeks.items() if w < week)
+            ahead = rates.scored_after(weeks, week, row["logged_at"], AHEAD)
             if ahead:
                 active = rates.recently_played(before, weeks, team_weeks.get(int(row["player_id"]), set()), week)
                 cases.append({"week": week, "name": row["name"], "position": row["position"], "active": active,

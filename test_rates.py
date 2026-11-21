@@ -1,5 +1,6 @@
 """Tests for the work-and-efficiency rate. Run: python3 test_rates.py"""
 import sys
+from datetime import datetime
 
 import rates
 import values
@@ -107,6 +108,31 @@ def test_a_player_who_has_stopped_playing_keeps_his_level():
     stale = {"id": 1, "position": "RB", "rate": 9.0, "level": 4.0, "projection": 0.0, "active": False}
     copy = rates.by_rate([stale])[0]
     assert copy["level"] == 4.0, "his rate is old work"
+
+
+def test_kickoffs_come_from_the_schedule():
+    schedule = "game_id,gameday,gametime\n2026_01_BUF_MIA,2026-09-13,13:00\n2026_02_X_Y,,\n"
+    weekly = "\n".join([HEADER.replace("season,", "season,game_id,"),
+                        weekly_row(1, "00-1", "BUF", expected=8).replace(f"{SEASON},", f"{SEASON},2026_01_BUF_MIA,", 1)])
+    found, _, _ = rates.join(PLAYERS, weekly, schedule)
+    assert found[101][1][2] == datetime(2026, 9, 13, 13, 0)
+    assert rates.join(PLAYERS, weekly)[0][101][1][2] is None, "no schedule, no kickoff"
+
+
+def test_scored_after_counts_games_that_kicked_off_after_the_run():
+    weeks = {4: (5.0, 7.0, datetime(2026, 10, 4, 13)), 5: (5.0, 8.0, datetime(2026, 10, 8, 20, 15)),
+             6: (5.0, 9.0, datetime(2026, 10, 18, 13)), 9: (5.0, 99.0, datetime(2026, 11, 8, 13))}
+    assert rates.scored_after(weeks, 5, "2026-10-07T06:07:00", 4) == [8.0, 9.0], "Wednesday: all of week 5 is ahead"
+    assert rates.scored_after(weeks, 5, "2026-10-09T06:07:00", 4) == [9.0], "Friday: Thursday night's game is over"
+    assert 99.0 not in rates.scored_after(weeks, 5, "2026-10-07T06:07:00", 4), "week 9 is past the window"
+
+
+def test_without_kickoffs_a_late_run_skips_its_own_week():
+    weeks = {5: (5.0, 8.0), 6: (5.0, 9.0)}
+    for stamp, expected in (("2026-10-06T06:07:00", [8.0, 9.0]), ("2026-10-08T06:07:00", [8.0, 9.0]),
+                            ("2026-10-08T21:30:00", [9.0]), ("2026-10-10T14:51:05", [9.0]),
+                            ("2026-10-12T06:07:00", [9.0])):
+        assert rates.scored_after(weeks, 5, stamp, 4) == expected, stamp
 
 
 def test_the_weights_are_the_ones_rate_test_chose():

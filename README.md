@@ -445,19 +445,20 @@ they've shown they help:
 |---|---|---|
 | Backs, nflverse 2025-2026, weights fit on 2019-2024, last season as the prior | 3.75 | **3.70** |
 | Receivers, same | 3.12 | **3.08** |
-| Backs and receivers the report sent to Jev in 2026, ESPN's projection as the prior (145) | 2.60 | **2.55** |
-| Rank correlation with what those players scored | 0.25 | **0.31** |
+| Backs and receivers the report sent to Jev in 2026, ESPN's projection as the prior (145) | 2.63 | **2.60** |
+| Rank correlation with what those players scored | 0.21 | **0.29** |
 
 Quarterbacks did worse with a rate on the second test, so they stay on the level. Where the rate
 put one of those backs or receivers 2+ a game over ESPN's projection and at 5 a game or more (15
-player-weeks, 9 players), ESPN said 3.5 a game, the level 5.4 and the rate 6.9; they scored 5.2,
+player-weeks, 9 players), ESPN said 3.5 a game, the level 5.4 and the rate 6.9; they scored 4.8,
 and 5 of the 15 scored 2+ over ESPN's number. The 9 player-weeks left out for a rate under 5
-scored 4.0. The wire rows count only games played after the run that listed each player: a Monday
-run comes after that week's Sunday games. Making the rate react faster to a jump in work (more
-drift, or ESPN's projection worth 1 game instead of 2) was no better on the replay and worse on
-the wire, worst in players' first two games, because most jumps don't last; part 3 of
-`rate_test.py` shows it. nflverse's points, rebuilt in half PPR, matched this league's ESPN
-points to the tenth in 97% of rostered player-weeks of 2025 and 2026.
+scored 4.0. The wire rows count only games that kicked off after the run that listed each player
+(nflverse's schedule): Thursday night's game comes before a Friday run, Sunday's before a Monday
+one. Making the rate react faster to a jump in work (more drift, or ESPN's projection worth 1
+game instead of 2) was no better on the replay and worse on the wire, worst in players' first two
+games, because most jumps don't last; part 3 of `rate_test.py` shows it. nflverse's points,
+rebuilt in half PPR, matched this league's ESPN points to the tenth in 97% of rostered
+player-weeks of 2025 and 2026.
 
 With `--rate-shadow`, each waiver run also ranks the wire three more ways (points by rate, wins
 by level, wins by rate) and logs every scored free agent to `logs/shadow.csv`; the report, the
@@ -472,12 +473,12 @@ rate is at least 5 a game, beats your worst healthy bench player at the position
 game over ESPN's season projection a game, with this week's ESPN projection and their work over
 the last two games against the season, and a tally of how every earlier flag has scored since;
 where the rate and the level disagree most and why (work and beyond); and a scorecard of what
-each list's top five have scored since. Both count only games played after the run that picked a
-player. A back or receiver who hasn't played in either of his team's last two games keeps his
-level in the rate's lists too: the rate counts only games played, so his rate is old work.
-`python3 shadow.py` prints the comparison any day. The expected-points file updates within a day
-of each game; a game it doesn't have yet is left out of the rate until it does. To stop, drop
-`--rate-shadow` from `hosted_run.sh`.
+each list's top five have scored since. Both count only games that kicked off after the run that
+picked a player, over that week and the next three. A back or receiver who hasn't played in
+either of his team's last two games keeps his level in the rate's lists too: the rate counts only
+games played, so his rate is old work. `python3 shadow.py` prints the comparison any day. The
+expected-points file updates within a day of each game; a game it doesn't have yet is left out of
+the rate until it does. To stop, drop `--rate-shadow` from `hosted_run.sh`.
 
 ## The Jev ranker (experimental)
 

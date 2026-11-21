@@ -12,9 +12,9 @@ Tested in rate_test.py, average miss on what a player scored a game over his nex
   Replay on nflverse data, last season as the prior, each method's weights fit on 2019-2024 and
     scored on 2025 and 2026: backs 3.70 against the level's 3.75, receivers 3.08 against 3.12.
   The backs and receivers the waiver report sent to Jev in 2026 (logs/jev_scores.csv), with ESPN's
-    preseason projection as the prior, as both run live, scored on games after each run: 2.55
-    against 2.60, and the rate's order matched what they went on to score better (rank
-    correlation 0.31 against 0.25).
+    preseason projection as the prior, as both run live, scored on games that kicked off after
+    each run: 2.60 against 2.63, and the rate's order matched what they went on to score better
+    (rank correlation 0.29 against 0.21).
   Quarterbacks were worse on that second test, and tight ends keep ESPN's number in values.py
   already, so both are left as they are.
 
@@ -22,6 +22,7 @@ Runs in shadow only for now: shadow.py ranks the wire with it beside the current
 """
 import csv
 import io
+from datetime import datetime
 
 import snaps
 import values
@@ -72,13 +73,25 @@ def game_points(row):
     return expected, scored
 
 
-def join(players_text, weekly_text):
-    """({espn_id: {week: (expected, scored)}}, {espn_id: weeks his team's game is in the file}, latest week).
+def kickoffs(schedule_text):
+    """{game id: kickoff}, local (Eastern) time as nflverse's schedule gives it."""
+    found = {}
+    for row in csv.DictReader(io.StringIO(schedule_text)):
+        if row.get("gameday") and row.get("gametime"):
+            found[row["game_id"]] = datetime.fromisoformat(f"{row['gameday']}T{row['gametime']}")
+    return found
+
+
+def join(players_text, weekly_text, schedule_text=""):
+    """({espn_id: {week: (expected, scored, kickoff)}}, {espn_id: weeks his team's game is in the
+    file}, latest week).
 
     nflverse keys players by GSIS id; its player table maps those to ESPN ids (as in snaps.py).
     A week the file has his team's game but no row for him is a game with no carries or targets;
-    a week it doesn't have his team's game yet (Monday night's, say) says nothing.
+    a week it doesn't have his team's game yet (Monday night's, say) says nothing. Kickoff comes
+    from nflverse's schedule (None without it) and is only for judging which games came after a run.
     """
+    starts = kickoffs(schedule_text) if schedule_text else {}
     to_espn = {}
     for row in csv.DictReader(io.StringIO(players_text)):
         espn_id = snaps._espn_id(row.get("espn_id"))
@@ -90,7 +103,7 @@ def join(players_text, weekly_text):
         covered.setdefault(week, set()).add(row.get("posteam"))
         espn_id = to_espn.get(row.get("player_id"))
         if espn_id is not None:
-            found.setdefault(espn_id, {})[week] = game_points(row)
+            found.setdefault(espn_id, {})[week] = game_points(row) + (starts.get(row.get("game_id")),)
             if week >= team_of.get(espn_id, (0, None))[0]:
                 team_of[espn_id] = (week, row.get("posteam"))
     played = {espn_id: {week for week, teams in covered.items() if team in teams}
@@ -102,7 +115,8 @@ def load(season):
     """join() for this season's file."""
     players = snaps._fetch(f"{snaps.BASE}/players/players.csv", snaps.CACHE / "players.csv", snaps.PLAYERS_MAX_AGE)
     weekly = snaps._fetch(URL.format(season=season), snaps.CACHE / f"ep_weekly_{season}.csv", MAX_AGE)
-    return join(players, weekly)
+    schedule = snaps._fetch(f"{snaps.BASE}/schedules/games.csv", snaps.CACHE / "games.csv", MAX_AGE)
+    return join(players, weekly, schedule)
 
 
 def rate(prior, games, weeks, played, position):
@@ -162,6 +176,27 @@ def attach(players, cards, season, week, data):
                       work_average=sum(expected) / len(expected) if expected else None)
         rated += 1
     return rated
+
+
+def scored_after(weeks, week, logged_at, ahead):
+    """What he scored in each game that kicked off after a run in ESPN week `week`, over that week
+    and the next ahead - 1. weeks is his {week: (expected, scored, kickoff)} (join).
+
+    Games played before the run are what put many players on the wire that day, so counting them
+    would flatter whatever picked them. A game with no kickoff on file counts only if the run came
+    before its week's first game (ESPN's week runs Tuesday to Monday; Thursday night is first).
+    Used by shadow.py's scorecard and tally and by rate_test.py's wire check.
+    """
+    when = datetime.fromisoformat(logged_at)
+    before_the_week = when.weekday() in (1, 2) or (when.weekday() == 3 and when.hour < 20)
+    found = []
+    for game_week, row in sorted(weeks.items()):
+        if not week <= game_week < week + ahead:
+            continue
+        kickoff = row[2] if len(row) > 2 else None
+        if (kickoff > when) if kickoff else (game_week > week or before_the_week):
+            found.append(row[1])
+    return found
 
 
 def by_rate(players):
