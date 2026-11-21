@@ -988,7 +988,7 @@ def test_main_puts_the_write_ups_calls_in_the_table_and_the_subject():
     sent = []
     saved = (waivers.ESPN.__dict__["from_env"], waivers.gather, waivers.ask_claude, waivers.mailer.send)
     waivers.ESPN.from_env = lambda: None
-    waivers.gather = lambda espn, ranker: context
+    waivers.gather = lambda espn, ranker, rate_shadow=False: context
     waivers.ask_claude = lambda brief: reply
     waivers.mailer.send = lambda subject, body, html=None: sent.append((subject, body, html)) or True
     try:

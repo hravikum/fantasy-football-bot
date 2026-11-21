@@ -44,6 +44,8 @@ python3 waivers.py                  print the waiver report
 python3 waivers.py --email          print it and send it
 python3 waivers.py --ranker jev     rank the pool with Jev instead of projections
 python3 waivers.py --jev-shadow     score and log with Jev, but rank and email as normal
+python3 waivers.py --rate-shadow    also rank the wire by rate and by wins and log it; Tuesdays, emails the comparison
+python3 shadow.py [--email]         the rate and wins comparison from the log, printed (and sent)
 python3 trades.py --give "A" --get "B"   what a trade does to both lineups, read-only
 python3 trades.py --watch           email an analysis of each new proposal sent to you or by you
 python3 trade_probe.py              what ESPN sends for trades, schedule and draft, read-only
@@ -52,6 +54,7 @@ python3 auctions.py                 each waiver auction: bidders, price, what th
 python3 accuracy.py [season]        how good ESPN's projections have been, by position
 python3 snap_test.py [season]       whether a rising snap share beats ESPN's projection
 python3 value_test.py               whether player levels beat ESPN's season projection, on ESPN's numbers
+python3 rate_test.py                whether the work-and-efficiency rate beats the level, nflverse 2019-2026 and the wire
 python3 lineup_test.py [season]     whether lineups set some other way would have outscored ESPN's projection
 python3 hosted_check.py             whether every outside service the bot needs answers from this machine
 bash seed_state.sh                  copy this Mac's logs and trade-watch memory to GitHub, once
@@ -66,6 +69,9 @@ python3 test_snaps.py               snap share tests
 python3 test_trades.py              trade analyzer tests
 python3 test_values.py              player level tests
 python3 test_roles.py               next-man-up tests
+python3 test_rates.py               rate tests
+python3 test_wins.py                points-into-wins tests
+python3 test_shadow.py              shadow comparison tests
 ```
 
 ## Scheduling (launchd)
@@ -132,7 +138,7 @@ time, and cron-job.org starts each run (below):
 
 | Job | When | Runs |
 | --- | --- | --- |
-| Waiver report | daily 6:07 | `waivers.py --email --jev-shadow` |
+| Waiver report | daily 6:07 | `waivers.py --email --jev-shadow --rate-shadow` |
 | Morning lineup pass | daily 9:05 | `lineup.py --live` |
 | Game-day check-ins | every 15 min: Sunday 7:00-21:00, Monday 17:00-21:00, Thursday to Saturday 11:00-21:00 | `lineup.py --live --near-kickoff` |
 | Trade watch | 8:03 and 23:03 | `trades.py --watch` |
@@ -412,6 +418,57 @@ What this can't do:
 
 `python3 auctions.py` checks it as the season goes: of the claims the report had priced the
 morning before, over the last 28 days, how many each end of its range would have won.
+
+## Rates and wins, in shadow (Nov 20)
+
+A first step of a new way to value players (`claude/player-valuation.md` in the project has the
+research behind it). Two changes to how the wire is ranked, running beside the report until
+they've shown they help:
+
+- **Rate** (`rates.py`). A level moves with every fantasy point, so one long touchdown moves it as
+  far as a doubled workload. A rate splits a back's or receiver's scoring into his work, expected
+  fantasy points priced from each carry and target by down, distance, depth and field position
+  (ffopportunity, free from nflverse), and what he scored over that. Work repeats from game to
+  game and is trusted quickly (ESPN's projection counts for 2 games of it); points over expected
+  mostly don't repeat and stay near the position's average (16 games' weight for backs, 32 for
+  receivers). In the rate's lists it values this week too, in place of ESPN's weekly projection,
+  except where ESPN has a player at zero (a bye, out) or his game has started. Quarterbacks and
+  tight ends keep their level and ESPN's number.
+- **Wins** (`wins.py`). A regular-season week here is two games, the matchup and the median, so a
+  point matters most in a week you're projected close to either. Every team's lineup is projected
+  the way yours is, scores are spread the way this league's have been around each team's average,
+  and a player's weekly points become wins added. A playoff week is one game.
+
+`rate_test.py` is the check, scored on what a player averaged over his next four games:
+
+| | Level | Rate |
+|---|---|---|
+| Backs, nflverse 2025-2026, weights fit on 2019-2024, last season as the prior | 3.75 | **3.70** |
+| Receivers, same | 3.12 | **3.08** |
+| Backs and receivers the report sent to Jev in 2026, ESPN's projection as the prior (145) | 2.60 | **2.55** |
+| Rank correlation with what those players scored | 0.25 | **0.31** |
+
+Quarterbacks did worse with a rate on the second test, so they stay on the level. Where the rate
+put one of those backs or receivers 2+ a game over ESPN's projection (24 player-weeks, 17
+players), ESPN said 2.4 a game, the level 4.1 and the rate 5.7; they scored 4.8, and 10 of the 24
+scored 2+ over ESPN's number. The wire rows count only games played after the run that listed
+each player: a Monday run comes after that week's Sunday games. Making the rate react faster to a
+jump in work (more drift, or ESPN's projection worth 1 game instead of 2) was no better on the
+replay and worse on the wire, worst in players' first two games, because most jumps don't last;
+part 3 of `rate_test.py` shows it. nflverse's points, rebuilt in half PPR, matched this league's
+ESPN points to the tenth in 97% of rostered player-weeks of 2025 and 2026.
+
+With `--rate-shadow`, each waiver run also ranks the wire three more ways (points by rate, wins
+by level, wins by rate) and logs every scored free agent to `logs/shadow.csv`; the report, the
+bids and Claude's brief don't change. On Tuesdays a run that emails also sends "Rate shadow week
+N", the comparison: today's four lists side by side; the hidden value, free agents whose rate is
+2+ a game over ESPN's season projection a game, with this week's ESPN projection and their work
+over the last two games against the season, and a tally of how every earlier flag has scored
+since; where the rate and the level disagree most and why (work and beyond); and a scorecard of
+what each list's top five have scored since. Both count only games played after the run that
+picked a player. `python3 shadow.py` prints it any day. The expected-points file updates within a
+day of each game; a game it doesn't have yet is left out of the rate until it does. To stop, drop
+`--rate-shadow` from `hosted_run.sh`.
 
 ## The Jev ranker (experimental)
 

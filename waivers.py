@@ -9,6 +9,8 @@ Usage:
   python3 waivers.py --email          print it and send it
   python3 waivers.py --ranker jev     rank the pool with Jev instead of projections
   python3 waivers.py --jev-shadow     score with Jev and log it, but rank and email as normal
+  python3 waivers.py --rate-shadow    also rank the wire with rates.py and by wins, and log it (shadow.py);
+                                      on Tuesdays, with --email, also email the comparison
 """
 import csv
 import html as html_escape
@@ -251,6 +253,7 @@ def score_pool(roster, pool, slot_counts, games, byes=None, week=0):
         scored.append(dict(free_agent,
                            gain=round(by_week[0], 1),
                            ahead_gain=round(sum(by_week), 1),
+                           by_week=by_week,
                            weeks_helped=sum(1 for points in by_week if points > 0),
                            season_gain=round(season_gain),
                            drop=dropped,
@@ -1044,7 +1047,7 @@ def faab_spent(team, spent_by_team):
     return max(counter, spent_by_team.get(team["id"], 0))
 
 
-def gather(espn, ranker="math"):
+def gather(espn, ranker="math", rate_shadow=False):
     league = espn.league("mSettings", "mTeam")
     settings = league["settings"]
     week = league["scoringPeriodId"]
@@ -1113,6 +1116,13 @@ def gather(espn, ranker="math"):
     for candidate in shortlist:
         candidate["bid"] = suggest_bid(candidate, budget_left, acquisition.get("minimumBid", 0), past)
     log_pool(week, pool, scored)
+    if rate_shadow:
+        import shadow   # here rather than at the top: shadow imports this module
+        try:
+            print(shadow.record(espn, league, team["id"], roster, pool, cards, slot_counts, games, byes, week,
+                                scored, shortlist))
+        except Exception as problem:  # broad on purpose: a shadow must not stop the report
+            print(f"(rate shadow failed: {type(problem).__name__}: {problem}); report continues without it")
     runs = sorted({claim["processed"] for claim in claims if claim["processed"]})
 
     final_week = (league.get("status") or {}).get("finalScoringPeriod") or 0
@@ -1182,9 +1192,9 @@ def brief_for_claude(context):
     }
 
 
-def main(email, ranker="math"):
+def main(email, ranker="math", rate_shadow=False):
     espn = ESPN.from_env()
-    context = gather(espn, ranker)
+    context = gather(espn, ranker, rate_shadow)
     context["advice"], calls = split_calls(ask_claude(brief_for_claude(context)))
     attach_calls(context["candidates"], calls)
     # With a key set, a missing write-up is a failure worth seeing in the email, not just in the log.
@@ -1193,11 +1203,18 @@ def main(email, ranker="math"):
     print(report)
     if email:
         mailer.send(f"Waivers week {context['week']}: {headline(context['candidates'])}", report, build_html(context))
+    if rate_shadow and email:
+        import shadow
+        if shadow.is_summary_day():
+            try:
+                shadow.send(season=espn.season)
+            except Exception as problem:  # broad on purpose: the report has already gone out
+                print(f"(shadow comparison failed: {type(problem).__name__}: {problem})")
 
 
 if __name__ == "__main__":
     try:
-        main(email="--email" in sys.argv, ranker=ranker_from(sys.argv))
+        main(email="--email" in sys.argv, ranker=ranker_from(sys.argv), rate_shadow="--rate-shadow" in sys.argv)
     except ESPNError as error:
         message = f"Error: {error}"
         print(message, file=sys.stderr)

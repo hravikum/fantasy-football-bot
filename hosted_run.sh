@@ -11,7 +11,7 @@ set -uo pipefail
 cd "$(dirname "$0")" || exit 1
 
 case "${1:-}" in
-    "7 6 * * *" | waivers)  JOB=(waivers.py --email --jev-shadow) ;;
+    "7 6 * * *" | waivers)  JOB=(waivers.py --email --jev-shadow --rate-shadow) ;;
     "5 9 * * *" | lineup)   JOB=(lineup.py) ;;
     "2,17,32,47 "* | gameday) JOB=(lineup.py --near-kickoff) ;;
     "3 8,23 * * *" | trades) JOB=(trades.py --watch) ;;
