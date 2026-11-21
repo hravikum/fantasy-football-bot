@@ -80,7 +80,7 @@ def test_only_backs_and_receivers_with_a_card_and_a_row_get_a_rate():
     data = ({101: {1: (11.0, 12.0), 2: (13.0, 14.0)}, 103: {1: (15.0, 20.0)}}, {101: {1, 2}, 103: {1}}, 2)
     rated = rates.attach([back, quarterback, stranger], {101: card, 103: card, 104: card}, SEASON, 3, data)
     assert rated == 1 and back["rate"] > 5.0 and "rate" not in quarterback and "rate" not in stranger
-    assert back["work_recent"] == 12.0 and back["work_average"] == 12.0
+    assert back["work_recent"] == 12.0 and back["work_average"] == 12.0 and back["active"] is True
 
 
 def test_the_rate_stands_in_for_the_level_and_for_this_week_unless_he_is_not_playing():
@@ -92,6 +92,21 @@ def test_the_rate_stands_in_for_the_level_and_for_this_week_unless_he_is_not_pla
     assert copies[2]["projection"] == 7.5, "his game has started"
     assert (copies[3]["level"], copies[3]["projection"]) == (17.0, 18.0), "no rate, nothing changes"
     assert rated["level"] == 6.0 and rated["projection"] == 7.5, "the originals are left as they were"
+
+
+def test_playing_lately_means_one_of_his_team_s_last_two_games():
+    team = {5, 6, 8, 9}                                   # his team's games in the file; week 7 a bye
+    assert rates.recently_played([(5, 9.0), (8, 3.0)], {}, team, 10)
+    assert not rates.recently_played([(5, 9.0), (6, 8.0)], {5: (9, 9), 6: (8, 8)}, team, 10), "out weeks 8 and 9"
+    assert rates.recently_played([(5, 9.0)], {9: (2.0, 1.0)}, team, 10), "a touch in the file counts"
+    assert rates.recently_played([(6, 9.0)], {}, team, 9), "this week's game isn't over: weeks 6 and 8 count"
+    assert rates.recently_played([], {}, set(), 2), "nothing to judge by yet"
+
+
+def test_a_player_who_has_stopped_playing_keeps_his_level():
+    stale = {"id": 1, "position": "RB", "rate": 9.0, "level": 4.0, "projection": 0.0, "active": False}
+    copy = rates.by_rate([stale])[0]
+    assert copy["level"] == 4.0, "his rate is old work"
 
 
 def test_the_weights_are_the_ones_rate_test_chose():

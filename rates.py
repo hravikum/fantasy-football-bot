@@ -52,6 +52,10 @@ WORK_DRIFT = values.DRIFT
 # Points over expected a game for the average player at the position, 2019-2024.
 EFFICIENCY_BASE = {"RB": 0.0, "WR": 0.2}
 RATED = set(OPPORTUNITY_GAMES)
+# A player counts as playing if he played in at least one of his team's last this-many games. The
+# rate counts only games he plays, so without this a back hurt or benched in week 7 keeps his
+# week-7 workload indefinitely.
+RECENT = 2
 
 
 def _number(value):
@@ -124,11 +128,23 @@ def counted_games(games, weeks, played):
             if week in weeks or week in played]
 
 
+def recently_played(games, weeks, played, week):
+    """Whether he played in one of his team's last RECENT games before this week.
+
+    His games are ESPN's (a week with stats) and the file's (a week with a carry or target);
+    his team's are the weeks the file has its game. With no team games yet, he gets the benefit.
+    """
+    team_games = sorted(w for w in played if w < week)[-RECENT:]
+    his = {w for w, _ in games} | set(weeks)
+    return not team_games or any(w in his for w in team_games)
+
+
 def attach(players, cards, season, week, data):
     """Give each back and receiver with games and expected points his rate, in place.
 
     data is load()'s result. Anyone else, or anyone the expected-points file doesn't know, gets no
-    rate and is valued at his level, as now. Returns how many got one.
+    rate and is valued at his level, as now. Each rated player also gets active: whether he has
+    played lately (recently_played). Returns how many got a rate.
     """
     by_player, played, _ = data
     rated = 0
@@ -141,6 +157,7 @@ def attach(players, cards, season, week, data):
         total, work, beyond = rate(prior, games, weeks, his_weeks, player["position"])
         expected = [x for x, _ in counted_games(games, weeks, his_weeks)]
         player.update(rate=total, rate_work=work, rate_beyond=beyond,
+                      active=recently_played(games, weeks, his_weeks, week),
                       work_recent=sum(expected[-2:]) / len(expected[-2:]) if expected else None,
                       work_average=sum(expected) / len(expected) if expected else None)
         rated += 1
@@ -152,12 +169,14 @@ def by_rate(players):
 
     The rate stands in for the level, which is all a later week reads (season_pace), and for
     ESPN's projection this week, which then no longer starts every list from ESPN's number. It
-    doesn't where ESPN has him at zero (a bye, out, inactive) or his game has already started.
+    doesn't where ESPN has him at zero (a bye, out, inactive) or his game has already started,
+    and not at all for a player who hasn't played lately: his rate is old work, so he keeps his
+    level as the report has it.
     """
     copies = []
     for player in players:
         copy = dict(player)
-        if player.get("rate") is not None:
+        if player.get("rate") is not None and player.get("active", True):
             copy["level"] = player["rate"]
             if (player.get("projection") or 0) > 0 and not player.get("locked"):
                 copy["projection"] = player["rate"]

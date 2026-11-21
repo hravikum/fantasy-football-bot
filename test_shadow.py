@@ -80,6 +80,9 @@ def test_record_logs_every_free_agent_four_ways_and_leaves_the_report_alone():
     assert float(back["points_new"]) > float(back["points_now"]), "this week counts at his rate too"
     assert back["espn"] == str(round(60.0 / 17, 2)) and back["espn_week"] == "9.0"
     assert back["work_recent"] == back["work_average"] == "16.0"
+    assert back["active"] == "1" and back["bench_floor"] != "", "he played last week; your bench has backs"
+    kicker = next(r for r in rows if r["position"] == "K")
+    assert kicker["active"] == "" and kicker["bench_floor"] == ""
     assert all(r[f"rank_{key}"] for r in rows for key in shadow.LISTS)
     assert [r["listed"] for r in rows].count("1") == 1
     assert all(float(r["wins_now"]) >= 0 for r in rows)
@@ -92,6 +95,7 @@ def run_rows(stamp, week, ranks_by_list, names):
         row = {"logged_at": stamp, "week": str(week), "player_id": str(pid), "name": name, "position": "WR",
                "percent_owned": "10", "listed": "0", "espn": "7.0", "espn_week": "6.5", "level": "6.0", "rate": "8.0",
                "rate_work": "7.5", "rate_beyond": "0.5", "work_recent": "8.0", "work_average": "7.5",
+               "active": "1", "bench_floor": "5.0",
                "points_now": "1", "points_new": "1", "wins_now": "0.1", "wins_new": "0.1",
                "xfp_through": str(week - 1)}
         for key in shadow.LISTS:
@@ -144,6 +148,72 @@ def test_hidden_value_lists_today_s_flags_and_scores_the_earlier_ones():
         "Hollins in weeks 10 and 12 and Cooper in week 10; Hollins was flagged on week 12's Monday"
     assert "ESPN said 0.0 a game, the rate 6.2, they scored 4.2." in text
     assert "1 of 2 scored 2+ a game over ESPN's number." in text
+
+
+def test_a_flag_needs_him_playing_and_better_than_your_bench():
+    names = {1: "Plays And Helps", 2: "Hurt Since Week 7", 3: "Behind Your Bench", 4: "No Bench Here"}
+    rows = run_rows("2026-11-24T06:07", 12, {key: [1, 2, 3, 4] for key in shadow.LISTS}, names)
+    for row in rows:
+        row.update(espn="0.0", rate="6.5")
+    rows[1]["active"] = "0"
+    rows[2]["bench_floor"] = "7.0"
+    rows[3]["bench_floor"] = ""
+    flagged = [r["name"] for r in rows if shadow.flagged(r)]
+    assert flagged == ["Plays And Helps", "No Bench Here"], flagged
+
+
+def test_ties_go_to_the_list_s_own_points_a_game_not_ownership():
+    tied = [dict(id=i, ahead_gain=0.0, season_gain=0, percent_owned=owned, level=level, season_projection=0.0)
+            for i, (owned, level) in enumerate([(38, 4.0), (5, 8.0), (20, 6.0)], start=1)]
+    assert shadow.ranks(tied, "ahead_gain") == {2: 1, 3: 2, 1: 3}
+    tied[0]["ahead_gain"] = 0.5
+    assert shadow.ranks(tied, "ahead_gain")[1] == 1, "points added still come first"
+
+
+def test_the_table_counts_places_among_quarterbacks_backs_receivers_and_tight_ends():
+    names = {1: "Kicker", 2: "Receiver A", 3: "Receiver B"}
+    rows = run_rows("2026-11-24T06:07", 12, {key: [1, 2, 3] for key in shadow.LISTS}, names)
+    rows[0]["position"] = "K"
+    assert shadow.skill_places(rows)["points_now"] == {"2": 1, "3": 2}
+    text = shadow.summary(rows, {})[1]
+    assert "Receiver A" in text and "Kicker" not in text
+
+
+def test_your_worst_healthy_bench_player_sets_the_floor():
+    """The fixture's bench: a receiver projected 51 for the season (3.0 a game) and a back at 34 (2.0)."""
+    def roster(**changes):
+        players = full_roster()
+        for key, change in changes.items():
+            players[key] = dict(players[key], **change)
+        return list(players.values())
+    assert shadow.bench_floors(roster(), SLOTS, GAMES) == {"WR": 3.0, "RB": 2.0}
+    assert shadow.bench_floors(roster(bench_rb={"injury_status": "OUT"}), SLOTS, GAMES) == {"WR": 3.0, "RB": 3.0}, \
+        "an injured back doesn't set it; with no healthy back on the bench, the worst bench receiver does"
+    assert shadow.bench_floors(roster(bench_wr={"rate": 6.0, "active": True}), SLOTS, GAMES)["WR"] == 6.0, \
+        "valued by his rate, as the rate's lists value him"
+
+
+def test_a_log_with_older_columns_is_carried_over_not_appended_to_crooked():
+    with tempfile.TemporaryDirectory() as folder:
+        path = Path(folder) / "shadow.csv"
+        old_fields = [f for f in shadow.FIELDS if f not in ("active", "bench_floor")]
+        path.write_text(",".join(old_fields) + "\n" + ",".join("7" if f == "week" else "x" for f in old_fields) + "\n")
+        shadow.upgrade(path)
+        rows = shadow.read(path)
+        assert list(rows[0]) == shadow.FIELDS and rows[0]["week"] == "7" and rows[0]["active"] == ""
+        shadow.upgrade(path)
+        assert shadow.read(path) == rows, "a second pass changes nothing"
+
+
+def test_a_player_who_has_stopped_playing_is_shown_idle_and_left_out_of_the_disagreements():
+    names = {1: "Hurt Since Week 7", 2: "Playing"}
+    rows = run_rows("2026-11-24T06:07", 12, {key: [1, 2] for key in shadow.LISTS}, names)
+    rows[0].update(active="0", rate="9.0", level="2.0")
+    text = shadow.summary(rows, {})[1]
+    table = text[text.index("TODAY'S TOP"):text.index("HIDDEN VALUE")]
+    assert "idle" in table.split("Hurt Since Week 7")[1].splitlines()[0]
+    disagreements = text[text.index("WHERE THE RATE"):text.index("SCORECARD")]
+    assert "Hurt Since Week 7" not in disagreements and "Playing" in disagreements
 
 
 def test_nothing_logged_says_so():

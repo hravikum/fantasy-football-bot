@@ -166,7 +166,7 @@ def wire_cases(path=JEV_LOG):
     and what each averaged over the next AHEAD weeks whose games came after that run."""
     if not path.exists():
         return []
-    by_player, _, _ = rates.load(SEASON)
+    by_player, team_weeks, _ = rates.load(SEASON)
     seen, cases = set(), []
     with open(path) as handle:
         for row in sorted(csv.DictReader(handle), key=lambda r: r["logged_at"]):
@@ -182,7 +182,8 @@ def wire_cases(path=JEV_LOG):
             before = sorted((w, p) for w, (_, p) in weeks.items() if w < week)
             ahead = [p for w, (_, p) in weeks.items() if start <= w < start + AHEAD]
             if ahead:
-                cases.append({"week": week, "name": row["name"], "position": row["position"],
+                active = rates.recently_played(before, weeks, team_weeks.get(int(row["player_id"]), set()), week)
+                cases.append({"week": week, "name": row["name"], "position": row["position"], "active": active,
                               "prior": float(row["season_projection"]) / values.GAMES_PER_SEASON,
                               "games": before, "weeks": weeks, "actual": statistics.fmean(ahead)})
     return cases
@@ -204,7 +205,8 @@ def wire_report(cases):
              f"  Rank correlation with what they scored, average of {len(weeks)} weeks: "
              f"level {correlation(level_now):.3f}, rate {correlation(rate_of):.3f}",
              ]
-    flagged = [c for c in cases if rate_of(c) - c["prior"] >= HIDDEN]
+    flagged = [c for c in cases if c["active"] and rate_of(c) - c["prior"] >= HIDDEN]
+    idle = [c for c in cases if not c["active"] and rate_of(c) - c["prior"] >= HIDDEN]
     if flagged:
         paid = sum(1 for c in flagged if c["actual"] >= c["prior"] + HIDDEN)
         lines.append(f"  Hidden value (rate {HIDDEN:.0f}+ a game over ESPN's projection, shadow.py): {len(flagged)} player-weeks, "
@@ -213,7 +215,10 @@ def wire_report(cases):
                      f"{statistics.fmean(level_now(c) for c in flagged):.1f}, rate "
                      f"{statistics.fmean(rate_of(c) for c in flagged):.1f}; they scored "
                      f"{statistics.fmean(c['actual'] for c in flagged):.1f} a game, and {paid} scored "
-                     f"{HIDDEN:.0f}+ over ESPN's number.")
+                     f"{HIDDEN:.0f}+ over ESPN's number. Only players who played in one of their team's last "
+                     f"{rates.RECENT} games; {len(idle)} more who hadn't were left out"
+                     + (f" (they scored {statistics.fmean(c['actual'] for c in idle):.1f} when they did play)." if idle else ".")
+                     + " The bench-floor part of the flag can't be replayed: past rosters aren't logged.")
     lines.append("  Where the two disagreed most:")
     for case in sorted(cases, key=lambda c: -abs(rate_of(c) - level_now(c)))[:8]:
         lines.append(f"    week {case['week']:<3} {case['name'][:22]:<22} {case['position']}  "

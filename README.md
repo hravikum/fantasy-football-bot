@@ -460,14 +460,20 @@ ESPN points to the tenth in 97% of rostered player-weeks of 2025 and 2026.
 
 With `--rate-shadow`, each waiver run also ranks the wire three more ways (points by rate, wins
 by level, wins by rate) and logs every scored free agent to `logs/shadow.csv`; the report, the
-bids and Claude's brief don't change. On Tuesdays a run that emails also sends "Rate shadow week
-N", the comparison: today's four lists side by side; the hidden value, free agents whose rate is
-2+ a game over ESPN's season projection a game, with this week's ESPN projection and their work
-over the last two games against the season, and a tally of how every earlier flag has scored
-since; where the rate and the level disagree most and why (work and beyond); and a scorecard of
-what each list's top five have scored since. Both count only games played after the run that
-picked a player. `python3 shadow.py` prints it any day. The expected-points file updates within a
-day of each game; a game it doesn't have yet is left out of the rate until it does. To stop, drop
+bids and Claude's brief don't change. All four lists break ties on points or wins added by their
+own points a game, then ownership: on a day nobody on the wire improves your lineup, the report's
+own order is just who is most rostered. On Tuesdays a run that emails also sends "Rate shadow
+week N", the comparison: today's four lists side by side, numbered among quarterbacks, backs,
+receivers and tight ends; the hidden value, backs and receivers who played in one of their team's
+last two games, whose rate beats your worst healthy bench player at the position, and is 2+ a
+game over ESPN's season projection a game, with this week's ESPN projection and their work over
+the last two games against the season, and a tally of how every earlier flag has scored since;
+where the rate and the level disagree most and why (work and beyond); and a scorecard of what
+each list's top five have scored since. Both count only games played after the run that picked a
+player. A back or receiver who hasn't played in either of his team's last two games keeps his
+level in the rate's lists too: the rate counts only games played, so his rate is old work.
+`python3 shadow.py` prints the comparison any day. The expected-points file updates within a day
+of each game; a game it doesn't have yet is left out of the rate until it does. To stop, drop
 `--rate-shadow` from `hosted_run.sh`.
 
 ## The Jev ranker (experimental)
