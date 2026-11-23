@@ -1879,3 +1879,46 @@ Already the best legal lineup. No moves.
 Locked, can't be moved: Omarion Hampton, Bucky Irving, Kyle Monangai, Bryce Young, Carnell Tate, David Montgomery, Quentin Johnston, Keaton Mitchell, Emari Demercado, Jets D/ST, Jason Sanders, Dawson Knox
 exit 0
 
+--- 2026-11-23 06:07:15 waivers.py --email --jev-shadow --rate-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(rate shadow: 246 backs and receivers rated, expected points through week 11; 153 free agents logged; the top 8 by points agree on 6)
+Waiver report — Mon Nov 23, week 11
+
+Your FAAB: $55 of $100   (minimum bid $0)
+  $8 a week for the 7 weeks of waivers left, this one included; $4 a week spent so far
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Wed 3:33 AM, Thu 3:42 AM, Fri 3:24 AM
+
+Lineup holes in the next 4 weeks:
+  week 13: D/ST short by 1 — available and playing that week: Eagles D/ST (PHI), Patriots D/ST (NE)
+  week 13: K short by 1 — available and playing that week: Jason Myers (SEA), Cairo Santos (CHI)
+  A kicker, defense or one-week fill-in is listed in the week you need him, not before.
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK LEVEL   NOW   5WK  SEASON  BID     DROP FOR HIM
+Nobody on the wire is worth a bid today.
+
+What it has taken to win a claim in this league (bids.py):
+  Backs and receivers after a breakout game, and next men up (22 claims): $8 won half, $18 won three
+    in four, $31 won nine in ten
+  Everyone else at quarterback, back, receiver and tight end (72 claims): $3 won half, $5 won three
+    in four, $12 won nine in ten
+  Kickers and defenses (60 claims): $1 won half, $4 won three in four, $6 won nine in ten
+  For a player who would start for you, the range runs from the bid that won three in four to the
+    one that won nine in ten; for a stash, from half to three in four.
+
+------------------------------------------------------------
+
+No players are listed as available this week, so there is nothing to search, add, or bid on from the wire. The two items in lineup_holes_ahead (D/ST and K for week 13) are real gaps, but per the reporting rule those become actionable only on the Tuesday week 13 starts, a day before that week's waiver run — bidding on Eagles/Patriots D or Myers/Santos now would be premature since availability and bids for that week aren't posted yet.
+
+On your roster, the three drop candidates (Demercado, Mitchell, Johnston) are bench pieces being flagged only because each already carries the cheapest possible drop against this week's best free agent — but since the free-agent pool is empty today, there's no one to drop them for, so hold all three as-is rather than cutting into a vacuum.
+
+With $55 of FAAB and a $8/week pace through 7 remaining weeks ($56 total runway), there's no urgency to spend blind; save it for when the wire actually produces a next-man-up handcuff, a breakout performer, or next Tuesday's week-13 D/ST and K options. Recommendation: skip the waiver run entirely this cycle.
+
+WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's
+evidence (values.py), and it is what the weeks after this one are valued at. A dash means
+ESPN's season projection is used as it is: tight ends, kickers and defenses.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+(shadow run: would have emailed "Fantasy Football: Waivers week 11: nothing worth a claim")
+exit 0
+
