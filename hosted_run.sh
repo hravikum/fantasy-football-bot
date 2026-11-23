@@ -48,6 +48,12 @@ PYTHON="${PYTHON:-python}" bash ./run.sh "${JOB[@]}"
 STATUS=$?
 # run.sh writes only to the log; this puts the same lines in GitHub's view of the run.
 if [ -f "$LOG" ]; then tail -c +"$((BEFORE + 1))" "$LOG"; fi
+# mailer.py prints this when a message reached neither Slack nor email. The job has done its work
+# and its files are still saved below; failing the run is what gets GitHub to email you.
+if [ -f "$LOG" ] && tail -c +"$((BEFORE + 1))" "$LOG" | grep -qF "(nothing delivered:"; then
+    echo "A message reached neither Slack nor email (above), so this run is marked failed." >&2
+    STATUS=1
+fi
 
 mkdir -p "$STATE/logs" "$STATE/cache"
 cp -R logs/. "$STATE/logs/"

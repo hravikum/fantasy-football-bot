@@ -18,6 +18,7 @@ permissions:
 concurrency:
   group: bot          # one run at a time, so two never save over each other
   cancel-in-progress: false
+  queue: max          # without it only one run waits, and a third arriving cancels the one waiting
 
 jobs:
   run:
@@ -27,6 +28,7 @@ jobs:
     env:
       TZ: America/New_York
       BOT_LIVE: ${{ vars.BOT_LIVE }}
+      EMAIL_TOO: ${{ vars.EMAIL_TOO }}   # "true" while Slack is on trial: email as well
       JOB: ${{ inputs.job }}
     steps:
       - uses: actions/checkout@v5
@@ -44,3 +46,5 @@ jobs:
           GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}

@@ -1,4 +1,5 @@
-"""Email through Gmail, using an app password rather than your Google password."""
+"""Sends the bot's messages: to Slack (slack.py), and by email through Gmail, using an app password
+rather than your Google password, when Slack isn't set up or while EMAIL_TOO is "true"."""
 import os
 import smtplib
 import ssl
@@ -7,6 +8,8 @@ from pathlib import Path
 
 import certifi
 from dotenv import load_dotenv
+
+import slack
 
 SUBJECT_PREFIX = "Fantasy Football: "   # on every email the bot sends, so an inbox filter can catch them all
 
@@ -21,17 +24,42 @@ def _tls_context():
 
 
 def send(subject, body, html=None):
-    """Send one email, plain text with an optional HTML version. Returns True if it went out.
+    """Send one message. Returns True if it reached you, by Slack or by email.
+
+    It goes to Slack when SLACK_BOT_TOKEN and SLACK_CHANNEL are set, and by email (plain text with
+    an optional HTML version) when they aren't, or while EMAIL_TOO is "true", the trial of Slack
+    beside email. When it reaches neither, it prints "(nothing delivered: ...)", and hosted_run.sh
+    then fails the run, so GitHub's own email tells you.
 
     With MAIL_TO_LOG set, as in a shadow run on GitHub (hosted_run.sh), nothing is sent: the
-    subject is printed and the email counts as delivered, so a trade it has reported on once
+    subject is printed and the message counts as delivered, so a trade it has reported on once
     isn't reported again when the runs go live.
     """
-    subject = SUBJECT_PREFIX + subject
     if os.getenv("MAIL_TO_LOG"):
-        print(f'(shadow run: would have emailed "{subject}")')
+        print(f'(shadow run: would have emailed "{SUBJECT_PREFIX + subject}")')
         return True
     load_dotenv(Path(__file__).with_name(".env"))
+    delivered = False
+    if slack.configured():
+        delivered = _post(subject, body)
+    if not slack.configured() or os.getenv("EMAIL_TOO") == "true":
+        delivered = _email(SUBJECT_PREFIX + subject, body, html) or delivered
+    if not delivered:
+        print(f'(nothing delivered: "{subject}" reached neither Slack nor email)')
+    return delivered
+
+
+def _post(subject, body):
+    """Without the "Fantasy Football: " prefix: the channel does what the inbox filter did."""
+    try:
+        slack.post(subject, slack.blocks_for(subject, body))
+        return True
+    except Exception as problem:  # broad on purpose: a dead notifier must not kill a run that already acted
+        print(f"(Slack post failed: {type(problem).__name__}: {problem})")
+        return False
+
+
+def _email(subject, body, html):
     address = os.getenv("GMAIL_ADDRESS")
     password = (os.getenv("GMAIL_APP_PASSWORD") or "").replace(" ", "")  # Google shows it in groups of four
     if not (address and password):

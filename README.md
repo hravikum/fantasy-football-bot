@@ -30,6 +30,9 @@ GMAIL_APP_PASSWORD=   # myaccount.google.com/apppasswords, needs 2-Step Verifica
 EMAIL_TO=             # optional, defaults to GMAIL_ADDRESS
 ANTHROPIC_API_KEY=    # optional, adds the written recommendations to the waiver report
 TYPESAFE_API_KEY=     # optional, only for --ranker jev
+SLACK_BOT_TOKEN=      # optional: post to Slack instead of emailing (Slack, below)
+SLACK_CHANNEL=        # the channel's id, from the bottom of its About tab
+EMAIL_TOO=            # optional: true to email as well while Slack is on trial
 ```
 
 ## Commands
@@ -172,6 +175,27 @@ for job in lineup gameday waivers trades; do launchctl bootout gui/$UID/local.fa
 workflow, and pick the job. A failed run is emailed to you by GitHub as well as by `run.sh`. The
 ESPN cookies, API keys and Gmail app password are repository secrets; when the ESPN cookies are
 renewed in `.env`, renew the secrets too.
+
+### Slack (Nov 23)
+
+With `SLACK_BOT_TOKEN` and `SLACK_CHANNEL` set, every message goes to a Slack channel instead of
+email. While the repository variable `EMAIL_TOO` is `true` it is emailed as well, for the trial.
+A message that reaches neither marks the run failed, so GitHub's own email still tells you.
+Setting it up, once:
+
+1. Create a free Slack workspace for the bot, and a public channel in it, such as #fantasy-bot.
+   On your phone, set the channel's notifications to every new message.
+2. At api.slack.com/apps: Create New App > From a manifest, pick the workspace, and paste
+   `slack-app-manifest.yml`. Then install the app to the workspace.
+3. OAuth & Permissions shows the Bot User OAuth Token (`xoxb-...`): that is `SLACK_BOT_TOKEN`.
+   The channel's id is at the bottom of its About tab (click the channel's name): `SLACK_CHANNEL`.
+4. In the channel, type `/invite @Fantasy Bot`.
+5. Add both as repository secrets and to `.env`, and set the repository variable `EMAIL_TOO` to
+   `true`.
+6. Actions > Hosted check > Run workflow: the Slack line should say the bot is in the channel.
+
+After a week in which every email had its Slack twin, delete `EMAIL_TOO`. To go back to email,
+delete the two Slack secrets.
 
 ### Starting the runs from cron-job.org (Nov 19)
 

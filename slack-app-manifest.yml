@@ -1,0 +1,20 @@
+# The Slack app the bot posts as. Paste this at api.slack.com/apps > Create New App > From a
+# manifest (README, "Slack"). chat:write lets it post to channels it has been invited to;
+# channels:read lets hosted_check.py confirm it is in the channel. The buttons planned next will
+# add an Interactivity request URL here.
+display_information:
+  name: Fantasy Bot
+  description: Waiver reports, lineup moves and trade offers for your ESPN team.
+features:
+  bot_user:
+    display_name: Fantasy Bot
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - chat:write
+      - channels:read
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

@@ -2,8 +2,8 @@
 
 Run by .github/workflows/hosted-check.yml on GitHub's machines, with your .env values supplied
 as repository secrets. It reads from ESPN, asks Anthropic to count the tokens in one word (which
-is free), and logs in to Gmail without sending anything. It never writes to ESPN, never sends an
-email, and never prints a secret.
+is free), logs in to Gmail and asks Slack about the channel without sending anything. It never
+writes to ESPN, never sends an email or a Slack message, and never prints a secret.
 
 Exits 1 if anything the bot can't do without is unreachable. Works the same on your Mac:
     python3 hosted_check.py
@@ -21,6 +21,7 @@ import requests
 from dotenv import load_dotenv
 
 import mailer
+import slack
 from espn import ESPN, WRITE_BASE
 from snaps import BASE as NFLVERSE
 from waivers import MODEL
@@ -93,6 +94,16 @@ def gmail():
     return "logged in, nothing sent"
 
 
+def slack_channel():
+    if not slack.configured():
+        raise RuntimeError("SLACK_BOT_TOKEN or SLACK_CHANNEL not set, so messages go by email only")
+    bot = slack.call("auth.test", {}, form=True)
+    channel = slack.call("conversations.info", {"channel": os.environ["SLACK_CHANNEL"]}, form=True)["channel"]
+    if not channel.get("is_member"):
+        raise RuntimeError(f"the bot isn't in #{channel.get('name')}; type /invite @{bot.get('user')} there")
+    return f"signed in as {bot.get('user')}, a member of #{channel.get('name')}; nothing posted"
+
+
 def nflverse():
     resp = requests.head(f"{NFLVERSE}/players/players.csv", timeout=30, allow_redirects=True)
     resp.raise_for_status()
@@ -120,6 +131,7 @@ def main():
     check("ESPN: lineup host", espn_write_host, results)
     check("Anthropic API", anthropic, results)
     check("Gmail", gmail, results)
+    check("Slack", slack_channel, results, essential=slack.configured())
     check("nflverse downloads", nflverse, results)
     check("Jev (shadow ranking only)", jev, results, essential=False)
     failed = [name for name, passed, essential in results if essential and not passed]

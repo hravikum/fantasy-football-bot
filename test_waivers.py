@@ -582,7 +582,8 @@ def test_email_carries_both_a_text_and_an_html_version():
             captured["subject"] = message["Subject"]
     saved_smtp, saved_env = smtplib.SMTP, os.environ.get("GMAIL_APP_PASSWORD")
     smtplib.SMTP = FakeSMTP
-    os.environ.update({"GMAIL_ADDRESS": "x@gmail.com", "GMAIL_APP_PASSWORD": "abcd efgh ijkl mnop"})
+    os.environ.update({"GMAIL_ADDRESS": "x@gmail.com", "GMAIL_APP_PASSWORD": "abcd efgh ijkl mnop",
+                       "SLACK_BOT_TOKEN": ""})   # set but empty, so a token in .env can't make a test post to Slack
     try:
         import mailer
         assert mailer.send("subject", "plain body", "<div>rich body</div>") is True
