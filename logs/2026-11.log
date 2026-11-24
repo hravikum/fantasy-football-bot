@@ -1999,3 +1999,129 @@ Already the best legal lineup. No moves.
 Locked, can't be moved: Justin Jefferson, Omarion Hampton, Bucky Irving, Kyle Monangai, Bryce Young, Carnell Tate, David Montgomery, Quentin Johnston, Keaton Mitchell, Emari Demercado, Jets D/ST, Jason Sanders, Dawson Knox
 exit 0
 
+--- 2026-11-24 06:07:14 waivers.py --email --jev-shadow --rate-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(rate shadow: 246 backs and receivers rated, expected points through week 11; 161 free agents logged; the top 8 by points agree on 5)
+Waiver report — Tue Nov 24, week 12
+
+Your FAAB: $55 of $100   (minimum bid $0)
+  $9 a week for the 6 weeks of waivers left, this one included; $4 a week spent so far
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Wed 3:33 AM, Thu 3:42 AM, Fri 3:24 AM
+
+Lineup holes in the next 4 weeks:
+  week 13: D/ST short by 1 — available and playing that week: Eagles D/ST (PHI), Patriots D/ST (NE)
+  week 13: K short by 1 — available and playing that week: Jason Myers (SEA), Cairo Santos (CHI)
+  A kicker, defense or one-week fill-in is listed in the week you need him, not before.
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK LEVEL   NOW   5WK  SEASON  BID     CALL      DROP FOR HIM
+Giants D/ST          D/ST  NYG      16%   -0.1       -   7.0     -  +0.5  +5.8      +2  $1-4    skip      -
+    Hole is week 13; named options are Eagles/Patriots, not Giants
+Commanders D/ST      D/ST  WSH      16%   +0.1       -   8.9     -  +2.5  +2.7      +0  $1-4    skip      -
+    Not named for week-13 hole; save FAAB for that
+
+This week only: fills a hole or streams one game, adds nothing after:
+Deshaun Watson       QB    CLE      11%   +0.0 100→out  19.9  13.2  +5.7  +5.7      +0  $3-5    skip      -
+    One-week matchup play only; Young's season level is higher
+J.J. McCarthy        QB    NYG      25%   -0.1   95→93  16.5   9.9  +2.4  +2.4      +0  $3-5    skip      -
+    New Giants starter but season level trails Young; rest-of-season gain 0
+
+What it has taken to win a claim in this league (bids.py):
+  Backs and receivers after a breakout game, and next men up (22 claims): $8 won half, $18 won three
+    in four, $31 won nine in ten
+  Everyone else at quarterback, back, receiver and tight end (72 claims): $3 won half, $5 won three
+    in four, $12 won nine in ten
+  Kickers and defenses (60 claims): $1 won half, $4 won three in four, $6 won nine in ten
+  For a player who would start for you, the range runs from the bid that won three in four to the
+    one that won nine in ten; for a stash, from half to three in four.
+
+------------------------------------------------------------
+
+All four candidates are skips. Deshaun Watson is a confirmed one-week-only streamer — "Barring an injury, Watson is going to start in Week 12 when the Browns return from their bye." His sustained level (13.2) trails Bryce Young's season-long rate (15.5), and the data's own rest_of_season gain is 0, so this is pure matchup juice against a weak Raiders pass defense, not a role change worth FAAB with Young already projected fine this week.
+
+J.J. McCarthy has genuinely taken over as a starter — he was traded and "lost his starting position with the Vikings in 2026 before being traded to the Giants" — and his snap share is rising (76%, 95%, 93% the last three weeks), confirming the full-time role. Still, his season-long level (9.9) sits well below Young's (15.5), and the tool's own rest_of_season gain is 0. This week's +2.4 isn't worth a FAAB bid or a bench spot ahead of the week-13 K/D/ST need.
+
+Giants and Commanders D/ST: no lineup hole this week, and the week-13 D/ST hole is already earmarked for Eagles and Patriots D/ST specifically — not these two. Their gains over Jets D/ST this week (0.5 and 2.5) and weak rest-of-season gains (2 and 0) don't justify spending now; wait for the Tuesday-before-week-13 report and bid on the named options then, preserving FAAB (pace shows $9/wk planned, $55 left) for that guaranteed need.
+
+Sources:
+- Deshaun Watson quiets Browns’ QB change talks by showing up big when it matters most
+  https://dawgpounddaily.com/deshaun-watson-quiets-browns-qb-change-talks-by-showing-up-big-when-it-matters-most-01m7gww5sf62
+- J. J. McCarthy
+  https://en.wikipedia.org/wiki/J._J._McCarthy
+
+WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's
+evidence (values.py), and it is what the weeks after this one are valued at. A dash means
+ESPN's season projection is used as it is: tight ends, kickers and defenses.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+Shadow comparison, week 12, from the run at 2026-11-24 06:07:22.
+
+Four ways to rank the same free agents. All four count what a player adds to your lineup
+this week and the next 4, after the drop he forces, as the report does.
+  Level: later weeks valued as the report values them now (values.py).
+  Rate: a back's or receiver's scoring split into his work (expected points from his carries
+  and targets) and what he makes of it, trusting the work more (rates.py). It values this week
+  too, in place of ESPN's projection, except where ESPN has him at zero.
+  Wins: each week's points turned into wins, your matchup plus the median game, so a point
+  counts most in a close week (wins.py).
+Quarterbacks and tight ends are valued the same in every list, so this compares backs and
+receivers only. Expected points are in through week 11. Nothing here changes the report
+or its bids.
+
+TODAY'S TOP 8 BACKS AND RECEIVERS. Place in each list among backs and receivers; ties on
+points or wins added go to the list's own points a game:
+  PLAYER                  POS  OWN%  LEVEL  RATE     PTS/LEVEL    PTS/RATE  WINS/LEVEL   WINS/RATE
+  Kayshon Boutte          WR      5    7.0   6.9             1           1           1           1
+  Rashod Bateman          WR      7    5.9   6.0             2           4           2           4
+  Mack Hollins            WR     16    3.8   6.4            17           2          17           2
+  Jahan Dotson            WR      3    5.9   6.3             3           3           3           3
+  MarShawn Lloyd          RB     27    5.6   5.8             4           5           4           5
+  Brian Thomas Jr.        WR     32    5.5   4.9             5          11           5          11
+  Rashid Shaheed          WR     17    5.5   5.2             6           9           6           9
+  Keon Coleman            WR     17    5.1   5.7            10           6          10           6
+  Emanuel Wilson          RB     16    5.4  idle             7           8           7           8
+  Ted Hurst III           WR      2    5.1   5.5             9           7           9           7
+  Chris Godwin Jr.        WR     38    5.2   4.6             8          15           8          15
+  RATE "idle": no game in his team's last 2; the rate's lists value him at his level.
+
+The report's list and the rate's list share 5 of their top 8.
+
+HIDDEN VALUE: backs and receivers who have played in one of their team's last 2 games,
+whose rate is at least 5 a game, beats your worst healthy bench player at the position
+(BENCH), and is 2+ a game over ESPN's season projection a game. ESPN never revises that
+number; ESPN WK is this week's projection, which does move, and is 0 for a player on bye or not
+expected to play.
+  PLAYER                  POS  OWN%  ESPN ESPN WK  LEVEL  RATE  BENCH  WORK LAST 2/SEASON  PTS/RATE
+  Mack Hollins            WR     16   0.0     6.8    3.8   6.4    5.3           9.0 / 7.9         2
+  Jahan Dotson            WR      3   4.0     6.3    5.9   6.3    5.3           6.1 / 6.2         3
+  Work is expected points a game from his carries and targets; last 2 above season is a role growing.
+
+  How the flags have done: 5 flagged so far (once a week per player), 0 have played since.
+
+WHERE THE RATE AND THE LEVEL DISAGREE MOST (points a game):
+  PLAYER                  POS  LEVEL  RATE   = work and beyond
+  Elijah Mitchell         RB     1.2   3.9   = 4.5 - 0.5
+  Audric Estime           RB     1.8   4.5   = 4.4 + 0.1
+  Mack Hollins            WR     3.8   6.4   = 6.3 + 0.1
+  Pierre Strong Jr.       RB     1.2   3.3   = 4.1 - 0.8
+  Savion Williams         WR     2.4   4.4   = 4.0 + 0.4
+  Demarcus Robinson       WR     1.3   3.0   = 2.8 + 0.2
+  Work is expected points a game from his carries and targets; beyond is what he has scored
+  over that, held near the position's average because it rarely repeats.
+
+SCORECARD: what each list's top 5 have scored a game since, in games that kicked off after
+the pick, over its week and the next 3 (games played; a player picked on several days of
+a week counts once):
+  points, level (the report)          2.8 a game from   1 picks
+  points, rate                        2.7 a game from   1 picks
+  wins, level                         2.8 a game from   1 picks
+  wins, rate                          2.7 a game from   1 picks
+  Where they picked differently, rate against level, by points:
+    only points, rate                 2.7 a game from   1 picks
+    only points, level (the report)   2.8 a game from   1 picks
+  Where they picked differently, wins against points, with the rate:
+    only wins, rate                   nothing played yet
+    only points, rate                 nothing played yet
+  A handful of picks says little; read this once each side has a few dozen.
+exit 0
+
