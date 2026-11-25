@@ -1048,6 +1048,30 @@ def test_slack_shows_a_card_a_player_with_the_call_and_the_numbers_in_the_thread
     assert plain == waivers.slack.monospace("the text report")
 
 
+def test_slack_puts_every_add_and_bid_first_even_a_one_week_fill_in():
+    """Tuesday Nov 24: Watson, the day's only bid, a one-week fill-in, sat below two skipped defenses."""
+    base = _sample_context()["candidates"][0]
+    defense = dict(base, id=1, name="Giants D/ST", gain=0.5, ahead_gain=5.8, weeks_helped=3, season_gain=2)
+    fill_in = dict(base, id=2, name="Deshaun Watson", gain=5.7, ahead_gain=5.7, weeks_helped=1, season_gain=0)
+    other = dict(base, id=3, name="J.J. McCarthy", gain=2.4, ahead_gain=2.4, weeks_helped=1, season_gain=0)
+    context = _sample_context(candidates=[defense, fill_in, other])
+    waivers.attach_calls(context["candidates"], {"Giants D/ST": {"call": "skip"}, "Deshaun Watson": {"call": "bid", "bid": 4},
+                                                 "J.J. McCarthy": {"call": "skip"}})
+    assert waivers.this_week_only(fill_in) and not waivers.this_week_only(defense)
+    blocks, (table_layout, _) = waivers.slack_layout(context, "Waivers week 12: 1 to bid on", "report")
+    texts = _texts(blocks)
+    cards = [t.split("*")[1] for t in texts if t.startswith("*") and "   ·   " in t.split("\n")[0]]
+    assert cards == ["Deshaun Watson", "Giants D/ST", "J.J. McCarthy"]
+    heading = texts.index(f"*{waivers.THIS_WEEK_ONLY}*")
+    assert texts.index(next(t for t in texts if t.startswith("*J.J. McCarthy*"))) > heading, \
+        "the skipped fill-in keeps his heading"
+    table = next(b for b in table_layout if b["type"] == "table")
+    assert [row[0]["text"] for row in table["rows"][1:]] == cards, "the thread's table in the same order"
+    lines = waivers.build_report(context).splitlines()
+    assert next(i for i, l in enumerate(lines) if l.startswith("Giants D/ST")) < \
+        next(i for i, l in enumerate(lines) if l.startswith("Deshaun Watson")), "the email's table is unchanged"
+
+
 def test_slack_says_so_on_a_day_with_nobody_and_no_write_up():
     context = _sample_context(candidates=[], advice=None, advice_failed=True)
     blocks, (table_layout, _) = waivers.slack_layout(context, "Waivers week 3: nothing worth a claim", "report")

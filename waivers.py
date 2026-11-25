@@ -1077,7 +1077,7 @@ def slack_layout(context, subject, report):
 
     blocks.append(slack.divider())
     shown = 0
-    for heading, rows in table_sections(context["candidates"]):
+    for heading, rows in _slack_order(context["candidates"]):
         for candidate in rows[:CARDS - shown]:
             if heading and candidate is rows[0]:
                 blocks.append(slack.context(f"*{esc(heading)}*"))
@@ -1114,6 +1114,18 @@ def slack_layout(context, subject, report):
     return blocks, [details, slack.monospace(report)]
 
 
+def _slack_order(candidates):
+    """[(heading, rows)] for Slack: every add and bid first, this week's fill-ins among them, then the
+    rest as the text table has them. In the text table a one-week fill-in Claude bids on sits under
+    players with value past this week, even ones it skips (Tuesday Nov 24: Watson, the only bid,
+    below two skipped defenses); in Slack what to act on comes first."""
+    acts = lambda c: (c.get("call") or {}).get("call") in ("add", "bid")
+    sections = table_sections(candidates)
+    first = [c for _, rows in sections for c in rows if acts(c)]
+    rest = [(heading, [c for c in rows if not acts(c)]) for heading, rows in sections]
+    return [(None, first)] * bool(first) + [(heading, rows) for heading, rows in rest if rows]
+
+
 def _card(candidate):
     """One player: who, the write-up's call, what he adds, what he costs, who goes for him, and why."""
     esc = slack.escape
@@ -1146,7 +1158,7 @@ def _slack_table(context):
     head = (["Player", "Pos", "Team", "Own%", "+/-", "Snap%", "Wk", "Level", "Now", f"{LOOKAHEAD + 1}wk", "Season"]
             + (["Jev", "Conf", "Proj#"] if jev_column else []) + ["Bid"] + (["Call"] if call_column else []) + ["Drop"])
     rows = [head]
-    for _, group in table_sections(context["candidates"]):
+    for _, group in _slack_order(context["candidates"]):
         for c in group:
             row = [c["name"], c["position"], PRO_TEAMS.get(c["pro_team"], "?"), f"{c['percent_owned']:.0f}%",
                    f"{c['percent_change']:+.1f}", snaps.label(c.get("snaps")), f"{c['projection'] or 0:.1f}",
