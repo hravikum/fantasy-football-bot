@@ -2141,3 +2141,64 @@ Later kickoffs go to FLEX, so a late scratch there can be covered from any posit
 Applied and confirmed on ESPN: 3 move(s).
 exit 0
 
+--- 2026-11-25 06:07:15 waivers.py --email --jev-shadow --rate-shadow ---
+(shadow ranked by jev (jev-1.14.0); logged 20 judgments)
+(rate shadow: 247 backs and receivers rated, expected points through week 11; 167 free agents logged; the top 8 by points agree on 5)
+Waiver report — Wed Nov 25, week 12
+
+Your FAAB: $55 of $100   (minimum bid $0)
+  $9 a week for the 6 weeks of waivers left, this one included; $4 a week spent so far
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Wed 3:12 AM, Wed 3:12 AM, Wed 3:12 AM
+
+Lineup holes in the next 4 weeks:
+  week 13: D/ST short by 1 — available and playing that week: Eagles D/ST (PHI), Lions D/ST (DET)
+  week 13: K short by 1 — available and playing that week: Jason Myers (SEA), Cairo Santos (CHI)
+  A kicker, defense or one-week fill-in is listed in the week you need him, not before.
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK LEVEL   NOW   5WK  SEASON  BID     CALL      DROP FOR HIM
+
+This week only: fills a hole or streams one game, adds nothing after:
+J.J. McCarthy        QB    NYG      26%   +0.9   95→93  16.5   9.9  +2.4  +2.4      +0  free    add       Emari Demercado
+    Giants starter, rising snaps, good Colts matchup
+Justin Herbert       QB    LAC      36%   -0.4 100→100  16.2  13.5  +2.0  +2.0      +0  free    skip      -
+    Concussion protocol, questionable, may not play
+
+What it has taken to win a claim in this league (bids.py):
+  Backs and receivers after a breakout game, and next men up (23 claims): $8 won half, $18 won three
+    in four, $31 won nine in ten
+  Everyone else at quarterback, back, receiver and tight end (74 claims): $2 won half, $5 won three
+    in four, $12 won nine in ten
+  Kickers and defenses (66 claims): $1 won half, $4 won three in four, $7 won nine in ten
+  For a player who would start for you, the range runs from the bid that won three in four to the
+    one that won nine in ten; for a stash, from half to three in four.
+
+------------------------------------------------------------
+
+Both QBs clear waivers free, so no bid is needed—just grab before someone else does, or pass.
+
+**J.J. McCarthy** is no longer a Viking; he's now the Giants' starter and, per reports, has settled in as the New York Giants' starter, and his dual-threat ability gives him a reasonable amount of fantasy upside. His snap share climbed to 93% last week and he draws a sleeper nod for Week 12 with a much better matchup this week against the Indianapolis Colts after topping 14 points against Jacksonville. That matches the data's 2.4-point lineup gain this week and rising snap trend. Worth the free add over Emari Demercado, your emptiest bench spot and worst drop cost.
+
+**Justin Herbert** is a pass. He's questionable, with an injury listed as concussion, est. return Nov 29, and one outlet flatly says do not assume Herbert will clear protocol before Sunday. Even analysts who like him long-term are telling managers to bench Justin Herbert in Week 12... and fantasy managers should keep him on the bench even if he is cleared. His projection in the data assumes he plays and starts clean, which isn't a safe bet right now. No second QB stash is worth a bench spot you may need for the Week 13 K/D holes once next Tuesday's report names those claims — nothing to bid on there yet.
+
+No lineup holes this week, nothing else on the wire worth FAAB today.
+
+Sources:
+- Week 12 Fantasy Football Rankings, Top Players, Sleepers and Positional Guide
+  https://bleacherreport.com/articles/25536814-week-12-fantasy-football-rankings-top-players-sleepers-and-positional-guide
+- Chargers Injury Report Week 12: Who Is Out, Questionable
+  https://parlae.io/fantasy/nfl/injuries/los-angeles-chargers
+- Week 12 Fantasy Football Injury Report: Who Got Hurt? (2026)
+  https://statchasers.com/fantasy-football-injury-report/
+- Bench Justin Herbert in Week 12 vs Patriots - Yahoo Sports
+  https://sports.yahoo.com/general/videos/bench-justin-herbert-week-12-232927777.html
+
+"free": he has cleared waivers, so he costs nothing and goes to whoever adds him first. Everyone else is decided by bid at the next run.
+
+WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's
+evidence (values.py), and it is what the weeks after this one are valued at. A dash means
+ESPN's season projection is used as it is: tight ends, kickers and defenses.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
