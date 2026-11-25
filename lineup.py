@@ -19,6 +19,7 @@ from pathlib import Path
 import requests
 
 import mailer
+import slack
 from espn import BENCH, ESPN, IR, SLOT_NAMES, SLOT_ORDER, ESPNError, ESPNWriteRejected, parse_roster_entry
 
 # Over the 2025 season (accuracy.py 2025), one projected point was worth about 0.9 real points at
@@ -191,6 +192,47 @@ def describe(players, target, moves, gain, broken, blocked, games, week):
     return "\n".join(lines)
 
 
+def slack_layout(subject, players, target, moves, gain, broken, blocked, games, outcome=(), needs_you=False):
+    """The lineup message for Slack: the moves one to a line, anything that needs you, and what ESPN
+    did with them. outcome is the lines after the moves: applied and confirmed, or what went wrong."""
+    esc = slack.escape
+    current = {p["id"]: p["slot"] for p in players}
+    blocks = [slack.header(subject),
+              slack.context(f"Best legal lineup projects {starters_total(players, target, games):.1f} "
+                            f"({gain:+.1f} on the current {starters_total(players, current, games):.1f})")]
+    if moves:
+        lines = []
+        for player, old, new in sorted(moves, key=lambda m: SLOT_ORDER.index(m[2])):
+            status = "" if player["injury_status"] in HEALTHY else \
+                f"   _{esc(player['injury_status'].replace('_', ' ').lower())}_"
+            lines.append(f"*{esc(player['name'])}*   {SLOT_NAMES[old]} → {SLOT_NAMES[new]}   "
+                         f"{expected_points(player, games):.1f}{status}")
+        blocks.append(slack.section("\n".join(lines)))
+        later = later_in_flex(players, target, games)
+        if later:
+            blocks.append(slack.context("Later kickoffs go to FLEX, so a late scratch there can be covered "
+                                        "from any position."))
+        if not would_act(moves, gain, broken, later):
+            blocks.append(slack.context(f"Holding: {gain:+.1f} is under the {MIN_GAIN} point bar."))
+    else:
+        blocks.append(slack.section("Already the best legal lineup. No moves."))
+    for player in blocked:
+        blocks.append(slack.section(f":warning: *{esc(player['name'])}* is off IR ({esc(player['injury_status'])}) "
+                                    "and there is no roster spot for him. ESPN can block add/drops until you "
+                                    "drop someone."))
+    watch = [f"{p['name']} would start and is listed {p['injury_status']}" for p in players
+             if target[p["id"]] not in (BENCH, IR) and p["injury_status"] not in HEALTHY]
+    locked = [p["name"] for p in players if p["locked"]]
+    small = (["Watch: " + "; ".join(watch)] if watch else []) + (["Locked, can't be moved: " + ", ".join(locked)]
+                                                                  if locked else [])
+    if small:
+        blocks.append(slack.context(esc("\n".join(small))))
+    said = esc(" ".join(line for line in outcome if line))
+    if said:
+        blocks.append(slack.section(f":warning: {said}") if needs_you else slack.context(f":white_check_mark: {said}"))
+    return blocks
+
+
 def without_ir(moves):
     """The same plan with the IR slot left alone: a stash stays on the bench instead."""
     fallback = []
@@ -277,7 +319,9 @@ def main(live, force=False, near_kickoff=False):
         return
     if not act:
         if blocked and not near_kickoff:   # the morning run sends this; every check-in would be a flood
-            mailer.send(f"Week {week}: roster needs you", report)
+            subject = f"Week {week}: roster needs you"
+            mailer.send(subject, report, blocks=slack_layout(subject, players, target, moves, gain, broken, blocked,
+                                                             games))
         return
 
     failure = None
@@ -307,7 +351,8 @@ def main(live, force=False, near_kickoff=False):
     body = "\n".join(lines)
     print("\n" + "\n".join(lines[1:]))
     subject = f"Week {week}: {'lineup needs you' if needs_you else 'lineup updated'}"
-    mailer.send(subject, body)
+    mailer.send(subject, body, blocks=slack_layout(subject, players, target, moves, gain, broken, blocked, games,
+                                                   lines[2:], needs_you))
 
 
 if __name__ == "__main__":
@@ -317,5 +362,5 @@ if __name__ == "__main__":
         message = f"Error: {error}"
         print(message, file=sys.stderr)
         if "--live" in sys.argv:
-            mailer.send("lineup run failed", message)
+            mailer.alert("lineup run failed", message)
         sys.exit(1)

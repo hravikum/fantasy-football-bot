@@ -226,6 +226,90 @@ def test_reaching_neither_says_so_in_the_line_hosted_run_looks_for():
     assert "invalid_auth" in printed and "Operation timed out" in printed
 
 
+REFUSED = Reply(body={"ok": False, "error": "invalid_blocks"})
+RICH = [{"type": "section", "text": {"type": "mrkdwn", "text": "*rich*"}}]
+
+
+def test_a_layout_slack_refuses_is_posted_plain_instead():
+    with fake_slack(REFUSED, Reply()) as sent:
+        delivered, printed = quietly(mailer.send, "Week 12: lineup updated", "Moved A to FLEX.", None, RICH)
+    assert delivered is True and len(sent) == 2
+    assert json.loads(sent[0]["data"])["blocks"] == RICH
+    assert json.loads(sent[1]["data"])["blocks"] == slack.blocks_for("Week 12: lineup updated", "Moved A to FLEX.")
+    assert "(Slack refused the layout (chat.postMessage: invalid_blocks); posting it plainer)" in printed
+
+
+def test_no_connection_is_not_tried_again_as_plain():
+    saved = slack.time.sleep
+    slack.time.sleep = no_wait
+    try:
+        with fake_slack(requests.exceptions.ConnectionError("reset")) as sent:
+            delivered, printed = quietly(mailer.send, "Week 12: lineup updated", "body", None, RICH)
+    finally:
+        slack.time.sleep = saved
+    assert delivered is False and len(sent) == 3, "three tries of the layout, none of a plainer one"
+    assert "refused the layout" not in printed
+
+
+def test_the_thread_reply_goes_under_the_message():
+    table = [slack.table([["Player", "Bid"], ["Watson", "$3-5"]], right={1})]
+    with fake_slack(Reply(body={"ok": True, "ts": "1.2"}), Reply(body={"ok": True, "ts": "1.3"})) as sent:
+        assert quietly(mailer.send, "Waivers week 12", "body", None, RICH, [table])[0] is True
+    reply = json.loads(sent[1]["data"])
+    assert reply["thread_ts"] == "1.2" and reply["blocks"] == table
+    assert "thread_ts" not in json.loads(sent[0]["data"])
+
+
+def test_a_refused_table_in_the_thread_falls_back_to_the_next_layout():
+    table, plain = [slack.table([["Player"], ["Watson"]])], slack.monospace("PLAYER\nWatson")
+    with fake_slack(Reply(), REFUSED, Reply()) as sent:
+        assert quietly(mailer.send, "Waivers week 12", "body", None, RICH, [table, plain])[0] is True
+    assert [json.loads(s["data"])["blocks"] for s in sent[1:]] == [table, plain]
+
+
+def test_a_lost_thread_reply_still_counts_the_message_as_delivered():
+    with fake_slack(Reply(), REFUSED) as sent:
+        delivered, printed = quietly(mailer.send, "Waivers week 12", "body", None, RICH, [RICH])
+    assert delivered is True and len(sent) == 2
+    assert "(Slack thread reply failed: SlackError: chat.postMessage: invalid_blocks)" in printed
+    assert "nothing delivered" not in printed
+
+
+def test_a_failure_notice_leads_with_a_warning():
+    with fake_slack(Reply()) as sent:
+        assert quietly(mailer.alert, "lineup run failed", "Error: ESPN rejected the cookies (401).")[0] is True
+    blocks = json.loads(sent[0]["data"])["blocks"]
+    assert blocks[0]["text"]["text"] == ":rotating_light: *lineup run failed*"
+    assert blocks[1]["text"]["text"] == "```\nError: ESPN rejected the cookies (401).\n```"
+
+
+def test_a_write_up_reads_as_paragraphs_with_its_sources_as_links():
+    text = ("**Watson** starts. Bid $4 & drop <Demercado>.\n\nSkip McCarthy.\n\nSources:\n"
+            "- Week 12 QB start-sit | Darnold, Watson\n  https://example.com/a?b=1&c=2\n"
+            "- Yahoo Sports\n  https://sports.yahoo.com/x")
+    blocks = slack.write_up(text)
+    assert blocks[0]["text"]["text"] == "*Watson* starts. Bid $4 &amp; drop &lt;Demercado&gt;.\n\nSkip McCarthy."
+    assert blocks[1] == slack.context("Sources: <https://example.com/a?b=1&amp;c=2|Week 12 QB start-sit - Darnold, "
+                                      "Watson> · <https://sports.yahoo.com/x|Yahoo Sports>")
+    assert slack.write_up("No sources here.") == [slack.section("No sources here.")]
+
+
+def test_a_long_write_up_is_split_and_its_sources_capped():
+    text = "\n\n".join("w" * 2000 for _ in range(3)) + "\n\nSources:\n" + "\n".join(
+        f"- Story {n}\n  https://example.com/{n}" for n in range(15))
+    blocks = slack.write_up(text)
+    texts = [b["elements"][0]["text"] if b["type"] == "context" else b["text"]["text"] for b in blocks]
+    assert all(len(t) <= slack.SECTION for t in texts)
+    assert len(blocks) == 4 and texts[-1].count("<https://") == slack.MAX_LINKS
+
+
+def test_a_table_aligns_numbers_right_and_shows_a_dash_for_nothing():
+    block = slack.table([["Player", "Now", "Drop"], ["Watson", "+5.7", ""]], right={1})
+    assert block["column_settings"] == [{"align": "left"}, {"align": "right"}, {"align": "left"}]
+    assert block["rows"][1] == [{"type": "raw_text", "text": "Watson"}, {"type": "raw_text", "text": "+5.7"},
+                                {"type": "raw_text", "text": "-"}]
+
+
 def test_a_shadow_run_reaches_neither():
     os.environ["MAIL_TO_LOG"] = "1"
     try:

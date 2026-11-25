@@ -11,7 +11,7 @@ import requests
 import lineup_test
 from espn import BENCH, ESPN, IR, ESPNError
 from lineup import (MIN_GAIN, decide, describe, game_time_soon, later_in_flex, plan, season_kickoffs,
-                    would_act)
+                    slack_layout, would_act)
 
 SLOTS = {0: 1, 2: 2, 4: 2, 6: 1, 16: 1, 17: 1, 20: 6, 21: 1, 23: 2}
 ELIGIBLE = {"QB": [0, 7, 20, 21], "RB": [2, 3, 23, 7, 20, 21], "WR": [4, 3, 5, 23, 7, 20, 21],
@@ -478,6 +478,43 @@ def test_the_replay_report_shows_the_league_then_your_team_and_logs_every_row():
     assert logged[1]["position"] == "TE" and logged[1]["level"] == ""
     assert logged[2]["week"] == "2" and logged[2]["level"] == str(round(lineup_test.values.level(10.0, [20.0], 16), 2)), \
         "two decimals is plenty for a level"
+
+
+def _slack_texts(blocks):
+    return [b["text"]["text"] if "text" in b else b["elements"][0]["text"] for b in blocks if b["type"] != "divider"]
+
+
+def test_slack_shows_each_move_on_a_line_and_that_espn_confirmed_them():
+    roster = full_roster(bench_wr=player("WR", 20, 18.0, status="QUESTIONABLE"))
+    players = list(roster.values())
+    target, moves, gain, broken, blocked = decide(players, SLOTS, GAMES)
+    texts = _slack_texts(slack_layout("Week 5: lineup updated", players, target, moves, gain, broken, blocked, GAMES,
+                                      ["Applied and confirmed on ESPN: 3 move(s)."]))
+    assert texts[0] == "Week 5: lineup updated"
+    assert texts[1].startswith("Best legal lineup projects ") and f"({gain:+.1f} on the current" in texts[1]
+    moved = texts[2].split("\n")
+    assert len(moved) == len(moves) and f"*{roster['bench_wr']['name']}*   BE → WR   18.0   _questionable_" in moved
+    assert texts[-1] == ":white_check_mark: Applied and confirmed on ESPN: 3 move(s)."
+    assert any(t.startswith("Watch: " + roster["bench_wr"]["name"]) for t in texts)
+
+
+def test_slack_puts_what_needs_you_up_front():
+    roster = full_roster(hurt=player("RB", IR, 1.0, status="ACTIVE"))
+    for i in range(4):
+        roster[f"filler{i}"] = player("WR", 20, 1.0)
+    players = list(roster.values())
+    target, moves, gain, broken, blocked = decide(players, SLOTS, GAMES)
+    texts = _slack_texts(slack_layout("Week 5: lineup needs you", players, target, moves, gain, broken, blocked,
+                                      GAMES, ["ESPN refused the change (409 X): no", "Nothing was applied."], True))
+    assert any(t.startswith(f":warning: *{roster['hurt']['name']}* is off IR") for t in texts)
+    assert texts[-1] == ":warning: ESPN refused the change (409 X): no Nothing was applied."
+
+
+def test_slack_says_so_when_there_is_nothing_to_move():
+    players = list(full_roster().values())
+    target, moves, gain, broken, blocked = decide(players, SLOTS, GAMES)
+    assert "Already the best legal lineup. No moves." in _slack_texts(
+        slack_layout("Week 5: roster needs you", players, target, moves, gain, broken, blocked, GAMES))
 
 
 if __name__ == "__main__":

@@ -19,6 +19,7 @@ from pathlib import Path
 import requests
 
 import mailer
+import slack
 import values
 from espn import BENCH, ESPN, IR, PRO_TEAMS, ESPNError, parse_roster_entry
 from lineup import CANT_PLAY, HEALTHY, kickoff_of, plan
@@ -149,11 +150,15 @@ def windows(weeks, ctx):
             "playoffs": sum(g for number, g in gain.items() if number > regular_end)}
 
 
+def label(p):
+    """A player as the trade reports name him: position, team, and any injury tag."""
+    return (f"{p['name']} ({p['position']}, {PRO_TEAMS.get(p['pro_team'], '?')}"
+            + ("" if p["injury_status"] in HEALTHY else f", {p['injury_status']}") + ")")
+
+
 def describe(result, ctx):
     week, regular_end, last_week = ctx["week"], ctx["regular_end"], ctx["last_week"]
     partner = ctx["names"].get(result["partner"], f"team {result['partner']}")
-    label = lambda p: (f"{p['name']} ({p['position']}, {PRO_TEAMS.get(p['pro_team'], '?')}"
-                       + ("" if p["injury_status"] in HEALTHY else f", {p['injury_status']}") + ")")
     lines = [f"Trade check, week {week}: you and {partner}",
              "  You give: " + ", ".join(label(p) for p in result["sent"]),
              "  You get:  " + ", ".join(label(p) for p in result["received"]), ""]
@@ -198,6 +203,25 @@ def describe(result, ctx):
             f"{p['name']} ({p['injury_status']}) week {due_back(p, week, ctx['return_weeks'])}" for p in hurt)]
     lines += ["", "Read-only: nothing was proposed or sent to ESPN."]
     return "\n".join(lines)
+
+
+def slack_layout(title, proposal, result, ctx, me, partner):
+    """The offer for Slack: who gives whom, what it does to both lineups, and where to answer it. The
+    full analysis goes in the thread under it."""
+    esc = slack.escape
+    lines = ["*With the trade, minus without*"]
+    for who, key in (("You", "you"), (partner, "them")):
+        w = windows(result[key]["weeks"], ctx)
+        lines.append(f"{esc(who)}: {w['this_week']:+.1f} this week · {w['next']:+.1f} over the next "
+                     f"{LOOKAHEAD + 1} weeks · {w['regular']:+.1f} to week {ctx['regular_end']} · "
+                     f"{w['playoffs']:+.1f} in the playoffs")
+    review = f" after the {ctx['review_hours']}-hour review" if ctx["review_hours"] else ""
+    return [slack.header(title), slack.section(esc(offer_line(proposal, me, partner))),
+            slack.fields("*You give*\n" + "\n".join(esc(label(p)) for p in result["sent"]),
+                         "*You get*\n" + "\n".join(esc(label(p)) for p in result["received"])),
+            slack.section("\n".join(lines)),
+            slack.context(f"Accepted now, it would process around {ctx['process_at']:%a %I:%M %p}{review}. "
+                          "Read-only: nothing was proposed or sent to ESPN. The full analysis is in the thread.")]
 
 
 def _plain(text):
@@ -345,14 +369,16 @@ def watch(espn, seen_path=SEEN, now=None):
             name = ctx["names"].get(partner, f"team {partner}")
             body = offer_line(proposal, me, name) + "\n\n" + describe(result, ctx)
             print(body)
-            if not mailer.send(subject(proposal, result, me, name), body):
+            title = subject(proposal, result, me, name)
+            if not mailer.send(title, body, blocks=slack_layout(title, proposal, result, ctx, me, name),
+                               thread=[slack.monospace(describe(result, ctx))]):
                 continue   # not marked seen, so the next check-in tries the email again
         seen[proposal["id"]] = now.isoformat(timespec="minutes")
         seen_path.parent.mkdir(exist_ok=True)
         seen_path.write_text(json.dumps(seen, indent=1))
 
 
-def report_failure(message, path=FAILED, today=None, send=mailer.send):
+def report_failure(message, path=FAILED, today=None, send=mailer.alert):
     """Log every failure, email only the first each day: the watch runs every 15 minutes."""
     today = (today or date.today()).isoformat()
     print(f"Trade watch failed: {message}")

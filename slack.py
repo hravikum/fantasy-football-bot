@@ -1,7 +1,8 @@
-"""Posts the bot's messages to your Slack channel.
+"""Posts the bot's messages to your Slack channel, and has the pieces they are laid out with.
 
 A bot token rather than an incoming webhook: a webhook can't post into a thread or edit a message,
-and the bid buttons planned next need both. Two keys, from .env or the environment:
+and the reports' thread replies and the bid buttons planned next need both. Two keys, from .env or
+the environment:
     SLACK_BOT_TOKEN   xoxb-..., the app's Bot User OAuth Token (OAuth & Permissions page)
     SLACK_CHANNEL     the channel's id, C followed by letters and digits (bottom of its About tab)
 The app needs the chat:write scope to post and channels:read for hosted_check.py, and the bot has
@@ -22,12 +23,18 @@ SECTION = 3000         # characters one section block may hold
 HEADER = 150           # characters a header block may hold
 MAX_BLOCKS = 50        # blocks one message may hold
 FENCE = "```"
+MAX_LINKS = 10         # sources listed under a write-up
 LINK = re.compile(r"https?://[^\s<>|]+")
 CUT_SHORT = "Cut short: too long for one Slack message. The run's log has all of it."
 
 
 class SlackError(Exception):
-    pass
+    """refused: Slack answered and said no (a bad token, a layout it won't take), rather than never
+    answering. Only a refused layout is worth posting again in a plainer one."""
+
+    def __init__(self, message, refused=False):
+        super().__init__(message)
+        self.refused = refused
 
 
 def configured():
@@ -68,7 +75,7 @@ def call(method, fields, form=False, sleep=None):
                 except ValueError:
                     raise SlackError(f"{method}: HTTP {resp.status_code}, not JSON: {resp.text[:100]}")
                 if not answer.get("ok"):
-                    raise SlackError(f"{method}: {answer.get('error', 'refused')}")
+                    raise SlackError(f"{method}: {answer.get('error', 'refused')}", refused=True)
                 return answer
         if attempt + 1 < TRIES:
             sleep(wait)
@@ -82,14 +89,33 @@ def _seconds(value, fallback):
         return fallback
 
 
-def post(text, blocks=None):
+def post(text, blocks=None, thread_ts=None):
     """Post one message to SLACK_CHANNEL and return its ts (Slack's id for it). text is what a
-    phone's notification shows; blocks, when given, are what the channel shows."""
+    phone's notification shows; blocks, when given, are what the channel shows; thread_ts puts it
+    in the thread under that message."""
     message = {"channel": os.environ["SLACK_CHANNEL"], "text": escape(text),
                "unfurl_links": False, "unfurl_media": False}
     if blocks:
         message["blocks"] = blocks
+    if thread_ts:
+        message["thread_ts"] = thread_ts
     return call("chat.postMessage", message)["ts"]
+
+
+def post_first(text, layouts, thread_ts=None):
+    """Post the first of these layouts that Slack takes, and return its ts.
+
+    A layout Slack refuses (invalid_blocks: a section over its length limit, say) falls back to the
+    next one, so a mistake in the formatting costs the formatting, never the message. A failure to
+    reach Slack at all is raised at once: a plainer layout wouldn't get through either.
+    """
+    for number, blocks in enumerate(layouts, 1):
+        try:
+            return post(text, blocks, thread_ts)
+        except SlackError as error:
+            if not error.refused or number == len(layouts):
+                raise
+            print(f"(Slack refused the layout ({error}); posting it plainer)")
 
 
 def escape(text):
@@ -99,22 +125,82 @@ def escape(text):
 
 def blocks_for(subject, body):
     """The subject as a header, then the body in monospace, so the reports' tables line up as in
-    the email's text version, then the body's links, which can't be clicked inside monospace."""
-    blocks = [{"type": "header", "text": {"type": "plain_text", "text": subject[:HEADER]}}]
-    room = SECTION - len(f"{FENCE}\n\n{FENCE}")
-    chunks = _chunks(body.strip("\n").replace(FENCE, "'''"), room) if body.strip() else []
+    the email's text version. Every message that has no layout of its own goes like this."""
+    return [header(subject)] + monospace(body, MAX_BLOCKS - 1)
+
+
+def monospace(body, room=MAX_BLOCKS):
+    """The body in monospace sections, then its links, which can't be clicked inside monospace,
+    in at most room blocks."""
+    chunks = _chunks(body.strip("\n").replace(FENCE, "'''"), SECTION - len(f"{FENCE}\n\n{FENCE}")) \
+        if body.strip() else []
     links = _links(body)
-    fits = MAX_BLOCKS - len(blocks) - bool(links) - 1      # leaves room for the cut-short note
-    blocks += [_section(f"{FENCE}\n{chunk}\n{FENCE}") for chunk in chunks[:fits]]
+    fits = room - bool(links) - 1      # leaves room for the cut-short note
+    blocks = [section(f"{FENCE}\n{chunk}\n{FENCE}") for chunk in chunks[:fits]]
     if links:
-        blocks.append(_section(links))
+        blocks.append(section(links))
     if len(chunks) > fits:
-        blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": CUT_SHORT}]})
+        blocks.append(context(CUT_SHORT))
     return blocks
 
 
-def _section(text):
+def alert(subject, body):
+    """A failure: a warning line, then the error itself."""
+    return [section(f":rotating_light: *{escape(subject)}*")] + monospace(body, MAX_BLOCKS - 1)
+
+
+def write_up(text):
+    """Claude's write-up as paragraphs, and its sources as one line of links under it.
+
+    waivers._render ends the write-up with "Sources:" and a "- title" line over an indented URL for
+    each. Markdown bold (**x**) becomes Slack's (*x*).
+    """
+    prose, _, sources = text.partition("\n\nSources:\n")
+    blocks = [section(re.sub(r"\*\*(.+?)\*\*", r"*\1*", chunk)) for chunk in _chunks(prose.strip(), SECTION)]
+    links = []
+    for title, url in re.findall(r"^- (.+)\n {2}(\S+)$", sources, re.M):
+        line = " · ".join(links + [link(url, title)])
+        if len(links) == MAX_LINKS or len("Sources: " + line) > SECTION:
+            break
+        links.append(link(url, title))
+    if links:
+        blocks.append(context("Sources: " + " · ".join(links)))
+    return blocks
+
+
+def header(text):
+    return {"type": "header", "text": {"type": "plain_text", "text": text[:HEADER]}}
+
+
+def section(text):
+    """Text in Slack's markup (mrkdwn), escaped already: &, < and > that aren't markup as &amp; etc."""
     return {"type": "section", "text": {"type": "mrkdwn", "text": text}}
+
+
+def fields(*texts):
+    """Short texts side by side, two to a row."""
+    return {"type": "section", "fields": [{"type": "mrkdwn", "text": text} for text in texts]}
+
+
+def context(text):
+    """Small grey text."""
+    return {"type": "context", "elements": [{"type": "mrkdwn", "text": text}]}
+
+
+def divider():
+    return {"type": "divider"}
+
+
+def table(rows, right=()):
+    """A table, its first row the header. Slack takes one a message, of up to 20 columns and 100 rows;
+    right lists the columns (from 0) to align right, as numbers read best. An empty cell shows a dash."""
+    return {"type": "table",
+            "column_settings": [{"align": "right" if number in right else "left"} for number in range(len(rows[0]))],
+            "rows": [[{"type": "raw_text", "text": str(cell) or "-"} for cell in row] for row in rows]}
+
+
+def link(url, title):
+    return f"<{escape(url)}|{escape(title).replace('|', '-')}>"
 
 
 def _chunks(text, room):

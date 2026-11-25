@@ -240,7 +240,7 @@ def test_the_watch_emails_a_new_offer_once_and_retries_a_failed_email():
     emails, delivered = [], [False]
     real_gather, real_send = trades.gather, trades.mailer.send
     trades.gather = lambda espn: context(mine, theirs)
-    trades.mailer.send = lambda subject, body: emails.append((subject, body)) or delivered[0]
+    trades.mailer.send = lambda subject, body, **slack_parts: emails.append((subject, body, slack_parts)) or delivered[0]
     try:
         with tempfile.TemporaryDirectory() as folder, contextlib.redirect_stdout(io.StringIO()):
             seen = Path(folder) / "seen.json"
@@ -252,9 +252,28 @@ def test_the_watch_emails_a_new_offer_once_and_retries_a_failed_email():
             assert len(emails) == 2 and "offer-1" in json.loads(seen.read_text()), "then never again"
     finally:
         trades.gather, trades.mailer.send = real_gather, real_send
-    subject, body = emails[-1]
+    subject, body, slack_parts = emails[-1]
     assert subject == "Trade offer from Them: you +52, them -143 pts rest of season"
     assert body.startswith("Them offered this") and "You get:  WR" in body
+    assert slack_parts["blocks"][0]["text"]["text"] == subject
+    (analysis,) = slack_parts["thread"]
+    assert analysis[0]["text"]["text"].startswith("```\nTrade check, week"), "the full analysis goes in the thread"
+
+
+def test_slack_puts_the_two_sides_next_to_each_other_with_both_teams_totals():
+    mine, theirs = full_roster(), full_roster(wr1=player("WR", 4, 14.0))
+    result, ctx = run(mine, theirs, [mine["bench_rb"]], [theirs["wr1"]])
+    ctx["process_at"] = datetime(2026, 10, 9, 3)
+    proposal = dict(PROPOSAL, teamId=2, proposedDate=BEFORE_IT_EXPIRES - 86400000, expirationDate=BEFORE_IT_EXPIRES)
+    blocks = trades.slack_layout("Trade offer from Them & co", proposal, result, ctx, 1, "Them & co")
+    assert blocks[0]["text"]["text"] == "Trade offer from Them & co", "a header is plain text: nothing escaped"
+    assert blocks[1]["text"]["text"].startswith("Them &amp; co offered this")
+    give, get = (field["text"] for field in blocks[2]["fields"])
+    assert give == "*You give*\n" + trades.label(mine["bench_rb"]) and get == "*You get*\n" + trades.label(theirs["wr1"])
+    totals = blocks[3]["text"]["text"].split("\n")
+    assert totals[0] == "*With the trade, minus without*" and totals[1].startswith("You: ")
+    assert totals[2].startswith("Them &amp; co: ") and "in the playoffs" in totals[2]
+    assert "Read-only: nothing was proposed or sent to ESPN." in blocks[4]["elements"][0]["text"]
 
 
 if __name__ == "__main__":

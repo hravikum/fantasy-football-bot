@@ -991,16 +991,81 @@ def test_main_puts_the_write_ups_calls_in_the_table_and_the_subject():
     waivers.ESPN.from_env = lambda: None
     waivers.gather = lambda espn, ranker, rate_shadow=False: context
     waivers.ask_claude = lambda brief: reply
-    waivers.mailer.send = lambda subject, body, html=None: sent.append((subject, body, html)) or True
+    waivers.mailer.send = lambda subject, body, html=None, **slack_parts: sent.append(
+        (subject, body, html, slack_parts)) or True
     try:
         with contextlib.redirect_stdout(io.StringIO()):
             waivers.main(email=True)
     finally:
         waivers.ESPN.from_env, waivers.gather, waivers.ask_claude, waivers.mailer.send = saved
-    subject, body, html = sent[0]
+    subject, body, html, slack_parts = sent[0]
     assert subject == "Waivers week 3: 1 to bid on"
     assert "bid $9" in body and "bid $9" in html and "starter out" in html
     assert "```" not in body and "```" not in html and f"Bid on {name}." in body
+    card = next(b["text"]["text"] for b in slack_parts["blocks"] if name in b.get("text", {}).get("text", ""))
+    assert "*bid $9*" in card and "_starter out_" in card, "Slack's card carries the same call"
+    assert len(slack_parts["thread"]) == 2, "a table under the message, and the text report if Slack won't take it"
+
+
+def _texts(blocks):
+    """Every piece of text in a Slack layout, in order."""
+    found = []
+    for block in blocks:
+        if block["type"] in ("section", "header"):
+            found += [block["text"]["text"]] if "text" in block else [f["text"] for f in block["fields"]]
+        elif block["type"] == "context":
+            found += [element["text"] for element in block["elements"]]
+    return found
+
+
+def _within_slacks_limits(blocks):
+    assert len(blocks) <= 50, f"{len(blocks)} blocks, Slack takes 50"
+    assert all(len(text) <= 3000 for text in _texts(blocks)), "a section over Slack's 3,000 characters"
+    assert sum(b["type"] == "table" for b in blocks) <= 1, "Slack takes one table a message"
+
+
+def test_slack_shows_a_card_a_player_with_the_call_and_the_numbers_in_the_thread():
+    context = _sample_context(advice="Bid on him: his starter is out.\n\nSources:\n- Injury news\n  https://example.com/n",
+                              last_runs=[], rivals=[100, 88, 95, 40])
+    first = context["candidates"][0]
+    waivers.attach_calls(context["candidates"], {first["name"]: {"call": "bid", "bid": 9, "why": "starter <out>"}})
+    blocks, (table_layout, plain) = waivers.slack_layout(context, "Waivers week 3: 1 to bid on", "the text report")
+    for layout in (blocks, table_layout, plain):
+        _within_slacks_limits(layout)
+    texts = _texts(blocks)
+    assert texts[0] == "Waivers week 3: 1 to bid on"
+    assert texts[1].startswith("FAAB $92 of $100 · minimum bid $0 · rivals with the most: $100, $95, $88")
+    assert any(t.startswith("*Holes in the next 4 weeks*\n• week 5: WR short by 1") for t in texts)
+    card = next(t for t in texts if t.startswith(f"*{first['name']}*"))
+    assert "*bid $9*" in card and "range $8-15" in card and f"drop {first['drop']['name']}" in card
+    assert card.endswith("_starter &lt;out&gt;_"), "the write-up's reason, escaped for Slack"
+    assert "Bid on him: his starter is out." in texts
+    assert "Sources: <https://example.com/n|Injury news>" in texts
+    table = next(b for b in table_layout if b["type"] == "table")
+    assert [cell["text"] for cell in table["rows"][0]][:3] == ["Player", "Pos", "Team"]
+    assert len(table["rows"]) == 2 and table["rows"][1][0]["text"] == first["name"]
+    assert table["column_settings"][0] == {"align": "left"} and table["column_settings"][3] == {"align": "right"}
+    assert plain == waivers.slack.monospace("the text report")
+
+
+def test_slack_says_so_on_a_day_with_nobody_and_no_write_up():
+    context = _sample_context(candidates=[], advice=None, advice_failed=True)
+    blocks, (table_layout, _) = waivers.slack_layout(context, "Waivers week 3: nothing worth a claim", "report")
+    texts = _texts(blocks)
+    assert waivers.NOBODY in texts and any(t.startswith(":warning: No write-up today") for t in texts)
+    assert not any(b["type"] == "table" for b in table_layout), "no table with nobody in it"
+
+
+def test_slack_shows_ten_cards_and_leaves_the_rest_to_the_thread():
+    context = _sample_context()
+    first = context["candidates"][0]
+    context["candidates"] = [dict(first, id=n, name=f"Player {n}") for n in range(13)]
+    blocks, (table_layout, _) = waivers.slack_layout(context, "Waivers week 3: 13 worth a claim", "report")
+    _within_slacks_limits(blocks)
+    texts = _texts(blocks)
+    assert sum(t.startswith("*Player ") for t in texts) == waivers.CARDS
+    assert "3 more in the table in the thread." in texts
+    assert len(next(b for b in table_layout if b["type"] == "table")["rows"]) == 14
 
 
 if __name__ == "__main__":

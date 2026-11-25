@@ -23,13 +23,17 @@ def _tls_context():
     return context
 
 
-def send(subject, body, html=None):
+def send(subject, body, html=None, blocks=None, thread=None):
     """Send one message. Returns True if it reached you, by Slack or by email.
 
     It goes to Slack when SLACK_BOT_TOKEN and SLACK_CHANNEL are set, and by email (plain text with
     an optional HTML version) when they aren't, or while EMAIL_TOO is "true", the trial of Slack
     beside email. When it reaches neither, it prints "(nothing delivered: ...)", and hosted_run.sh
     then fails the run, so GitHub's own email tells you.
+
+    In Slack, blocks lay the message out; without them, or if Slack refuses them, it goes as the
+    subject over the body in monospace. thread is a list of layouts for one reply under the
+    message, for detail that would crowd the channel: the first that Slack takes is posted.
 
     With MAIL_TO_LOG set, as in a shadow run on GitHub (hosted_run.sh), nothing is sent: the
     subject is printed and the message counts as delivered, so a trade it has reported on once
@@ -41,7 +45,7 @@ def send(subject, body, html=None):
     load_dotenv(Path(__file__).with_name(".env"))
     delivered = False
     if slack.configured():
-        delivered = _post(subject, body)
+        delivered = _post(subject, body, blocks, thread)
     if not slack.configured() or os.getenv("EMAIL_TOO") == "true":
         delivered = _email(SUBJECT_PREFIX + subject, body, html) or delivered
     if not delivered:
@@ -49,14 +53,25 @@ def send(subject, body, html=None):
     return delivered
 
 
-def _post(subject, body):
+def alert(subject, body):
+    """A failure notice: in Slack it leads with a warning line rather than a monospace block."""
+    return send(subject, body, blocks=slack.alert(subject, body))
+
+
+def _post(subject, body, blocks=None, thread=None):
     """Without the "Fantasy Football: " prefix: the channel does what the inbox filter did."""
+    plain = slack.blocks_for(subject, body)
     try:
-        slack.post(subject, slack.blocks_for(subject, body))
-        return True
+        posted = slack.post_first(subject, [blocks, plain] if blocks else [plain])
     except Exception as problem:  # broad on purpose: a dead notifier must not kill a run that already acted
         print(f"(Slack post failed: {type(problem).__name__}: {problem})")
         return False
+    if thread:
+        try:
+            slack.post_first(subject, thread, thread_ts=posted)
+        except Exception as problem:  # the message is in; only the detail under it is lost
+            print(f"(Slack thread reply failed: {type(problem).__name__}: {problem})")
+    return True
 
 
 def _email(subject, body, html):

@@ -181,6 +181,13 @@ renewed in `.env`, renew the secrets too.
 With `SLACK_BOT_TOKEN` and `SLACK_CHANNEL` set, every message goes to a Slack channel instead of
 email. While the repository variable `EMAIL_TOO` is `true` it is emailed as well, for the trial.
 A message that reaches neither marks the run failed, so GitHub's own email still tells you.
+
+In Slack the waiver report is a card a player, with the write-up's call on each, and its full table
+and what claims have cost go in a reply under it; a trade offer puts what you give and get side by
+side, with the full analysis in the thread; lineup moves are a line each, and a failure leads with a
+warning. Anything else is its subject over the text in monospace, and so is any layout Slack
+refuses, so a formatting mistake never costs the message.
+
 Setting it up, once:
 
 1. Create a free Slack workspace for the bot, and a public channel in it, such as #fantasy-bot.

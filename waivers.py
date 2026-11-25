@@ -32,6 +32,7 @@ import bids
 import jev
 import mailer
 import roles
+import slack
 import snaps
 import values
 from espn import BENCH, ESPN, IR, PRO_TEAMS, SLOT_NAMES, SLOT_ORDER, ESPNError, parse_roster_entry
@@ -1041,6 +1042,124 @@ def build_html(context):
             f'{free_note}Bids are suggestions only. Place claims yourself in ESPN.</p></div>')
 
 
+CARDS = 10   # player cards in the channel; the table in the thread has every player
+COLUMN_NOTE = ("WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's evidence "
+               "(values.py), and it is what the weeks after this one are valued at. A dash means ESPN's season "
+               "projection is used as it is: tight ends, kickers and defenses.")
+
+
+def slack_layout(context, subject, report):
+    """The report for Slack: (blocks for the channel, layouts for the reply under it).
+
+    The channel gets the day in a few lines, a card a player with the write-up's call on it, and the
+    write-up. The reply under it has the full table and what claims have cost, as a Slack table, or
+    as the text report in monospace if Slack won't take the table.
+    """
+    esc = slack.escape
+    money = [f"FAAB ${context['budget_left']} of ${context['budget']}", f"minimum bid ${context['minimum_bid']}"]
+    if context["rivals"]:
+        money.append("rivals with the most: " + ", ".join(f"${r}" for r in sorted(context["rivals"], reverse=True)[:3]))
+    pace = faab_pace(context)
+    blocks = [slack.header(subject), slack.context(" · ".join(money) + (f"\n{pace}" if pace else ""))]
+
+    if context.get("holes_now"):
+        blocks.append(slack.section("*Holes this week*\n" + "\n".join(f"• {esc(h)}" for h in context["holes_now"])))
+    if context["gaps"]:
+        blocks.append(slack.section(f"*Holes in the next {LOOKAHEAD} weeks*\n"
+                                    + "\n".join(f"• {esc(gap)}" for gap in context["gaps"])))
+        blocks.append(slack.context(esc(HELD_NOTE)))
+    stepping_in = [c for c in context["candidates"] if c.get("role")]
+    if stepping_in:
+        blocks.append(slack.section("*Next man up*\n" + "\n".join(f"• {esc(roles.describe(c))}" for c in stepping_in)))
+        blocks.append(slack.context(f"Backs flagged this way averaged {roles.FILL_IN} a game over their next "
+                                    f"{roles.FILL_IN_WEEKS} weeks in 2025-26; just under half reached 10 a game "
+                                    "and a quarter stayed under 5."))
+
+    blocks.append(slack.divider())
+    shown = 0
+    for heading, rows in table_sections(context["candidates"]):
+        for candidate in rows[:CARDS - shown]:
+            if heading and candidate is rows[0]:
+                blocks.append(slack.context(f"*{esc(heading)}*"))
+            blocks += [slack.section(_card(candidate)), slack.divider()]
+            shown += 1
+    if len(context["candidates"]) > shown:
+        blocks.append(slack.context(f"{len(context['candidates']) - shown} more in the table in the thread."))
+    if not context["candidates"]:
+        blocks += [slack.section(esc(NOBODY)), slack.divider()]
+
+    if context["advice"]:
+        blocks += slack.write_up(context["advice"])
+    elif context.get("advice_failed"):
+        blocks.append(slack.section(f":warning: {esc(NO_WRITE_UP)}"))
+    notes = ([FREE_NOTE] if any(c.get("free_now") for c in context["candidates"]) else [])
+    notes += ["Bids are suggestions only. Place claims yourself in ESPN.",
+              "The full table and what claims have cost are in the thread."]
+    blocks.append(slack.context(esc(" ".join(notes))))
+
+    details = [slack.section("*The numbers*")]
+    when = []
+    if context["last_runs"]:
+        stamps = [run.strftime("%a %I:%M %p").replace(" 0", " ") for run in context["last_runs"][-3:]]
+        when.append("Claims processed: " + ", ".join(stamps))
+    if context.get("ranked_by"):
+        when.append(context["ranked_by"])
+    if when:
+        details.append(slack.context(esc("\n".join(when))))
+    title, *notes = bid_notes(context)
+    details.append(slack.section(f"*{esc(title)}*\n" + "\n".join(f"• {esc(note)}" for note in notes)))
+    details.append(slack.context(esc(COLUMN_NOTE)))
+    if context["candidates"]:
+        details.append(slack.table(*_slack_table(context)))
+    return blocks, [details, slack.monospace(report)]
+
+
+def _card(candidate):
+    """One player: who, the write-up's call, what he adds, what he costs, who goes for him, and why."""
+    esc = slack.escape
+    call = _call(candidate)
+    top = f"*{esc(candidate['name'])}*   {candidate['position']} · {PRO_TEAMS.get(candidate['pro_team'], '?')}"
+    if call:
+        top += f"   ·   {call if call == 'skip' else f'*{call}*'}"
+    gain, ahead = candidate["gain"], candidate.get("ahead_gain", candidate["gain"])
+    if this_week_only(candidate):
+        worth = [f"{gain:+.1f} pts this week only"]
+    else:
+        worth = [f"{gain:+.1f} pts this week", f"{ahead:+.1f} over {LOOKAHEAD + 1} weeks",
+                 f"{candidate['season_gain']:+.0f} season"]
+    worth.append("free, cleared waivers" if candidate.get("free_now") else f"range {_bid(candidate)}")
+    if _drop(candidate):
+        worth.append(f"drop {esc(_drop(candidate))}")
+    lines = [top, " · ".join(worth)]
+    if candidate.get("role"):
+        lines.append("Next man up")
+    why = (candidate.get("call") or {}).get("why")
+    if why:
+        lines.append(f"_{esc(why)}_")
+    return "\n".join(lines)
+
+
+def _slack_table(context):
+    """Every player's numbers, as the text report's table has them: (rows, the columns holding numbers)."""
+    jev_column = any("jev" in c for c in context["candidates"])
+    call_column = any(c.get("call") for c in context["candidates"])
+    head = (["Player", "Pos", "Team", "Own%", "+/-", "Snap%", "Wk", "Level", "Now", f"{LOOKAHEAD + 1}wk", "Season"]
+            + (["Jev", "Conf", "Proj#"] if jev_column else []) + ["Bid"] + (["Call"] if call_column else []) + ["Drop"])
+    rows = [head]
+    for _, group in table_sections(context["candidates"]):
+        for c in group:
+            row = [c["name"], c["position"], PRO_TEAMS.get(c["pro_team"], "?"), f"{c['percent_owned']:.0f}%",
+                   f"{c['percent_change']:+.1f}", snaps.label(c.get("snaps")), f"{c['projection'] or 0:.1f}",
+                   _level(c), f"{c['gain']:+.1f}", f"{c.get('ahead_gain', c['gain']):+.1f}",
+                   f"{c['season_gain']:+.0f}"]
+            if jev_column:
+                row += [f"{c['jev']:.2f}", f"{c['jev_confidence']:.2f}"] if "jev" in c else ["-", "-"]
+                row.append(str(c.get("math_rank", 0)))
+            rows.append(row + [_bid(c)] + ([_call(c) or "-"] if call_column else []) + [_drop(c) or "-"])
+    text_columns = {"Player", "Pos", "Team", "Bid", "Call", "Drop"}
+    return rows, {number for number, name in enumerate(head) if name not in text_columns}
+
+
 def faab_spent(team, spent_by_team):
     """ESPN's spend counter reads zero in some leagues; the claims themselves are the honest record."""
     counter = team.get("transactionCounter", {}).get("acquisitionBudgetSpent") or 0
@@ -1202,7 +1321,9 @@ def main(email, ranker="math", rate_shadow=False):
     report = build_report(context)
     print(report)
     if email:
-        mailer.send(f"Waivers week {context['week']}: {headline(context['candidates'])}", report, build_html(context))
+        subject = f"Waivers week {context['week']}: {headline(context['candidates'])}"
+        blocks, thread = slack_layout(context, subject, report)
+        mailer.send(subject, report, build_html(context), blocks=blocks, thread=thread)
     if rate_shadow and email:
         import shadow
         if shadow.is_summary_day():
@@ -1219,5 +1340,5 @@ if __name__ == "__main__":
         message = f"Error: {error}"
         print(message, file=sys.stderr)
         if "--email" in sys.argv:
-            mailer.send("waiver report failed", message)
+            mailer.alert("waiver report failed", message)
         sys.exit(1)
