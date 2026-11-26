@@ -30,7 +30,6 @@ GMAIL_ADDRESS=
 GMAIL_APP_PASSWORD=   # myaccount.google.com/apppasswords, needs 2-Step Verification
 EMAIL_TO=             # optional, defaults to GMAIL_ADDRESS
 ANTHROPIC_API_KEY=    # optional, adds the written recommendations to the waiver report
-TYPESAFE_API_KEY=     # optional, only for --ranker jev
 SLACK_BOT_TOKEN=      # optional: post to Slack instead of emailing (Slack, below)
 SLACK_CHANNEL=        # the channel's id, from the bottom of its About tab
 EMAIL_TOO=            # optional: true to email as well while Slack is on trial
@@ -46,8 +45,6 @@ python3 lineup.py --live --force    apply the best lineup even below the point b
 python3 lineup.py --live --near-kickoff   the same, only if a game kicks off within 95 minutes
 python3 waivers.py                  print the waiver report
 python3 waivers.py --email          print it and send it
-python3 waivers.py --ranker jev     rank the pool with Jev instead of projections
-python3 waivers.py --jev-shadow     score and log with Jev, but rank and email as normal
 python3 waivers.py --rate-shadow    also rank the wire by rate and by wins and log it; Tuesdays, emails the comparison
 python3 shadow.py [--email]         the rate and wins comparison from the log, printed (and sent)
 python3 trades.py --give "A" --get "B"   what a trade does to both lineups, read-only
@@ -69,7 +66,6 @@ python3 claim_probe.py              try one $0 waiver claim for you to cancel in
 python3 test_lineup.py              optimizer and IR tests
 python3 test_waivers.py             waiver scoring tests
 python3 test_timers.py              cron-job.org timer tests
-python3 test_jev.py                 Jev scorer tests (needs typesafe-sdk)
 python3 test_pricing.py             claim pricing and projection accuracy tests
 python3 test_snaps.py               snap share tests
 python3 test_trades.py              trade analyzer tests
@@ -144,7 +140,7 @@ time, and cron-job.org starts each run (below):
 
 | Job | When | Runs |
 | --- | --- | --- |
-| Waiver report | daily 6:07 | `waivers.py --email --jev-shadow --rate-shadow` |
+| Waiver report | daily 6:07 | `waivers.py --email --rate-shadow` |
 | Morning lineup pass | daily 9:05 | `lineup.py --live` |
 | Game-day check-ins | every 15 min: Sunday 7:00-21:00, Monday 17:00-21:00, Thursday to Saturday 11:00-21:00 | `lineup.py --live --near-kickoff` |
 | Trade watch | 8:03 and 23:03 | `trades.py --watch` |
@@ -392,7 +388,7 @@ Only players worth a bid are listed. When nobody added to your lineup, the list 
 with the most widely rostered free agents at +0.0 and $0-1, which is how Justin Herbert sat on it
 for weeks; on Nov 16 seven of the eight rows were like that. Now a player is listed if he helps
 this week, over the next five, or by 15 points or more over the season, or if he is a next man
-up or Jev rates him with confidence. On a day with nobody, the report says so.
+up. On a day with nobody, the report says so.
 
 A kicker, a defense, or a player who fills one later week and nothing else is not listed until
 the week he is needed (`held` in `waivers.py`). There will be one like him on the wire that
@@ -545,39 +541,16 @@ games played, so his rate is old work. `python3 shadow.py` prints the comparison
 expected-points file updates within a day of each game; a game it doesn't have yet is left out of
 the rate until it does. To stop, drop `--rate-shadow` from `hosted_run.sh`.
 
-## The Jev ranker (experimental)
+## Jev (removed Nov 26, 2026)
 
-`--ranker jev` replaces the projection ordering with judgments from TypeSafe's Jev. For
-each of the top 20 candidates it asks four typed questions in one call: how large and
-secure the player's role is, how much he'd help this roster all season, whether his usage
-has grown, and whether he's keeper-worthy. `WEIGHTS` in `jev.py` combines them, and the
-result is shrunk toward neutral in proportion to Jev's own confidence, so an unsure
-judgment barely moves the ranking.
-
-The report then shows both orderings: `JEV` is the composite, `CONF` its confidence, and
-`PROJ#` where the projection math had that player. A confident Jev score can also raise a
-bid band, never lower one.
-
-What to watch while comparing:
-
-- Jev cannot look anything up. It judges only the state in `player_state()`, which is a
-  handful of ESPN numbers. Whatever that state omits, Jev cannot know.
-- Its score is a judgment about our numbers, not new information. The news that made the
-  written recommendations useful still comes from Claude.
-- Pin the model in `jev.py` once thresholds are tuned; `jev-latest` moves under you. Every
-  report prints the version that answered.
-
-### Shadow mode and the log
-
-The scheduled 6am job runs with `--jev-shadow`: Jev scores the day's candidates and every
-judgment is appended to `logs/jev_scores.csv`, but the ranking, the bids, the email and
-Claude's brief are exactly what they would be without it. Same pool, same day, both
-rankings on file. After a few weeks that log can be checked against what the players
-actually scored, which is the only fair test of whether Jev's confident calls were right.
-To stop the experiment, remove `--jev-shadow` from `install_schedule.sh` and reinstall.
-
-Fall back by dropping the flag. Missing key, missing SDK, or failed calls all fall back on
-their own and say so in the report.
+From September to Nov 26 the waiver run also scored its top 20 candidates with TypeSafe's Jev in
+shadow (`--jev-shadow`) and logged every judgment to `logs/jev_scores.csv`. Checked against what
+the players then scored (63 runs, 1,253 judgments), Jev ranked them about as well as ESPN's weekly
+projection and added nothing beyond it, and only 8 judgments were confident enough to move anyone
+up, so it was removed with its key and SDK. The log stays on `bot-state` as history:
+`rate_test.py`'s wire check and `trade_probe.py` read it. Its inputs changed on 2026-09-23, when
+snap share was added, and its `math_rank` column changed meaning when player levels went in
+(November 2026).
 
 ## Lineup projections
 
@@ -634,7 +607,7 @@ ESPN through nflverse's id table. The report shows the last two weeks in the SNA
 as a shrinking role), `-` means no snap data. The trend is computed in code; a change of
 `TREND_POINTS` (15) percentage points counts as rising or falling.
 
-Snap share goes to Claude's brief and Jev's state, but deliberately not into the ranking yet:
+Snap share goes to Claude's brief, but deliberately not into the ranking yet:
 first it has to show it predicts points in this league, the way `accuracy.py` tested ESPN's
 projections; `snap_test.py` is that test. Over the 2025 season it found nothing: players whose
 snap share had just risen beat their projection by only 0.2 points a game more than steady ones
@@ -642,11 +615,6 @@ snap share had just risen beat their projection by only 0.2 points a game more t
 ranking. The first five weeks of 2026 agree: -0.5 ±0.9 over 374 player-weeks. The player
 table (7 MB) is cached in `cache/` for a week and snap counts for six hours; if GitHub is down,
 the last cached copy is used, and with none the report goes out without the column.
-
-Jev's inputs changed on 2026-09-23, when snap share was added. When reviewing
-`logs/jev_scores.csv`, compare judgments before and after that date separately. The `math_rank`
-column changed meaning when player levels went in (November 2026), since the ranking it records
-now values later weeks at each player's level.
 
 ## Waiver auctions
 
@@ -687,8 +655,8 @@ above).
 - **ESPN changes the API.** It's unofficial and can change without notice. `check.py` is
   the fastest way to see what still parses.
 - **A log line says a lookup failed with "Connection reset by peer".** ESPN closes a connection
-  the report left idle while it did other work. Jev's usage lookup lost 6 of 14 November mornings
-  to this, and judged without usage on those days. Every ESPN read now retries once, which opens
+  the report left idle while it did other work. Jev's usage lookup (since removed) lost 6 of 14
+  November mornings to this. Every ESPN read now retries once, which opens
   a new connection.
 - **The waiver email has no write-up, or arrives an hour late.** Through Nov 15, 30 of 53 reports
   went out without one. On 24 of them the log says the call to Claude failed after 900 to 6,300

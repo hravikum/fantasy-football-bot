@@ -21,9 +21,6 @@ BENCH, IR = 20, 21
 # Single-position slots, used to find a player's primary position
 POSITION_SLOTS = {0: "QB", 2: "RB", 4: "WR", 6: "TE", 16: "D/ST", 17: "K"}
 
-# ESPN stat ids for the opportunity numbers that show a player's role
-USAGE_STATS = {"pass_attempts": 0, "carries": 23, "receptions": 53, "targets": 58}
-
 PRO_TEAMS = {
     0: "FA", 1: "ATL", 2: "BUF", 3: "CHI", 4: "CIN", 5: "CLE", 6: "DAL", 7: "DEN", 8: "DET",
     9: "GB", 10: "TEN", 11: "IND", 12: "KC", 13: "LV", 14: "LAR", 15: "MIA", 16: "MIN",
@@ -117,19 +114,6 @@ class ESPN:
                 player = entry.get("player") or entry.get("playerPoolEntry", {}).get("player", {})
                 if player.get("id"):
                     found[player["id"]] = player
-        return found
-
-    def usage(self, player_ids, final_week):
-        """{player_id: [{week, carries, targets, ...}]} of actual per-game usage this season."""
-        found = {}
-        for player_id, player in self.player_cards(player_ids, final_week).items():
-            weeks = {}
-            for line in player.get("stats", []):
-                if (line.get("statSourceId") == 0 and line.get("seasonId") == self.season
-                        and line.get("scoringPeriodId") and line.get("statSplitTypeId") != 2):
-                    raw = line.get("stats", {})
-                    weeks[line["scoringPeriodId"]] = {name: raw.get(str(stat), 0) for name, stat in USAGE_STATS.items()}
-            found[player_id] = [dict(week=week, **weeks[week]) for week in sorted(weeks)]
         return found
 
     def waiver_claims(self, weeks):

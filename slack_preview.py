@@ -68,7 +68,7 @@ def waiver_report():
                                          "(PHI), Lions D/ST (DET)",
                                          "week 13: K short by 1 — available and playing that week: Jason Myers "
                                          "(SEA), Cairo Santos (CHI)"],
-               "candidates": candidates, "advice": advice, "ranked_by": None,
+               "candidates": candidates, "advice": advice,
                "past_claims": {bids.IN_DEMAND: [8] * 12 + [18] * 6 + [31] * 5, bids.OTHER: [2] * 40 + [5] * 20 + [12] * 14,
                                bids.STREAMED: [1] * 33 + [4] * 20 + [7] * 13}}
     subject = f"Waivers week 12: {waivers.headline(candidates)}"

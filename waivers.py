@@ -7,8 +7,6 @@ it. It never places a claim.
 Usage:
   python3 waivers.py                  print the report
   python3 waivers.py --email          print it and send it
-  python3 waivers.py --ranker jev     rank the pool with Jev instead of projections
-  python3 waivers.py --jev-shadow     score with Jev and log it, but rank and email as normal
   python3 waivers.py --rate-shadow    also rank the wire with rates.py and by wins, and log it (shadow.py);
                                       on Tuesdays, with --email, also email the comparison
 """
@@ -29,7 +27,6 @@ import requests
 from dotenv import load_dotenv
 
 import bids
-import jev
 import mailer
 import roles
 import slack
@@ -39,9 +36,6 @@ from espn import BENCH, ESPN, IR, PRO_TEAMS, SLOT_NAMES, SLOT_ORDER, ESPNError, 
 from lineup import CANT_PLAY, expected_points, plan, starters_total
 from values import GAMES_PER_SEASON, season_pace
 
-JEV_LOG = Path(__file__).with_name("logs") / "jev_scores.csv"
-JEV_LOG_FIELDS = ["logged_at", "week", "player_id", "name", "position", "jev", "jev_confidence", "math_rank",
-                  "projection", "season_projection", "percent_owned", "usage_per_game", "usage_trend"]
 POOL_LOG = Path(__file__).with_name("logs") / "pool.csv"
 POOL_LOG_FIELDS = ["logged_at", "week", "player_id", "name", "position", "percent_owned", "percent_change",
                    "projection", "band", "bid"]
@@ -260,8 +254,6 @@ def score_pool(roster, pool, slot_counts, games, byes=None, week=0):
                            drop=dropped,
                            would_start=by_week[0] > 0))
     scored.sort(key=lambda c: (-c["ahead_gain"], -c["season_gain"], -c["percent_owned"]))
-    for rank, candidate in enumerate(scored, start=1):
-        candidate["math_rank"] = rank
     return scored
 
 
@@ -289,20 +281,6 @@ def _projection_band(candidate):
     return 3
 
 
-def _jev_band(candidate):
-    """Jev's judgment can raise a bid, but only when it is confident in it."""
-    score, confidence = candidate.get("jev"), candidate.get("jev_confidence") or 0
-    if score is None:
-        return 3
-    if score >= 0.90 and confidence >= 0.70:
-        return 0
-    if score >= 0.75 and confidence >= 0.60:
-        return 1
-    if score >= 0.60 and confidence >= 0.50:
-        return 2
-    return 3
-
-
 def percentile(values, fraction):
     """The value below which that fraction of the sample sits."""
     ordered = sorted(values)
@@ -316,7 +294,7 @@ def percentile(values, fraction):
 
 def bid_band(candidate):
     """0 starter, 1 useful piece, 2 stash, 3 not worth money."""
-    band = min(_projection_band(candidate), _jev_band(candidate))
+    band = _projection_band(candidate)
     if candidate.get("role"):
         band = min(band, 2)   # worth a stash whatever your lineup says; who you bid against is bids.kind_of
     if candidate.get("position") in STREAM_ONLY:
@@ -345,16 +323,6 @@ def suggest_bid(candidate, budget_left, minimum_bid, past=None):
     else:
         low, high = round(budget_left * BANDS[band][0]), round(budget_left * BANDS[band][1])
     return max(minimum_bid, min(low, budget_left)), max(minimum_bid, min(high, budget_left))
-
-
-def jev_order(candidate):
-    """Jev can promote a player it is confident about; it never demotes one.
-
-    Same rule as the bids. When Jev is unsure, which it is when the state is thin, the
-    list is exactly the projection list rather than noise sorted around 0.5.
-    """
-    confident = _jev_band(candidate) < 3
-    return (not confident, -(candidate.get("jev") or 0) if confident else 0, candidate["math_rank"])
 
 
 def drop_candidates(roster, target, slot_counts, horizon, this_week, replacement=None, count=3):
@@ -774,13 +742,10 @@ def build_report(context):
                   f"in 2025-26. Just under", "  half reached 10 a game and a quarter stayed under 5. "
                   "They are listed even with no lineup gain.", ""]
 
-    if context.get("ranked_by"):
-        lines += [context["ranked_by"], ""]
-    jev_column = any("jev" in c for c in context["candidates"])
     header = (f"{'PLAYER':<20} {'POS':<5} {'TEAM':<5} {'OWN%':>6} {'+/-':>6} {'SNAP%':>7} {'WK':>5} {'LEVEL':>5} "
               f"{'NOW':>5} {str(LOOKAHEAD + 1) + 'WK':>5} {'SEASON':>7}")
     call_column = any(c.get("call") for c in context["candidates"])
-    lines.append(header + ("  JEV  CONF  PROJ#" if jev_column else "") + f"  {'BID':<7} "
+    lines.append(header + f"  {'BID':<7} "
                  + (f"{'CALL':<9} " if call_column else "") + "DROP FOR HIM")
     for heading, rows in table_sections(context["candidates"]):
         if heading:
@@ -794,10 +759,6 @@ def build_report(context):
                    f"{candidate['projection'] or 0:>5.1f} {_level(candidate):>5} "
                    f"{candidate['gain']:>+5.1f} {candidate.get('ahead_gain', candidate['gain']):>+5.1f} "
                    f"{candidate['season_gain']:>+7.0f}")
-            if jev_column:
-                judged = "jev" in candidate  # kickers and defenses are never asked
-                row += (f" {candidate['jev']:>5.2f} {candidate['jev_confidence']:>5.2f}" if judged else f" {'-':>5} {'-':>5}")
-                row += f" {candidate.get('math_rank', 0):>6}"
             call = f"{_call(candidate):<9} " if call_column else ""
             lines.append(f"{row}  {bid:<7} {call}{(_drop(candidate) or '-')[:18]}")
             if (candidate.get("call") or {}).get("why"):
@@ -819,51 +780,6 @@ def build_report(context):
               "ESPN's season projection is used as it is: tight ends, kickers and defenses.",
               "", "Bids are suggestions only. Place claims yourself in ESPN."]
     return "\n".join(lines)
-
-
-def jev_pass(espn, league, roster, target, scored, faab_left):
-    """Jev scores for the top skill-position candidates, added in place. Returns (judged, note, with_usage)."""
-    settings = league["settings"]
-    judged = [c for c in scored if c["position"] in jev.SCORED_POSITIONS][:jev.DEPTH]
-    try:
-        usage = espn.usage([c["id"] for c in judged], league.get("status", {}).get("finalScoringPeriod", 18))
-    except (ESPNError, requests.exceptions.RequestException) as problem:
-        print(f"(usage lookup failed: {problem}); Jev will judge without it")
-        usage = {}
-    for candidate in judged:
-        candidate["usage"] = jev.usage_summary(usage.get(candidate["id"]), candidate["position"])
-    note = jev.score(
-        judged,
-        jev.roster_summary(roster, target, BENCH, IR),
-        {"teams": settings["size"], "points_per_reception": 0.5,
-         "keepers_next_season": settings.get("draftSettings", {}).get("keeperCount"),
-         "my_faab_left": faab_left},
-        depth=len(judged),
-    )
-    return judged, note, sum(1 for c in judged if c.get("usage"))
-
-
-def log_jev(week, judged, path=None):
-    """Append today's judgments, so in a few weeks they can be checked against what happened."""
-    path = path or JEV_LOG
-    rows = [c for c in judged if "jev" in c]
-    if not rows:
-        return 0
-    path.parent.mkdir(exist_ok=True)
-    new_file = not path.exists()
-    stamp = datetime.now().isoformat(timespec="minutes")
-    with open(path, "a", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=JEV_LOG_FIELDS)
-        if new_file:
-            writer.writeheader()
-        for c in rows:
-            usage = c.get("usage") or {}
-            writer.writerow({"logged_at": stamp, "week": week, "player_id": c["id"], "name": c["name"],
-                             "position": c["position"], "jev": c["jev"], "jev_confidence": c["jev_confidence"],
-                             "math_rank": c["math_rank"], "projection": c["projection"],
-                             "season_projection": c["season_projection"], "percent_owned": c["percent_owned"],
-                             "usage_per_game": usage.get("per_game"), "usage_trend": usage.get("trend")})
-    return len(rows)
 
 
 def log_pool(week, pool, scored, path=None):
@@ -891,14 +807,6 @@ def log_pool(week, pool, scored, path=None):
                              "percent_change": p["percent_change"], "projection": p["projection"],
                              "band": bid_band(c) if c else "", "bid": f"{bid[0]}-{bid[1]}" if bid else ""})
     return len(pool)
-
-
-def ranker_from(argv):
-    if "--ranker" in argv and "jev" in argv:
-        return "jev"
-    if "--jev-shadow" in argv:
-        return "shadow"
-    return "math"
 
 
 CELL = "padding:8px 10px;border-bottom:1px solid #f1f1f3;font-size:14px"
@@ -932,13 +840,10 @@ def _prose(text):
 
 def build_html(context):
     """The report as HTML. The plain text version still goes out as the fallback."""
-    jev_column = any("jev" in c for c in context["candidates"])
     call_column = any(c.get("call") for c in context["candidates"])
     headers = [_column("Player")] + ([_column("Call")] if call_column else []) + [_column("Rostered", True), _column("+/-", True), _column("Snaps", True),
                _column("Level", True), _column("This wk", True),
                _column(f"Next {LOOKAHEAD + 1}", True), _column("Season", True)]
-    if jev_column:
-        headers += [_column("Jev", True), _column("Conf", True)]
     headers += [_column("Bid"), _column("Drop for him")]
 
     rows, index = [], 0
@@ -966,9 +871,6 @@ def build_html(context):
                 _number(candidate.get("ahead_gain", candidate["gain"])),
                 _number(candidate["season_gain"], 0),
             ]
-            if jev_column:
-                cells += ([_cell(f'{candidate["jev"]:.2f}', NUMBER), _cell(f'{candidate["jev_confidence"]:.2f}', NUMBER)]
-                          if "jev" in candidate else [_cell("&mdash;", NUMBER), _cell("&mdash;", NUMBER)])
             cells.append(_cell(_bid(candidate, "&ndash;"), "white-space:nowrap"))
             drop = _drop(candidate)
             cells.append(_cell(html_escape.escape(drop) if drop else "&mdash;", "color:#374151"))
@@ -1017,9 +919,6 @@ def build_html(context):
         stamps = [run.strftime("%a %I:%M %p").replace(" 0", " ") for run in context["last_runs"][-3:]]
         summary += "<br>Claims processed: " + ", ".join(stamps)
 
-    ranked = (f'<p style="color:#6b7280;font-size:13px;margin:0 0 10px">'
-              f'{html_escape.escape(context["ranked_by"]).replace(chr(10), "<br>")}</p>'
-              if context.get("ranked_by") else "")
     free_note = f"{FREE_NOTE} " if any(c.get("free_now") for c in context["candidates"]) else ""
     table = (f'<table style="border-collapse:collapse;width:100%;margin-bottom:18px">'
              f'<thead><tr>{"".join(headers)}</tr></thead><tbody>{"".join(rows)}</tbody></table>'
@@ -1036,7 +935,7 @@ def build_html(context):
             f'sans-serif;color:#111827;max-width:720px;margin:0 auto;padding:4px 8px">'
             f'<h2 style="margin:0 0 4px;font-size:19px">Waiver report &middot; week {context["week"]}</h2>'
             f'<p style="color:#4b5563;font-size:14px;margin:0 0 4px">{summary}</p>'
-            f'{holes}{ranked}{table}{prices}'
+            f'{holes}{table}{prices}'
             f'{advice}'
             f'<p style="color:#6b7280;font-size:12px;border-top:1px solid #e5e7eb;padding-top:10px">'
             f'{free_note}Bids are suggestions only. Place claims yourself in ESPN.</p></div>')
@@ -1108,8 +1007,6 @@ def slack_layout(context, subject, report):
     if context["last_runs"]:
         stamps = [run.strftime("%a %I:%M %p").replace(" 0", " ") for run in context["last_runs"][-3:]]
         when.append("Claims processed: " + ", ".join(stamps))
-    if context.get("ranked_by"):
-        when.append(context["ranked_by"])
     if when:
         details.append(slack.context(esc("\n".join(when))))
     title, *notes = bid_notes(context)
@@ -1188,10 +1085,9 @@ def _card(candidate):
 
 def _slack_table(context):
     """Every player's numbers, as the text report's table has them: (rows, the columns holding numbers)."""
-    jev_column = any("jev" in c for c in context["candidates"])
     call_column = any(c.get("call") for c in context["candidates"])
     head = (["Player", "Pos", "Team", "Own%", "+/-", "Snap%", "Wk", "Level", "Now", f"{LOOKAHEAD + 1}wk", "Season"]
-            + (["Jev", "Conf", "Proj#"] if jev_column else []) + ["Bid"] + (["Call"] if call_column else []) + ["Drop"])
+            + ["Bid"] + (["Call"] if call_column else []) + ["Drop"])
     rows = [head]
     for _, group in _slack_order(context["candidates"]):
         for c in group:
@@ -1199,9 +1095,6 @@ def _slack_table(context):
                    f"{c['percent_change']:+.1f}", snaps.label(c.get("snaps")), f"{c['projection'] or 0:.1f}",
                    _level(c), f"{c['gain']:+.1f}", f"{c.get('ahead_gain', c['gain']):+.1f}",
                    f"{c['season_gain']:+.0f}"]
-            if jev_column:
-                row += [f"{c['jev']:.2f}", f"{c['jev_confidence']:.2f}"] if "jev" in c else ["-", "-"]
-                row.append(str(c.get("math_rank", 0)))
             rows.append(row + [_bid(c)] + ([_call(c) or "-"] if call_column else []) + [_drop(c) or "-"])
     text_columns = {"Player", "Pos", "Team", "Bid", "Call", "Drop"}
     return rows, {number for number, name in enumerate(head) if name not in text_columns}
@@ -1213,7 +1106,7 @@ def faab_spent(team, spent_by_team):
     return max(counter, spent_by_team.get(team["id"], 0))
 
 
-def gather(espn, ranker="math", rate_shadow=False):
+def gather(espn, rate_shadow=False):
     league = espn.league("mSettings", "mTeam")
     settings = league["settings"]
     week = league["scoringPeriodId"]
@@ -1266,18 +1159,6 @@ def gather(espn, ranker="math", rate_shadow=False):
         shares, snap_week = {}, 0
     for candidate in scored:
         candidate["snaps"] = snaps.summary(shares.get(candidate["id"]), snap_week)
-    ranked_by = None
-    if ranker == "jev":
-        judged, note, with_usage = jev_pass(espn, league, roster, target, scored, budget - spent)
-        scored.sort(key=jev_order)
-        promoted = sum(1 for c in scored if _jev_band(c) < 3)
-        ranked_by = (f"{note}\nUsage data found for {with_usage} of {len(judged)} players. "
-                     f"{promoted} rated confidently enough to move up; the rest keep projection order.")
-        log_jev(week, judged)
-    elif ranker == "shadow":
-        # Copies, so nothing Jev says reaches the ranking, the bids or Claude's brief.
-        judged, note, _ = jev_pass(espn, league, roster, target, [dict(c) for c in scored], budget - spent)
-        print(f"(shadow {note.lower()}; logged {log_jev(week, judged)} judgments)")
     shortlist = shortlist_from(scored)
     for candidate in shortlist:
         candidate["bid"] = suggest_bid(candidate, budget_left, acquisition.get("minimumBid", 0), past)
@@ -1299,7 +1180,7 @@ def gather(espn, ranker="math", rate_shadow=False):
         "last_runs": runs, "past_claims": past,
         "holes_now": holes_now(roster, slot_counts, games, week),
         "gaps": bye_gaps(roster, slot_counts, horizon, week, scored),
-        "candidates": shortlist, "ranked_by": ranked_by,
+        "candidates": shortlist,
         "drops": drop_candidates(roster, target, slot_counts, horizon, week, replacement_level(scored)),
         "roster": roster, "target": target,
     }
@@ -1334,7 +1215,6 @@ def brief_for_claude(context):
                        "lineup_gain_rest_of_season": c["season_gain"],
                        "snap_share_pct_by_week": (c.get("snaps") or {}).get("by_week"),
                        "snap_trend": (c.get("snaps") or {}).get("trend"),
-                       "jev_score": c.get("jev"), "jev_confidence": c.get("jev_confidence"),
                        "next_man_up": roles.describe(c) if c.get("role") else None,
                        "helps_only_this_week": this_week_only(c),
                        "availability": ("free agent: can be added today at no cost" if c.get("free_now")
@@ -1358,9 +1238,9 @@ def brief_for_claude(context):
     }
 
 
-def main(email, ranker="math", rate_shadow=False):
+def main(email, rate_shadow=False):
     espn = ESPN.from_env()
-    context = gather(espn, ranker, rate_shadow)
+    context = gather(espn, rate_shadow)
     context["advice"], calls = split_calls(ask_claude(brief_for_claude(context)))
     attach_calls(context["candidates"], calls)
     # With a key set, a missing write-up is a failure worth seeing in the email, not just in the log.
@@ -1382,7 +1262,7 @@ def main(email, ranker="math", rate_shadow=False):
 
 if __name__ == "__main__":
     try:
-        main(email="--email" in sys.argv, ranker=ranker_from(sys.argv), rate_shadow="--rate-shadow" in sys.argv)
+        main(email="--email" in sys.argv, rate_shadow="--rate-shadow" in sys.argv)
     except ESPNError as error:
         message = f"Error: {error}"
         print(message, file=sys.stderr)

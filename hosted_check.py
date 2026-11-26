@@ -8,7 +8,6 @@ writes to ESPN, never sends an email or a Slack message, and never prints a secr
 Exits 1 if anything the bot can't do without is unreachable. Works the same on your Mac:
     python3 hosted_check.py
 """
-import importlib
 import os
 import smtplib
 import socket
@@ -27,7 +26,6 @@ from snaps import BASE as NFLVERSE
 from waivers import MODEL
 
 NEEDED = ("LEAGUE_ID", "ESPN_S2", "SWID", "ANTHROPIC_API_KEY", "GMAIL_ADDRESS", "GMAIL_APP_PASSWORD")
-OPTIONAL = ("TYPESAFE_API_KEY",)     # only the Jev shadow ranking uses it
 
 
 def check(name, test, results, essential=True):
@@ -47,8 +45,7 @@ def settings():
     missing = [key for key in NEEDED if not os.getenv(key)]
     if missing:
         raise RuntimeError(f"not set: {', '.join(missing)}")
-    absent = [key for key in OPTIONAL if not os.getenv(key)]
-    return "all set" + (f" (no {', '.join(absent)}, so Jev would be skipped)" if absent else "")
+    return "all set"
 
 
 def espn_reads(espn, found):
@@ -110,13 +107,6 @@ def nflverse():
     return "snap counts and player ids can be downloaded"
 
 
-def jev():
-    importlib.import_module("typesafe_sdk")     # the call itself is left to the first shadow run
-    if not os.getenv("TYPESAFE_API_KEY"):
-        raise RuntimeError("no TYPESAFE_API_KEY")
-    return "SDK installed and key set (not called)"
-
-
 def main():
     load_dotenv(Path(__file__).with_name(".env"))     # on GitHub there is no .env; the secrets are the environment
     print(f"Hosted check, {datetime.now():%a %b %d %H:%M} local time ({time.tzname[0]}), Python {sys.version.split()[0]}\n")
@@ -133,7 +123,6 @@ def main():
     check("Gmail", gmail, results)
     check("Slack", slack_channel, results, essential=slack.configured())
     check("nflverse downloads", nflverse, results)
-    check("Jev (shadow ranking only)", jev, results, essential=False)
     failed = [name for name, passed, essential in results if essential and not passed]
     print("\n" + (f"Not ready: {', '.join(failed)}." if failed else "Everything the bot needs is reachable from here."))
     return 1 if failed else 0

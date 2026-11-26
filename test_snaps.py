@@ -7,7 +7,6 @@ from pathlib import Path
 
 import requests
 
-import jev
 import snap_test
 import snaps
 
@@ -79,16 +78,6 @@ def test_a_failed_download_falls_back_to_the_stale_copy():
             pass
     finally:
         requests.get = saved
-
-
-def test_jev_sees_snap_share_when_there_is_some():
-    candidate = {"name": "X", "position": "WR", "pro_team": 12, "injury_status": "ACTIVE",
-                 "percent_owned": 20.0, "percent_change": 3.0, "projection": 9.0, "season_projection": 140.0,
-                 "snaps": snaps.summary({1: 40, 2: 78}, 2)}
-    state = jev.player_state(candidate, {}, {})
-    assert state["player"]["snap_share"] == {"percent_by_week": [40, 78], "trend": "rising"}
-    del candidate["snaps"]
-    assert "snap_share" not in jev.player_state(candidate, {}, {})["player"]
 
 
 def test_backtest_labels_each_week_with_the_trend_before_it():

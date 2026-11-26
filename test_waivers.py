@@ -32,8 +32,6 @@ def test_a_player_who_adds_nothing_is_not_listed():
     assert [waivers.bid_band(c) for c in scored] == [0, 3, 3]
     assert [c["id"] for c in waivers.shortlist_from(scored)] == [useful["id"]]
     assert waivers.shortlist_from(scored[1:]) == [], "and an empty list is a fine answer"
-    promoted = dict(scored[1], jev=0.8, jev_confidence=0.7)
-    assert waivers.shortlist_from([promoted]) == [promoted], "a confident Jev rating is worth a bid too"
 
 
 def test_both_reports_say_so_when_nobody_is_worth_a_bid():
@@ -335,33 +333,6 @@ def test_bid_tiers_separate_a_starter_from_a_stash():
     assert waivers.suggest_bid({"gain": 0.0, "season_gain": 2}, 100, 1) == (1, 1), "minimum bid is respected"
 
 
-def test_a_confident_jev_score_can_raise_the_bid():
-    nothing_on_the_numbers = {"gain": 0.0, "season_gain": 0}
-    assert waivers.suggest_bid(nothing_on_the_numbers, 100, 0) == (0, 1)
-    confident = dict(nothing_on_the_numbers, jev=0.94, jev_confidence=0.88)
-    assert waivers.suggest_bid(confident, 100, 0) == (20, 35), "Jev rates him a starter, so bid like it"
-    unsure = dict(nothing_on_the_numbers, jev=0.94, jev_confidence=0.4)
-    assert waivers.suggest_bid(unsure, 100, 0) == (0, 1), "a coin-flip judgment does not move money"
-
-
-def test_projection_band_still_wins_when_it_rates_him_higher():
-    clear_upgrade = {"gain": 4.0, "season_gain": 60, "jev": 0.1, "jev_confidence": 0.9}
-    assert waivers.suggest_bid(clear_upgrade, 100, 0) == (20, 35)
-
-
-def test_an_unsure_jev_leaves_the_projection_order_alone():
-    """The first live Jev run: every confidence under 0.55, so the order was noise near 0.5."""
-    pool = [dict(math_rank=i, jev=0.5 + (0.01 if i % 2 else -0.01), jev_confidence=0.3) for i in range(1, 7)]
-    assert [c["math_rank"] for c in sorted(pool, key=waivers.jev_order)] == [1, 2, 3, 4, 5, 6]
-
-
-def test_a_confident_jev_pick_moves_up_and_nobody_moves_down():
-    pool = [dict(math_rank=i, jev=0.5, jev_confidence=0.3) for i in range(1, 6)]
-    pool[3].update(jev=0.93, jev_confidence=0.85)          # projection rank 4, Jev is sure about him
-    order = [c["math_rank"] for c in sorted(pool, key=waivers.jev_order)]
-    assert order == [4, 1, 2, 3, 5]
-
-
 def test_claude_retries_a_dropped_connection_once():
     import requests
     calls = []
@@ -485,33 +456,6 @@ def test_a_cut_off_write_up_says_so():
     assert text.endswith("[Cut off: the write-up hit the 16,000-token output limit.]")
 
 
-def test_jev_log_writes_a_header_once_and_appends_after_it():
-    import csv, tempfile
-    from pathlib import Path
-    path = Path(tempfile.mkdtemp()) / "logs" / "jev_scores.csv"
-    judged = [dict(free_agent("WR", 9.0, season=150.0), math_rank=3, jev=0.71, jev_confidence=0.64,
-                   usage={"per_game": 7.5, "trend": "rising"})]
-    unjudged = [dict(free_agent("RB", 8.0), math_rank=4)]            # its Jev call failed
-    assert waivers.log_jev(2, judged + unjudged, path) == 1
-    assert waivers.log_jev(3, judged, path) == 1
-    rows = list(csv.DictReader(open(path)))
-    assert len(rows) == 2 and open(path).read().count("logged_at") == 1
-    assert rows[0]["week"] == "2" and rows[0]["jev"] == "0.71" and rows[0]["usage_trend"] == "rising"
-
-
-def test_nothing_is_logged_when_jev_scored_nobody():
-    import tempfile
-    from pathlib import Path
-    path = Path(tempfile.mkdtemp()) / "jev_scores.csv"
-    assert waivers.log_jev(2, [dict(free_agent("WR", 9.0), math_rank=1)], path) == 0 and not path.exists()
-
-
-def test_command_line_picks_the_ranker():
-    assert waivers.ranker_from(["waivers.py", "--email"]) == "math"
-    assert waivers.ranker_from(["waivers.py", "--ranker", "jev"]) == "jev"
-    assert waivers.ranker_from(["waivers.py", "--email", "--jev-shadow"]) == "shadow"
-
-
 def test_claude_sees_the_same_numbers_for_the_bench_as_for_free_agents():
     """The Jaguars-vs-Broncos error: the bench had season numbers only, so Claude guessed the rest."""
     roster = list(full_roster().values())
@@ -540,7 +484,7 @@ def _sample_context(**overrides):
     ranked[0]["drop"] = roster[-1]
     context = {"week": 3, "budget": 100, "budget_left": 92, "minimum_bid": 0, "rivals": [100, 88],
                "last_runs": [], "gaps": ["week 5: WR short by 1"], "candidates": ranked,
-               "drops": [roster[-1]], "advice": None, "ranked_by": None, "roster": roster, "target": target}
+               "drops": [roster[-1]], "advice": None, "roster": roster, "target": target}
     context.update(overrides)
     return context
 
@@ -559,13 +503,6 @@ def test_html_escapes_names_and_links_sources():
     html = waivers.build_html(context)
     assert "A&amp;W &lt;script&gt;" in html and "<script>" not in html
     assert '<a href="https://example.com/a"' in html
-
-
-def test_html_shows_jev_columns_only_when_jev_ran():
-    plain = waivers.build_html(_sample_context())
-    context = _sample_context()
-    context["candidates"][0].update(jev=0.71, jev_confidence=0.64)
-    assert ">Jev<" not in plain and ">Jev<" in waivers.build_html(context)
 
 
 def test_email_carries_both_a_text_and_an_html_version():
@@ -989,7 +926,7 @@ def test_main_puts_the_write_ups_calls_in_the_table_and_the_subject():
     sent = []
     saved = (waivers.ESPN.__dict__["from_env"], waivers.gather, waivers.ask_claude, waivers.mailer.send)
     waivers.ESPN.from_env = lambda: None
-    waivers.gather = lambda espn, ranker, rate_shadow=False: context
+    waivers.gather = lambda espn, rate_shadow=False: context
     waivers.ask_claude = lambda brief: reply
     waivers.mailer.send = lambda subject, body, html=None, **slack_parts: sent.append(
         (subject, body, html, slack_parts)) or True

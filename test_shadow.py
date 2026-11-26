@@ -256,7 +256,7 @@ def test_the_comparison_goes_out_on_tuesdays_with_the_report():
     saved = (waivers.ESPN.__dict__["from_env"], waivers.gather, waivers.ask_claude, waivers.mailer.send,
              shadow.send, shadow.is_summary_day)
     waivers.ESPN.from_env = lambda: type("FakeESPN", (), {"season": SEASON})()
-    waivers.gather = lambda espn, ranker, rate_shadow=False: _sample_context()
+    waivers.gather = lambda espn, rate_shadow=False: _sample_context()
     waivers.ask_claude = lambda brief: None
     waivers.mailer.send = lambda subject, body, html=None, **slack_parts: emailed.append(subject) or True
     shadow.send = lambda season=None: sent.append(season)

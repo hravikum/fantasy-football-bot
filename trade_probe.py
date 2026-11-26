@@ -12,11 +12,14 @@ import json
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime
+from pathlib import Path
 
 from espn import ESPN, ESPNError, parse_roster_entry
 from trades import team_name
-from waivers import GAMES_PER_SEASON, JEV_LOG
+from waivers import GAMES_PER_SEASON
 
+# Jev's old judgment log (no longer written): its season projections, day after day.
+JEV_LOG = Path(__file__).with_name("logs") / "jev_scores.csv"
 TRADE_TYPES = ["TRADE_PROPOSAL", "TRADE_ACCEPT", "TRADE_DECLINE", "TRADE_VETO", "TRADE_UPHOLD", "TRADE_ERROR"]
 
 

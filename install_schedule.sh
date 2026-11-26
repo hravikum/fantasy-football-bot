@@ -56,8 +56,7 @@ cat >"$AGENTS/local.fantasy.gameday.plist" <<PLIST
 </plist>
 PLIST
 
-# Waiver report: every morning at 6, after the overnight claim run. --jev-shadow logs Jev's
-# judgments to logs/jev_scores.csv without changing the email; drop it to stop the experiment.
+# Waiver report: every morning at 6, after the overnight claim run.
 cat >"$AGENTS/local.fantasy.waivers.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -65,7 +64,7 @@ cat >"$AGENTS/local.fantasy.waivers.plist" <<PLIST
 <dict>
   <key>Label</key><string>local.fantasy.waivers</string>
   <key>ProgramArguments</key>
-  <array><string>/bin/bash</string><string>$DIR/run.sh</string><string>waivers.py</string><string>--email</string><string>--jev-shadow</string></array>
+  <array><string>/bin/bash</string><string>$DIR/run.sh</string><string>waivers.py</string><string>--email</string></array>
   <key>WorkingDirectory</key><string>$DIR</string>
   <key>StandardOutPath</key><string>$DIR/logs/launchd.out</string>
   <key>StandardErrorPath</key><string>$DIR/logs/launchd.err</string>
