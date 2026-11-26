@@ -199,6 +199,11 @@ def table(rows, right=()):
             "rows": [[{"type": "raw_text", "text": str(cell) or "-"} for cell in row] for row in rows]}
 
 
+def button(text, action_id, value):
+    """A button. value, at most 2,000 characters, comes back with the tap: the Worker keeps nothing."""
+    return {"type": "button", "text": {"type": "plain_text", "text": text}, "action_id": action_id, "value": value}
+
+
 def link(url, title):
     return f"<{escape(url)}|{escape(title).replace('|', '-')}>"
 

@@ -6,7 +6,8 @@
 # job through run.sh, and saves whatever changed. Until the repository variable BOT_LIVE is "true",
 # a run is a shadow: no email goes out and no lineup is changed, so it can run beside the Mac.
 #
-# Usage: hosted_run.sh <schedule or job>     the cron line that fired, or waivers|lineup|gameday|trades
+# Usage: hosted_run.sh <schedule or job>     the cron line that fired, or waivers|lineup|gameday|trades|claim
+# (claim: a bid from Slack's Bid button, which the Worker passes in CLAIM_ARGS)
 set -uo pipefail
 cd "$(dirname "$0")" || exit 1
 
@@ -15,10 +16,11 @@ case "${1:-}" in
     "5 9 * * *" | lineup)   JOB=(lineup.py) ;;
     "2,17,32,47 "* | gameday) JOB=(lineup.py --near-kickoff) ;;
     "3 8,23 * * *" | trades) JOB=(trades.py --watch) ;;
+    claim) JOB=(claim.py) ;;
     *) echo "No job for '${1:-}'. The schedules in bot.yml and this list have to match." >&2; exit 2 ;;
 esac
 if [ "${BOT_LIVE:-}" = "true" ]; then
-    if [ "${JOB[0]}" = "lineup.py" ]; then JOB+=(--live); fi
+    if [ "${JOB[0]}" = "lineup.py" ] || [ "${JOB[0]}" = "claim.py" ]; then JOB+=(--live); fi
 else
     export MAIL_TO_LOG=1
     echo "Shadow run: no email goes out and no lineup is changed (repository variable BOT_LIVE is not true)."

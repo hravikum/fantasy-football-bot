@@ -7,8 +7,8 @@ website uses, authenticated with browser cookies.
 ## What it will and won't do
 
 - Only ever touches the team your SWID cookie owns. It refuses any other team id.
-- Never drops a player, never trades, never places a waiver claim on its own. Bids are suggestions.
-  (`claim_probe.py --send` places one $0 claim, and only when you run it.)
+- Never drops a player, never trades, never places a waiver claim on its own. It places one only when
+  you submit a bid from Slack (or run `claim_probe.py --send`), and only for the amount you typed.
 - Sends one transaction at a time and reads the roster back to confirm it landed.
 - Never retries a timed-out write blindly; it reads the roster back and reports the truth.
 
@@ -206,6 +206,37 @@ Setting it up, once:
 
 After a week in which every email had its Slack twin, delete `EMAIL_TOO`. To go back to email,
 delete the two Slack secrets.
+
+### Bidding from Slack (Nov 26)
+
+With the repository variable `SLACK_BUTTONS` set to `true`, each card in the waiver report for a player
+still on waivers has a Bid button. It opens a form with Claude's call, the range and your FAAB left,
+where you type the amount ($0 and up) and pick who to drop. Submitting starts the `claim` job on GitHub
+(`claim.py`), which checks again on ESPN (he is still on waivers, you have no claim on him already, the
+drop is still yours and his game hasn't started, the bid is within your FAAB), places the claim and
+answers in the report's thread, usually within a minute. Change or cancel a claim in ESPN until waivers
+run. A player who has cleared waivers has no button yet: add him in ESPN.
+
+Slack can only send a tap to a web address that answers within three seconds, and the bot's runs come
+and go, so a small Cloudflare Worker (`slack-worker/worker.js`, on Cloudflare's free plan) receives the
+taps: it checks they come from Slack and from you, opens the form, and starts the GitHub job. Setting it
+up, once:
+
+1. GitHub: a fine-grained token for this repository only, with Actions: read and write.
+2. Slack: your member ID (your profile, the ⋮ menu, Copy member ID), and the app's Signing Secret
+   (api.slack.com/apps, the app, Basic Information).
+3. Cloudflare, with a free account: Workers & Pages, Create, Create Worker, Deploy. Then Edit code,
+   replace everything with `slack-worker/worker.js`, and Deploy again. In the Worker's Settings, under
+   Variables and Secrets, add four secrets: `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN` (the same
+   `xoxb-` token), `SLACK_USER_ID` and `GITHUB_TOKEN`. Copy the Worker's address (`https://….workers.dev`).
+4. The Slack app's Interactivity & Shortcuts page: turn it on, paste the Worker's address as the
+   Request URL, and save.
+5. A test, once this is pushed: `python3 claim_probe.py` for a player on waivers, then
+   `python3 slack_preview.py --bid-card <his id>`. Tap Bid on the card it posts, submit $0, wait for the
+   answer in the card's thread, and cancel the claim in ESPN.
+6. Set the repository variable `SLACK_BUTTONS` to `true`: the next waiver report has buttons.
+
+To change the Worker later, paste the new `worker.js` the same way. Its tests: `node slack-worker/worker.test.js`.
 
 ### Starting the runs from cron-job.org (Nov 19)
 

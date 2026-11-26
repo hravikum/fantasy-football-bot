@@ -7,6 +7,9 @@ trade offer. Nothing goes to ESPN or by email.
 
     python3 slack_preview.py           check the layouts, post nothing
     python3 slack_preview.py --post    post them
+    python3 slack_preview.py --bid-card PLAYER
+                                       post one real card, with a Bid button, for a player on waivers (an
+                                       id from claim_probe.py): a $0 test of the Bid button from end to end
 """
 import sys
 from datetime import datetime
@@ -15,11 +18,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 import bids
+import claim
+import claim_probe
 import lineup
 import slack
 import trades
 import waivers
-from espn import BENCH
+from espn import BENCH, ESPN, parse_roster_entry
 from test_lineup import GAMES, SLOTS, full_roster, player
 from test_trades import BEFORE_IT_EXPIRES, PROPOSAL, run
 
@@ -115,10 +120,39 @@ def check(blocks):
     return f"{len(blocks)} blocks, longest text {max(map(len, texts), default=0)}"
 
 
+def bid_card(player_id):
+    """One real card with a Bid button, built the way the waiver report builds it, for a player on
+    waivers and your real roster. Tap Bid, submit $0, and cancel the claim in ESPN afterwards."""
+    espn = ESPN.from_env()
+    league = espn.league("mSettings", "mTeam")
+    week = league["scoringPeriodId"]
+    team = espn.my_team(league["teams"])
+    found = claim_probe.on_waivers(espn, week, ids=[player_id])
+    if not found:
+        sys.exit(f"Player {player_id} isn't on waivers: pick one from python3 claim_probe.py")
+    bench = claim_probe.your_bench(espn, team["id"], week)
+    candidate = dict(found[0], bid=(0, 0), gain=0.0, ahead_gain=0.0, season_gain=0, weeks_helped=1, free_now=False,
+                     drop=bench[0] if bench else None,
+                     call={"call": "bid", "bid": 0, "drop": None, "why": "A test: cancel it in ESPN afterwards"})
+    context = {"roster": [parse_roster_entry(e, week, espn.season) for e in espn.roster_entries(team["id"], week)],
+               "budget_left": claim.faab_left(league, team), "week": week}
+    card = slack.section(waivers._card(candidate))
+    card["accessory"] = slack.button("Bid", "bid", waivers.bid_button(candidate, context))
+    blocks = [slack.header("Preview: a test bid"),
+              slack.context("Tap Bid, submit $0, and watch for the answer in this message's thread. Then cancel "
+                            "the claim in ESPN, and run python3 claim_probe.py --check with its id if you like."),
+              card]
+    slack.post_first("Preview: a test bid", [blocks])
+    print(f"posted a card for {found[0]['name']}, suggesting {bench[0]['name'] if bench else 'no drop'} to drop")
+
+
 if __name__ == "__main__":
     load_dotenv(Path(__file__).with_name(".env"))
-    if "--post" in sys.argv and not slack.configured():
+    if ("--post" in sys.argv or "--bid-card" in sys.argv) and not slack.configured():
         sys.exit("Set SLACK_BOT_TOKEN and SLACK_CHANNEL in .env first.")
+    if "--bid-card" in sys.argv:
+        bid_card(int(sys.argv[sys.argv.index("--bid-card") + 1]))
+        sys.exit(0)
     for build in (waiver_report, lineup_message, trade_offer, failure):
         subject, blocks, thread = build()
         print(f"{build.__name__}: {check(blocks)}" + (f"; thread: {', '.join(check(t) for t in thread)}" if thread else ""))

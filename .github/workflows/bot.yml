@@ -10,7 +10,12 @@ on:
       job:
         description: Which job to run now
         type: choice
-        options: [waivers, lineup, gameday, trades]
+        options: [waivers, lineup, gameday, trades, claim]
+      args:
+        description: For claim, the bid as JSON (Slack's Bid button fills it in)
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: write     # to save logs to the bot-state branch
@@ -22,14 +27,17 @@ concurrency:
 
 jobs:
   run:
-    # The waiver report's Claude call can run long, past the 1-CPU runner's 15-minute limit.
-    runs-on: ${{ inputs.job == 'waivers' && 'ubuntu-latest' || 'ubuntu-slim' }}
+    # The waiver report's Claude call can run long, past the 1-CPU runner's 15-minute limit. A bid from
+    # Slack runs there too: Python is already installed, so the answer comes back half a minute sooner.
+    runs-on: ${{ (inputs.job == 'waivers' || inputs.job == 'claim') && 'ubuntu-latest' || 'ubuntu-slim' }}
     timeout-minutes: 14
     env:
       TZ: America/New_York
       BOT_LIVE: ${{ vars.BOT_LIVE }}
       EMAIL_TOO: ${{ vars.EMAIL_TOO }}   # "true" while Slack is on trial: email as well
+      SLACK_BUTTONS: ${{ vars.SLACK_BUTTONS }}   # "true" once the Worker is deployed: Bid buttons on the cards
       JOB: ${{ inputs.job }}
+      CLAIM_ARGS: ${{ inputs.args }}     # an environment variable, never pasted into a command
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6

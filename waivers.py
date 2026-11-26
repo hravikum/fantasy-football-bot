@@ -1056,6 +1056,7 @@ def slack_layout(context, subject, report):
     as the text report in monospace if Slack won't take the table.
     """
     esc = slack.escape
+    buttons = os.getenv("SLACK_BUTTONS") == "true"   # on once the Worker behind them is deployed
     money = [f"FAAB ${context['budget_left']} of ${context['budget']}", f"minimum bid ${context['minimum_bid']}"]
     if context["rivals"]:
         money.append("rivals with the most: " + ", ".join(f"${r}" for r in sorted(context["rivals"], reverse=True)[:3]))
@@ -1081,7 +1082,11 @@ def slack_layout(context, subject, report):
         for candidate in rows[:CARDS - shown]:
             if heading and candidate is rows[0]:
                 blocks.append(slack.context(f"*{esc(heading)}*"))
-            blocks += [slack.section(_card(candidate)), slack.divider()]
+            card = slack.section(_card(candidate))
+            value = bid_button(candidate, context) if buttons else None
+            if value:
+                card["accessory"] = slack.button("Bid", "bid", value)
+            blocks += [card, slack.divider()]
             shown += 1
     if len(context["candidates"]) > shown:
         blocks.append(slack.context(f"{len(context['candidates']) - shown} more in the table in the thread."))
@@ -1093,7 +1098,8 @@ def slack_layout(context, subject, report):
     elif context.get("advice_failed"):
         blocks.append(slack.section(f":warning: {esc(NO_WRITE_UP)}"))
     notes = ([FREE_NOTE] if any(c.get("free_now") for c in context["candidates"]) else [])
-    notes += ["Bids are suggestions only. Place claims yourself in ESPN.",
+    notes += ["Bid places a claim in ESPN for the amount you type; change or cancel it in ESPN until waivers run."
+              if buttons else "Bids are suggestions only. Place claims yourself in ESPN.",
               "The full table and what claims have cost are in the thread."]
     blocks.append(slack.context(esc(" ".join(notes))))
 
@@ -1112,6 +1118,35 @@ def slack_layout(context, subject, report):
     if context["candidates"]:
         details.append(slack.table(*_slack_table(context)))
     return blocks, [details, slack.monospace(report)]
+
+
+BID_VALUE = 2000   # characters a Slack button can carry
+
+
+def bid_button(candidate, context):
+    """What the Bid button carries to the Worker, which opens the bid form from it and keeps nothing
+    itself: the player, his range, the write-up's call and why, the drop to suggest and the roster to
+    choose from (anyone whose game hasn't started, bench and IR first), FAAB left and the week. None
+    for a player who has cleared waivers: adding him happens at once, and that button comes later."""
+    if candidate.get("free_now"):
+        return None
+    said = candidate.get("call") or {}
+    drop_name = _drop(candidate)
+    roster = sorted((p for p in context["roster"] if not p.get("locked")),
+                    key=lambda p: (p["slot"] not in (BENCH, IR), p["name"]))
+    value = {"p": candidate["id"], "n": candidate["name"],
+             "t": f"{candidate['position']} · {PRO_TEAMS.get(candidate['pro_team'], '?')}",
+             "r": list(candidate["bid"]), "k": said.get("call"), "c": said.get("bid"), "y": said.get("why") or "",
+             "d": next((p["id"] for p in roster if drop_name and p["name"].casefold() == drop_name.casefold()), None),
+             "o": [[p["id"], p["name"]] for p in roster], "f": context["budget_left"], "w": context["week"]}
+    text = json.dumps(value, separators=(",", ":"))
+    while len(text) > BID_VALUE and (len(value["y"]) > 80 or len(value["o"]) > 1):   # a long reason, then starters
+        if len(value["y"]) > 80:
+            value["y"] = value["y"][:77] + "..."
+        else:
+            value["o"] = [o for o in value["o"] if o[0] == value["d"]] + [o for o in value["o"] if o[0] != value["d"]][:-1]
+        text = json.dumps(value, separators=(",", ":"))
+    return text
 
 
 def _slack_order(candidates):

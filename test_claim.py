@@ -6,6 +6,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+import requests
+
+import claim
 import claim_probe
 from espn import BENCH, ESPN, ESPNError, ESPNWriteRejected, claim_body
 
@@ -151,6 +154,118 @@ def test_the_check_says_plainly_whether_the_claim_is_still_pending():
         else FakeLeague.league(league, *views, week=week, headers=headers))
     code, printed, _ = probe(["--check", "abc"], league)
     assert code == 0 and "Not in your pending claims any more: cancelled." in printed
+
+
+class Wire:
+    """ESPN as claim.py sees it: one player and his status, your roster, your pending claims, the claim."""
+    season = 2026
+
+    def __init__(self, status="WAIVERS", pending=(), locked=False, spent=45, answer=None):
+        self.status, self.pending, self.locked, self.spent, self.answer = status, list(pending), locked, spent, answer
+        self.claimed, self.my_team_id = [], None
+
+    def league(self, *views, week=None, headers=None):
+        if "kona_player_info" in views:
+            entry = {"status": self.status, "player": {"id": 111, "fullName": "Nobody Wanted"}}
+            return {"players": [entry] if self.status else []}
+        if "mPendingTransactions" in views:
+            return {"transactions": self.pending}
+        return {"scoringPeriodId": 12, "teams": [{"id": 13, "transactionCounter": {"acquisitionBudgetSpent": self.spent}}],
+                "settings": {"acquisitionSettings": {"acquisitionBudget": 100}}}
+
+    def my_team(self, teams):
+        self.my_team_id = 13
+        return teams[0]
+
+    def roster_entries(self, team_id, week):
+        return [{"lineupSlotId": BENCH, "playerPoolEntry": {"lineupLocked": self.locked, "player": {
+            "id": 222, "fullName": "Bench Guy", "eligibleSlots": [2], "proTeamId": 3}}}]
+
+    def claim(self, team_id, week, add_id, drop_id=None, bid=0):
+        self.claimed.append((team_id, week, add_id, drop_id, bid))
+        if isinstance(self.answer, Exception):
+            if isinstance(self.answer, requests.exceptions.RequestException):
+                self.pending.append(_pending_claim(bid))   # it landed, though the answer never came
+            raise self.answer
+        self.pending.append(_pending_claim(bid))
+        return {"id": "abc", "status": "PENDING"}
+
+
+def _pending_claim(bid, player=111):
+    return {"id": "abc", "teamId": 13, "type": "WAIVER", "status": "PENDING", "bidAmount": bid,
+            "items": [{"type": "ADD", "playerId": player, "toTeamId": 13}, {"type": "DROP", "playerId": 222}]}
+
+
+BID = {"player": 111, "name": "Nobody Wanted", "bid": 3, "drop": 222, "drop_name": "Bench Guy", "ts": "1.2"}
+
+
+def bid(wire, live=True, args=BID, slack_works=True):
+    """Run claim.main against the wire; returns (exit code, what was posted to Slack, what was printed)."""
+    posted = []
+    def post_first(text, layouts, thread_ts=None):
+        if not slack_works:
+            raise RuntimeError("slack is down")
+        posted.append((text, thread_ts))
+    saved = claim.ESPN.from_env, claim.slack.post_first, claim.slack.configured
+    claim.ESPN.from_env, claim.slack.post_first, claim.slack.configured = (lambda: wire), post_first, (lambda: True)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            code = claim.main(live, dict(args))
+    finally:
+        claim.ESPN.from_env, claim.slack.post_first, claim.slack.configured = saved
+    return code, posted, out.getvalue()
+
+
+def test_a_bid_from_slack_is_placed_and_said_so_in_the_reports_thread():
+    wire = Wire()
+    code, posted, _ = bid(wire)
+    assert code == 0 and wire.claimed == [(13, 12, 111, 222, 3)]
+    assert posted == [(":white_check_mark: Bid $3 on *Nobody Wanted*, dropping *Bench Guy* placed. It goes through at "
+                       "the next waiver run unless someone outbids you; change or cancel it in ESPN until then.", "1.2")]
+
+
+def test_a_bid_is_checked_again_before_it_is_sent():
+    cases = [(Wire(status="FREEAGENT"), "he has cleared waivers"), (Wire(status=None), "no longer available"),
+             (Wire(pending=[_pending_claim(5)]), "you already have a $5 claim on him"),
+             (Wire(locked=True), "Bench Guy's game has started"), (Wire(spent=98), "$3 is more than the $2 of FAAB")]
+    for wire, why in cases:
+        code, posted, _ = bid(wire)
+        assert code == 0 and wire.claimed == [] and why in posted[0][0] and posted[0][0].startswith(":warning:"), why
+    wire = Wire()
+    code, posted, _ = bid(wire, args=dict(BID, drop=999))
+    assert wire.claimed == [] and "no longer on your roster" in posted[0][0]
+
+
+def test_a_bid_with_room_on_the_roster_drops_nobody():
+    wire = Wire()
+    code, posted, _ = bid(wire, args=dict(BID, drop="none"))
+    assert wire.claimed == [(13, 12, 111, None, 3)] and "dropping" not in posted[0][0]
+
+
+def test_a_shadow_run_checks_and_sends_nothing():
+    wire = Wire()
+    code, posted, printed = bid(wire, live=False)
+    assert code == 0 and wire.claimed == [] and posted == []
+    assert "(shadow run: would have bid $3 on *Nobody Wanted*, dropping *Bench Guy*)" in printed
+
+
+def test_espns_refusal_is_said_in_the_thread():
+    wire = Wire(answer=ESPNWriteRejected(409, "TRAN_INSUFFICIENT_FUNDS", "not enough"))
+    code, posted, _ = bid(wire)
+    assert code == 0 and posted[0][0].startswith(":warning: ESPN refused the bid $3 on *Nobody Wanted*")
+    assert "TRAN_INSUFFICIENT_FUNDS" in posted[0][0]
+
+
+def test_a_lost_answer_is_settled_by_reading_the_pending_claims():
+    wire = Wire(answer=requests.exceptions.ReadTimeout("read timed out"))
+    code, posted, printed = bid(wire)
+    assert code == 0 and len(wire.claimed) == 1, "never sent twice"
+    assert "connection problem while writing" in printed and posted[0][0].startswith(":white_check_mark:")
+
+
+def test_when_slack_cannot_be_told_the_run_fails_so_github_says_so():
+    code, _, printed = bid(Wire(), slack_works=False)
+    assert code == 1 and "(nothing delivered:" in printed, "hosted_run.sh fails a run that prints this"
 
 
 if __name__ == "__main__":

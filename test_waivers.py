@@ -1072,6 +1072,56 @@ def test_slack_puts_every_add_and_bid_first_even_a_one_week_fill_in():
         next(i for i, l in enumerate(lines) if l.startswith("Deshaun Watson")), "the email's table is unchanged"
 
 
+def _with_buttons(context):
+    import os
+    os.environ["SLACK_BUTTONS"] = "true"
+    try:
+        return waivers.slack_layout(context, "Waivers week 3: 1 to bid on", "report")[0]
+    finally:
+        del os.environ["SLACK_BUTTONS"]
+
+
+def test_a_card_gets_a_bid_button_once_the_worker_is_on():
+    import json
+    context = _sample_context()
+    first = context["candidates"][0]
+    waivers.attach_calls(context["candidates"], {first["name"]: {"call": "bid", "bid": 9, "why": "starter out"}})
+    card = next(b for b in waivers.slack_layout(context, "s", "r")[0] if first["name"] in b.get("text", {}).get("text", ""))
+    assert "accessory" not in card, "no button until SLACK_BUTTONS is true"
+    blocks = _with_buttons(context)
+    card = next(b for b in blocks if first["name"] in b.get("text", {}).get("text", ""))
+    assert card["accessory"]["action_id"] == "bid" and card["accessory"]["text"]["text"] == "Bid"
+    value = json.loads(card["accessory"]["value"])
+    roster = context["roster"]
+    assert value["p"] == first["id"] and value["n"] == first["name"] and value["r"] == [8, 15]
+    assert value["k"] == "bid" and value["c"] == 9 and value["y"] == "starter out"
+    assert value["d"] == first["drop"]["id"], "the report's drop, as the form's suggestion"
+    assert {o[0] for o in value["o"]} == {p["id"] for p in roster if not p.get("locked")}
+    bench_first = [o[0] for o in value["o"]][:sum(p["slot"] in (waivers.BENCH, waivers.IR) for p in roster)]
+    assert all(next(p for p in roster if p["id"] == pid)["slot"] in (waivers.BENCH, waivers.IR) for pid in bench_first)
+    assert value["f"] == 92 and value["w"] == 3
+    assert any("Bid places a claim in ESPN" in t for t in _texts(blocks))
+
+
+def test_a_player_who_has_cleared_waivers_gets_no_bid_button():
+    context = _sample_context()
+    context["candidates"][0]["free_now"] = True
+    assert waivers.bid_button(context["candidates"][0], context) is None
+    assert not any("accessory" in b for b in _with_buttons(context))
+
+
+def test_a_bid_button_stays_within_what_slack_lets_it_carry():
+    import json
+    context = _sample_context()
+    first = context["candidates"][0]
+    waivers.attach_calls(context["candidates"], {first["name"]: {"call": "bid", "bid": 9, "why": "w" * 400}})
+    context["roster"] = context["roster"] + [dict(p, id=1000 + n, name="Somebody With A Long Name " + "x" * 60)
+                                             for n, p in enumerate(context["roster"] * 2)]
+    value = waivers.bid_button(first, context)
+    assert len(value) <= waivers.BID_VALUE
+    assert json.loads(value)["o"][0][0] == first["drop"]["id"], "the suggested drop always stays"
+
+
 def test_slack_says_so_on_a_day_with_nobody_and_no_write_up():
     context = _sample_context(candidates=[], advice=None, advice_failed=True)
     blocks, (table_layout, _) = waivers.slack_layout(context, "Waivers week 3: nothing worth a claim", "report")
