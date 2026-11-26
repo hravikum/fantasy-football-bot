@@ -7,7 +7,8 @@ website uses, authenticated with browser cookies.
 ## What it will and won't do
 
 - Only ever touches the team your SWID cookie owns. It refuses any other team id.
-- Never drops a player, never trades, never places a waiver claim. Bids are suggestions.
+- Never drops a player, never trades, never places a waiver claim on its own. Bids are suggestions.
+  (`claim_probe.py --send` places one $0 claim, and only when you run it.)
 - Sends one transaction at a time and reads the roster back to confirm it landed.
 - Never retries a timed-out write blindly; it reads the roster back and reports the truth.
 
@@ -63,6 +64,8 @@ python3 hosted_check.py             whether every outside service the bot needs 
 bash seed_state.sh                  copy this Mac's logs and trade-watch memory to GitHub, once
 .venv/bin/python3 timers.py          set up the cron-job.org timers that start the GitHub runs
 python3 role_probe.py               every next man up right now, and how deep the free-agent list goes, read-only
+python3 slack_preview.py [--post]   the Slack layouts from sample data, checked (and posted, headed Preview)
+python3 claim_probe.py              try one $0 waiver claim for you to cancel in ESPN: read the file first
 python3 test_lineup.py              optimizer and IR tests
 python3 test_waivers.py             waiver scoring tests
 python3 test_timers.py              cron-job.org timer tests

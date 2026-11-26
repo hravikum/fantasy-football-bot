@@ -239,6 +239,40 @@ class ESPN:
         return result
 
 
+    def claim(self, team_id, week, add_id, drop_id=None, bid=0):
+        """Place one waiver claim: add_id for bid dollars of FAAB, dropping drop_id if the roster is full.
+
+        ESPN holds it as PENDING until the next waiver run, and it can be cancelled in ESPN until then.
+        Returns ESPN's answer; its id names the claim. The shape is the community's (ADD needs toTeamId,
+        DROP fromTeamId). claim_probe.py confirmed it in this league on Nov 26, 2026: a $0 claim came
+        back 200 PENDING (isPending, subOrder 1) and read back pending; cancelled in ESPN, it left
+        mPendingTransactions and a CANCELED row naming it (relatedTransactionId) joined mTransactions2,
+        where the claim itself still reads PENDING.
+        """
+        if self.my_team_id is None:
+            raise ESPNError("Ownership not confirmed yet; call my_team() before writing.")
+        if team_id != self.my_team_id:
+            raise ESPNError(f"Refusing to write to team {team_id}; these cookies own team {self.my_team_id}.")
+        url = f"{WRITE_BASE}/seasons/{self.season}/segments/0/leagues/{self.league_id}/transactions/"
+        resp = self.session.post(url, json=claim_body(team_id, week, add_id, drop_id, bid), timeout=30)
+        if resp.status_code != 200:
+            raise ESPNWriteRejected(resp.status_code, *_rejection(resp))
+        result = resp.json()
+        if result.get("status") != "PENDING":
+            raise ESPNError(f"ESPN answered {result.get('status', 'with no status')}, not PENDING. Check your "
+                            "roster and your pending claims in ESPN.")
+        return result
+
+
+def claim_body(team_id, week, add_id, drop_id=None, bid=0):
+    """The transaction for one waiver claim, as ESPN.claim sends it."""
+    items = [{"playerId": add_id, "type": "ADD", "toTeamId": team_id}]
+    if drop_id is not None:
+        items.append({"playerId": drop_id, "type": "DROP", "fromTeamId": team_id})
+    return {"isLeagueManager": False, "teamId": team_id, "type": "WAIVER", "bidAmount": bid,
+            "scoringPeriodId": week, "executionType": "EXECUTE", "items": items}
+
+
 def _rejection(resp):
     """ESPN puts a typed reason in details[] and prose in messages[]."""
     try:
