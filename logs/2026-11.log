@@ -2478,3 +2478,63 @@ Already the best legal lineup. No moves.
 Locked, can't be moved: Kyle Monangai
 exit 0
 
+--- 2026-11-27 06:07:12 waivers.py --email --rate-shadow ---
+(rate shadow: 249 backs and receivers rated, expected points through week 11; 164 free agents logged; the top 8 by points agree on 6)
+Waiver report — Fri Nov 27, week 12
+
+Your FAAB: $55 of $100   (minimum bid $0)
+  $9 a week for the 6 weeks of waivers left, this one included; $4 a week spent so far
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Wed 3:12 AM, Wed 3:12 AM, Thu 3:52 AM
+
+Lineup holes in the next 4 weeks:
+  week 13: D/ST short by 1 — available and playing that week: Eagles D/ST (PHI), Chiefs D/ST (KC)
+  week 13: K short by 1 — available and playing that week: Jason Myers (SEA), Cairo Santos (CHI)
+  A kicker, defense or one-week fill-in is listed in the week you need him, not before.
+
+Next man up:
+  Will Shipley is next up behind Saquon Barkley, who left week 12 after 5 touches (usually 15). He had 11 carries and targets in week 12 (usually 1).
+  Backs flagged this way averaged 9.5 a game over their next 4 weeks in 2025-26. Just under
+  half reached 10 a game and a quarter stayed under 5. They are listed even with no lineup gain.
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK LEVEL   NOW   5WK  SEASON  BID     CALL      DROP FOR HIM
+Chargers D/ST        D/ST  LAC      22%   +1.5       -   7.5     -  +0.9  +6.3      +3  $1-4    bid $4    Jets D/ST
+    Positive gain this week, next 5 weeks, and rest of season
+Will Shipley         RB    PHI       3%   -0.0  36→out   4.2   1.5  +0.0  +0.0      +0  $8-18   bid $5    Emari Demercado
+    Barkley returned same game; cheap handcuff stash only
+
+What it has taken to win a claim in this league (bids.py):
+  Backs and receivers after a breakout game, and next men up (23 claims): $8 won half, $18 won three
+    in four, $31 won nine in ten
+  Everyone else at quarterback, back, receiver and tight end (75 claims): $2 won half, $5 won three
+    in four, $12 won nine in ten
+  Kickers and defenses (66 claims): $1 won half, $4 won three in four, $7 won nine in ten
+  For a player who would start for you, the range runs from the bid that won three in four to the
+    one that won nine in ten; for a stash, from half to three in four.
+  Priced as in demand today: Will Shipley (next man up)
+
+------------------------------------------------------------
+
+Barkley left Thursday's game with a stinger but he later returned to the game in the second half, and his 2026 games missed sits at 2, with Barkley last playing Week 12, Nov 26 — he's week-to-week banged up, not out. So Shipley isn't a true replacement, just handcuff insurance; he's expected to contribute as a kickoff returner along with serving as the top backup out of the backfield to Saquon Barkley, but Tank Bigsby is on injured reserve, leaving Shipley the only scrimmage back behind Barkley. Since Barkley is due back at once, bid low on Shipley — a cheap stash against recurring stingers/injuries, not a priority. Use the "everyone else" range floor (~$5), not the next-man-up tier, since the trigger already resolved. Drop Demercado (0.0 projection), the data's cheapest cut.
+
+Chargers D/ST shows positive gain every window — this week (+0.9), next five weeks (+6.3), and rest of season (+3) — a clean upgrade over Jets D/ST (6.56 proj/4.8 level) at the position. It would start immediately, so bid toward the top of the K/DST range ($4, the three-in-four mark), with room in FAAB pace ($9/wk budgeted, $55 left over six weeks). Drop Jets D/ST as listed.
+
+No other skips needed beyond these two — both candidates in the available list get calls.
+
+Sources:
+- Saquon Barkley injury update after Eagles RB exits in Thanksgiving clash vs Cowboys
+  https://www.geo.tv/latest/692858-saquon-barkley-injury-update-after-eagles-rb-exits-in-thanksgiving-clash-vs-cowboys
+- Saquon Barkley Injury Status & History
+  https://statchasers.com/nfl/players/saquon-barkley/injury/
+- Will Shipley - Philadelphia Eagles Running Back - ESPN
+  https://www.espn.com/nfl/player/_/id/4431545/will-shipley
+- Saquon Barkley Injury Update: Status, Practice Report & Next Man Up
+  https://www.runningbackroulette.com/injuries/saquon-barkley-bc030b7f-2c1d-433a-9e42-9575d8854a9d
+
+WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's
+evidence (values.py), and it is what the weeks after this one are valued at. A dash means
+ESPN's season projection is used as it is: tight ends, kickers and defenses.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
