@@ -4,11 +4,11 @@
 # Interactivity turned on, with the Cloudflare Worker's address as its Request URL (README,
 # "Bidding from Slack"); that is set on the app's page rather than here.
 display_information:
-  name: Fantasy Bot
+  name: Fantasy Football Bot
   description: Waiver reports, lineup moves and trade offers for your ESPN team.
 features:
   bot_user:
-    display_name: Fantasy Bot
+    display_name: Fantasy Football Bot
     always_online: true
 oauth_config:
   scopes:

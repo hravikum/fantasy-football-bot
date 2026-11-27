@@ -195,7 +195,7 @@ Setting it up, once:
    `slack-app-manifest.yml`. Then install the app to the workspace.
 3. OAuth & Permissions shows the Bot User OAuth Token (`xoxb-...`): that is `SLACK_BOT_TOKEN`.
    The channel's id is at the bottom of its About tab (click the channel's name): `SLACK_CHANNEL`.
-4. In the channel, type `/invite @Fantasy Bot`.
+4. In the channel, type `/invite @Fantasy Football Bot`.
 5. Add both as repository secrets and to `.env`, and set the repository variable `EMAIL_TOO` to
    `true`.
 6. Actions > Hosted check > Run workflow: the Slack line should say the bot is in the channel.
