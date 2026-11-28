@@ -20,7 +20,7 @@ import requests
 
 import mailer
 import slack
-from espn import BENCH, ESPN, IR, SLOT_NAMES, SLOT_ORDER, ESPNError, ESPNWriteRejected, parse_roster_entry
+from espn import BENCH, ESPN, IR, PRO_TEAMS, SLOT_NAMES, SLOT_ORDER, ESPNError, ESPNWriteRejected, parse_roster_entry
 
 # Over the 2025 season (accuracy.py 2025), one projected point was worth about 0.9 real points at
 # RB, WR and TE, so an upgrade held back costs nearly its whole edge. The bar only stops the
@@ -40,6 +40,9 @@ FLEX = 23
 KICKOFF_WINDOW = timedelta(minutes=95)     # inactives come out 90 minutes before kickoff
 SCHEDULE = Path(__file__).with_name("cache") / "kickoffs.json"
 SCHEDULE_MAX_AGE = 24 * 3600               # kickoffs only move when the NFL flexes a game
+NEEDS_YOU = Path(__file__).with_name("cache") / "needs_you.json"   # spots already flagged this week
+FILL_INS = 3                               # free agents named for a spot nobody can fill
+FREE_AGENTS = 200                          # how deep in ESPN's free-agent list to look for them
 
 
 def expected_points(player, games):
@@ -149,6 +152,105 @@ def decide(players, slot_counts, games):
     broken = [p for p in players if p["slot"] not in (BENCH, IR) and not p["locked"]
               and expected_points(p, games) == 0]
     return target, moves, gain, broken, blocked
+
+
+def unfilled(players, target, slot_counts, games):
+    """[(slot, who can't play there, or None)]: starting spots the best lineup leaves without anyone
+    who plays. The planner moves an injured starter to IR or the bench, so an empty spot is put down
+    to whoever on the bench or IR could fill it and can't. A starter whose game has kicked off is
+    past helping."""
+    holes, named = [], set()
+    for slot in sorted(slot_counts, key=lambda s: SLOT_ORDER.index(s) if s in SLOT_ORDER else len(SLOT_ORDER)):
+        if not slot_counts[slot] or slot in (BENCH, IR):
+            continue
+        there = [p for p in players if target[p["id"]] == slot]
+        for p in there:
+            if not p["locked"] and expected_points(p, games) == 0:
+                holes.append((slot, p))
+                named.add(p["id"])
+        for _ in range(max(slot_counts[slot] - len(there), 0)):
+            out = next((p for p in players if p["id"] not in named and target[p["id"]] in (BENCH, IR)
+                        and slot in p["eligible_slots"] and not p["locked"] and expected_points(p, games) == 0),
+                       None)
+            if out:
+                named.add(out["id"])
+            holes.append((slot, out))
+    return holes
+
+
+def why_out(player, games):
+    if player["injury_status"] in CANT_PLAY:
+        return player["injury_status"].replace("_", " ").lower()
+    return "bye week" if player["pro_team"] not in games else "projected 0"
+
+
+def fill_ins(free_agents, slot, games, now):
+    """The best players you can add on the spot for that slot: cleared waivers, eligible, and a
+    game this week that hasn't kicked off."""
+    found = [p for p in free_agents if p.get("free_now") and slot in p["eligible_slots"]
+             and expected_points(p, games) > 0 and (kickoff_of(p, games) or now) > now]
+    return sorted(found, key=lambda p: -expected_points(p, games))[:FILL_INS]
+
+
+def hole_text(slot, player, choices, games):
+    position = SLOT_NAMES[slot]
+    line = (f"{position}: {player['name']} can't play ({why_out(player, games)})" if player
+            else f"{position}: the spot is empty") + f", and nobody on your bench can play {position}."
+    if not choices:
+        return line + " No free agent who could play there has a game still to come."
+    named = []
+    for p in choices:
+        kickoff = kickoff_of(p, games)
+        when = f", {kickoff:%a %I:%M %p}".replace(" 0", " ") if kickoff else ""
+        named.append(f"{p['name']} ({PRO_TEAMS.get(p['pro_team'], '?')}, {expected_points(p, games):.1f}{when})")
+    return line + " Free agents you can add now: " + "; ".join(named) + "."
+
+
+def hole_key(hole):
+    slot, player = hole
+    return f"{slot}:{player['id'] if player else 'empty'}"
+
+
+def unsent(holes, week, path=NEEDS_YOU):
+    """(the holes not yet flagged this week, the record to save once they are). The check-in runs
+    every 15 minutes on game days; a hole is worth one message, not forty."""
+    try:
+        saved = json.loads(path.read_text())
+    except (OSError, ValueError):
+        saved = {}
+    sent = set(saved.get("sent", [])) if saved.get("week") == week else set()
+    fresh = {}
+    for hole in holes:
+        if hole_key(hole) not in sent:
+            fresh.setdefault(hole_key(hole), hole)
+    return list(fresh.values()), {"week": week, "sent": sorted(sent | {hole_key(h) for h in holes})}
+
+
+def hole_layout(subject, lines):
+    return ([slack.header(subject)] + [slack.section(f":warning: {slack.escape(line)}") for line in lines]
+            + [slack.context("Add him in ESPN and the next lineup run starts him, or set it yourself. "
+                             "The bot doesn't add players on its own.")])
+
+
+def flag_holes(espn, live, week, holes, games, now=None, path=NEEDS_YOU):
+    """Tell Hari about spots nobody on his roster can fill, once each a week, with free agents who could."""
+    fresh, record = unsent(holes, week, path)
+    if not fresh:
+        return
+    now = now or datetime.now()
+    try:
+        pool = espn.free_agents(week, FREE_AGENTS)
+    except (ESPNError, requests.exceptions.RequestException) as problem:
+        print(f"(free agents unavailable: {type(problem).__name__}); the message names nobody to add")
+        pool = []
+    lines = [hole_text(slot, player, fill_ins(pool, slot, games, now), games) for slot, player in fresh]
+    print("\n" + "\n".join(f"NEEDS YOU: {line}" for line in lines))
+    if not live:
+        return
+    subject = f"Week {week}: a lineup spot nobody can fill"
+    if mailer.send(subject, "\n".join(lines), blocks=hole_layout(subject, lines)):
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(json.dumps(record))
 
 
 def would_act(moves, gain, broken, later_flex=False):
@@ -308,6 +410,9 @@ def main(live, force=False, near_kickoff=False):
     later = later_in_flex(players, target, games)
     report = describe(players, target, moves, gain, broken, blocked, games, week)
     print(report)
+    holes = unfilled(players, target, slot_counts, games)
+    if holes:
+        flag_holes(espn, live, week, holes, games)
 
     act = bool(moves) and (would_act(moves, gain, broken, later) or force)
     if act and not would_act(moves, gain, broken, later):

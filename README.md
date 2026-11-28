@@ -98,6 +98,13 @@ check-in with no game near prints nothing and stays out of the log. Every run is
 and only emails when it actually changes something, so a missed run is covered by the next
 one. The "roster needs you" email comes from the morning pass only, not every check-in.
 
+When the best legal lineup still leaves a starting spot nobody on the roster can fill (a tight end
+ruled out with no other tight end, a kicker on bye), any lineup run sends "a lineup spot nobody can
+fill": who can't play and why, and up to three free agents you can add on the spot (cleared waivers,
+eligible for the spot, game not yet started), best projection first. Each spot is flagged once a
+week, remembered in `cache/needs_you.json` (kept on `bot-state` like the trade watch's memory), so
+the 15-minute check-ins don't repeat it. The bot doesn't add anyone itself.
+
 `local.fantasy.trades` checks at :07, :22, :37 and :52 for trade proposals sent to you or by
 you, and emails an analysis of each new one. It never answers a proposal. A failure there is
 logged every time but emailed once a day, since it runs 96 times a day.
@@ -638,6 +645,12 @@ column, now in the report as well), the week's projection, and the report's band
 `auctions.py` matches each auction to the last of those rows from before the run. That was meant
 to answer two questions. Does the add rate predict how many teams bid and how high the top rival
 goes? And do free agents who are being added beat their projections?
+
+The morning waiver report opens with how your own claims went in the night's run, if there was one
+in the last 24 hours: won (for how much, the next best bid, who you dropped), lost (to whom, their
+price against yours, or the tie on waiver order), or not run (a full roster, a drop already gone),
+and your season record on claims decided by price. Read from the same `mTransactions2` claims, so it
+costs one extra ESPN call at most, for the names of players on other rosters.
 
 A month of `logs/pool.csv` answered the first: no, and it can't. Nearly every claim here processes
 in the Wednesday run (112 of 131 auctions through week 8, and $469 of the $496 spent), and ESPN

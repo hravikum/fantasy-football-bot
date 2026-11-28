@@ -28,7 +28,7 @@ fi
 
 # Small files the bot reads back on its next run. players.csv and the snap counts are left out:
 # they are public downloads, fetched again in a second or two.
-KEPT=(cache/trades_seen.json cache/trades_failed_on.txt cache/kickoffs.json)
+KEPT=(cache/trades_seen.json cache/trades_failed_on.txt cache/kickoffs.json cache/needs_you.json)
 STATE="${RUNNER_TEMP:-/tmp}/bot-state"
 rm -rf "$STATE"
 if git fetch -q --depth=1 origin bot-state 2>/dev/null; then

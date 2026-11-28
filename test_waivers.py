@@ -489,6 +489,29 @@ def _sample_context(**overrides):
     return context
 
 
+RESULTS = [("won", "Won Chargers D/ST for $0 (nobody else claimed him); dropped Jets D/ST"),
+           ("lost", "Lost Tyler Shipley to One Week of Puka: $14 against your $4")]
+
+
+def test_last_nights_claims_lead_every_version_of_the_report():
+    context = _sample_context(results=RESULTS, record=(11, 17))
+    text = waivers.build_report(context)
+    assert "Your claims last night:\n  Won Chargers D/ST for $0" in text and "This season: 11 won of 17" in text
+    html = waivers.build_html(context)
+    assert "Your claims last night: Won Chargers D/ST" in html and "Lost Tyler Shipley" in html
+    blocks, _ = waivers.slack_layout(context, "Waivers week 3", text)
+    section = next(b for b in blocks if "Last night" in str(b))
+    assert ":white_check_mark: Won Chargers D/ST" in section["text"]["text"] and ":x: Lost" in section["text"]["text"]
+    assert blocks.index(section) < next(i for i, b in enumerate(blocks) if b.get("type") == "divider"), \
+        "before the player cards"
+
+
+def test_no_claims_last_night_no_section():
+    context = _sample_context(results=[], record=(11, 17))
+    assert "last night" not in waivers.build_report(context)
+    assert "Last night" not in str(waivers.slack_layout(context, "Waivers week 3", "")[0])
+
+
 def test_html_table_carries_the_numbers_and_the_drop():
     html = waivers.build_html(_sample_context())
     assert "<table" in html and "Drop for him" in html

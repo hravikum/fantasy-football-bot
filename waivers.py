@@ -715,6 +715,14 @@ def _level(player):
     return "-" if player.get("level") is None else f"{player['level']:.1f}"
 
 
+RESULT_MARKS = {"won": ":white_check_mark:", "lost": ":x:", "failed": ":warning:"}
+
+
+def record_line(context):
+    won, decided = context.get("record") or (0, 0)
+    return f"This season: {won} won of {decided} decided on price" if decided else ""
+
+
 def build_report(context):
     lines = [f"Waiver report — {datetime.now():%a %b %d}, week {context['week']}", ""]
     lines.append(f"Your FAAB: ${context['budget_left']} of ${context['budget']}"
@@ -727,6 +735,11 @@ def build_report(context):
     if context["last_runs"]:
         stamps = [run.strftime("%a %I:%M %p").replace(" 0", " ") for run in context["last_runs"][-3:]]
         lines.append("Claims processed: " + ", ".join(stamps))
+    if context.get("results"):
+        lines.append("Your claims last night:")
+        lines += [f"  {text}" for _, text in context["results"]]
+        if record_line(context):
+            lines.append(f"  {record_line(context)}")
     lines.append("")
 
     if context.get("holes_now"):
@@ -918,6 +931,10 @@ def build_html(context):
     if context["last_runs"]:
         stamps = [run.strftime("%a %I:%M %p").replace(" 0", " ") for run in context["last_runs"][-3:]]
         summary += "<br>Claims processed: " + ", ".join(stamps)
+    if context.get("results"):
+        summary += "<br>Your claims last night: " + "; ".join(html_escape.escape(text) for _, text in context["results"])
+        if record_line(context):
+            summary += f" ({record_line(context)})"
 
     free_note = f"{FREE_NOTE} " if any(c.get("free_now") for c in context["candidates"]) else ""
     table = (f'<table style="border-collapse:collapse;width:100%;margin-bottom:18px">'
@@ -961,6 +978,11 @@ def slack_layout(context, subject, report):
         money.append("rivals with the most: " + ", ".join(f"${r}" for r in sorted(context["rivals"], reverse=True)[:3]))
     pace = faab_pace(context)
     blocks = [slack.header(subject), slack.context(" · ".join(money) + (f"\n{pace}" if pace else ""))]
+    if context.get("results"):
+        blocks.append(slack.section("*Last night's claims*\n" + "\n".join(
+            f"{RESULT_MARKS[kind]} {esc(text)}" for kind, text in context["results"])))
+        if record_line(context):
+            blocks.append(slack.context(esc(record_line(context))))
 
     if context.get("holes_now"):
         blocks.append(slack.section("*Holes this week*\n" + "\n".join(f"• {esc(h)}" for h in context["holes_now"])))
@@ -1128,6 +1150,7 @@ def gather(espn, rate_shadow=False):
     spent = faab_spent(team, spent_by_team)
     rivals = [budget - faab_spent(t, spent_by_team) for t in league["teams"] if t["id"] != team["id"]]
     budget_left = budget - spent
+    last = bids.last_night(every_bid, team["id"], datetime.now())
 
     pool = espn.free_agents(week, POOL_SIZE)
     lock_started(pool, games, datetime.now())
@@ -1140,6 +1163,17 @@ def gather(espn, rate_shadow=False):
         cards = values.attach(espn, roster + pool + rival_backs, week)
     except (ESPNError, requests.exceptions.RequestException) as problem:
         print(f"(player levels unavailable: {type(problem).__name__}); later weeks use ESPN's season projection")
+    results = []
+    if last:
+        try:
+            known = {p["id"]: p["name"] for p in roster + pool + rival_backs}
+            missing = sorted({pid for r in last for pid in (r["player_id"], r["drop_id"]) if pid and pid not in known})
+            if missing:
+                known.update({pid: card.get("fullName") for pid, card in espn.player_cards(missing, week).items()})
+            teams = {t["id"]: t.get("name") or f"team {t['id']}" for t in league["teams"]}
+            results = [bids.result_line(r, known, teams) for r in last]
+        except Exception as problem:  # broad on purpose: a missing extra must not stop the report
+            print(f"(last night's claims unavailable: {type(problem).__name__}: {problem}); report continues without them")
     team_weeks = roles.finished_weeks(week, byes, games, datetime.now())
     try:
         roles.mark(pool, roster + rival_backs, cards, espn.season, team_weeks)
@@ -1178,6 +1212,7 @@ def gather(espn, rate_shadow=False):
         "weeks_left": max(final_week - week + 1, 0),   # 0 when ESPN doesn't say when the season ends
         "minimum_bid": acquisition.get("minimumBid", 0), "rivals": rivals,
         "last_runs": runs, "past_claims": past,
+        "results": results, "record": bids.season_record(every_bid, team["id"]),
         "holes_now": holes_now(roster, slot_counts, games, week),
         "gaps": bye_gaps(roster, slot_counts, horizon, week, scored),
         "candidates": shortlist,

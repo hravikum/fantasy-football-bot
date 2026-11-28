@@ -517,6 +517,119 @@ def test_slack_says_so_when_there_is_nothing_to_move():
         slack_layout("Week 5: roster needs you", players, target, moves, gain, broken, blocked, GAMES))
 
 
+HOLE_KICK = datetime(2026, 11, 29, 13, 0)                       # Sunday 1pm
+HOLE_NOON = datetime(2026, 11, 29, 12, 0)
+HOLE_GAMES = {team: (99, HOLE_KICK) for team in range(1, 35)}
+HOLE_GAMES[2] = (99, datetime(2026, 11, 26, 16, 30))             # pro team 2 played Thursday
+
+
+def holes_of(roster):
+    import lineup
+    players = list(roster.values())
+    target = plan(players, SLOTS, GAMES)[0]
+    return lineup.unfilled(players, target, SLOTS, GAMES)
+
+
+def test_a_starter_out_with_nobody_to_cover_is_a_hole():
+    roster = full_roster(te=player("TE", 6, 9.0, status="OUT"))
+    assert holes_of(roster) == [(6, roster["te"])]
+
+
+def test_a_bench_player_who_can_cover_means_no_hole():
+    assert holes_of(full_roster(te=player("TE", 6, 9.0, status="OUT"), bench_te=player("TE", BENCH, 5.0))) == []
+    assert holes_of(full_roster(flex1=player("RB", 23, 11.0, status="OUT"))) == [], "a bench back covers the flex"
+
+
+def test_a_starter_whose_game_has_started_is_past_helping():
+    assert holes_of(full_roster(te=player("TE", 6, 0.0, status="OUT", locked=True))) == []
+
+
+def test_an_empty_spot_and_a_bye_are_holes():
+    roster = full_roster()
+    del roster["k"]
+    assert holes_of(roster) == [(17, None)]
+    roster = full_roster(k=player("K", 17, 8.0, bye=True))
+    assert holes_of(roster) == [(17, roster["k"])]
+
+
+def test_fill_ins_can_be_added_now_and_still_play():
+    import lineup
+    def fa(name, position, projection, free=True, team=1, status="ACTIVE"):
+        p = player(position, BENCH, projection, status=status)
+        p.update(name=name, free_now=free, pro_team=team)
+        return p
+    pool = [fa("Good", "TE", 7.0), fa("Better", "TE", 8.0), fa("Waivers", "TE", 9.0, free=False),
+            fa("Played", "TE", 10.0, team=2), fa("Hurt", "TE", 6.0, status="OUT"), fa("Receiver", "WR", 12.0),
+            fa("Third", "TE", 3.0), fa("Fourth", "TE", 2.0)]
+    assert [p["name"] for p in lineup.fill_ins(pool, 6, HOLE_GAMES, HOLE_NOON)] == ["Better", "Good", "Third"]
+    assert [p["name"] for p in lineup.fill_ins(pool, 6, HOLE_GAMES, HOLE_KICK)] == [], "once 1pm kicks off, nobody's left"
+
+
+def test_the_message_says_who_why_and_who_to_add():
+    import lineup
+    te = player("TE", 6, 9.0, status="OUT")
+    te["name"] = "Harold Fannin Jr."
+    option = player("TE", BENCH, 7.2)
+    option["name"] = "Tyler Conklin"
+    text = lineup.hole_text(6, te, [option], HOLE_GAMES)
+    assert text.startswith("TE: Harold Fannin Jr. can't play (out), and nobody on your bench can play TE.")
+    assert "Free agents you can add now: Tyler Conklin (" in text and "7.2, Sun 1:00 PM)" in text, text
+    assert lineup.hole_text(17, None, [], HOLE_GAMES) == ("K: the spot is empty, and nobody on your bench can play K. "
+                                                     "No free agent who could play there has a game still to come.")
+    assert "(bye week)" in lineup.hole_text(17, player("K", 17, 8.0, bye=True), [], HOLE_GAMES)
+
+
+class FakeFreeAgents:
+    def __init__(self, pool=()):
+        self.pool, self.asked = list(pool), 0
+
+    def free_agents(self, week, limit=75):
+        self.asked += 1
+        return self.pool
+
+
+def test_a_hole_is_flagged_once_a_week():
+    import lineup
+    sent = []
+    real = lineup.mailer.send
+    lineup.mailer.send = lambda subject, body, html=None, blocks=None, thread=None: sent.append((subject, blocks)) or True
+    try:
+        path = Path(tempfile.mkdtemp()) / "needs_you.json"
+        roster = full_roster(te=player("TE", 6, 9.0, status="OUT"))
+        holes = holes_of(roster)
+        espn = FakeFreeAgents()
+        lineup.flag_holes(espn, False, 12, holes, HOLE_GAMES, HOLE_NOON, path)
+        assert sent == [] and not path.exists(), "practice mode prints and sends nothing"
+        lineup.flag_holes(espn, True, 12, holes, HOLE_GAMES, HOLE_NOON, path)
+        assert len(sent) == 1 and sent[0][0] == "Week 12: a lineup spot nobody can fill"
+        assert ":warning: TE: " in sent[0][1][1]["text"]["text"]
+        lineup.flag_holes(espn, True, 12, holes, HOLE_GAMES, HOLE_NOON, path)
+        assert len(sent) == 1 and espn.asked == 2, "the next check-in stays quiet and doesn't even look"
+        k_out = full_roster(te=roster["te"], k=player("K", 17, 8.0, status="OUT"))
+        lineup.flag_holes(espn, True, 12, holes_of(k_out), HOLE_GAMES, HOLE_NOON, path)
+        assert len(sent) == 2 and "K: " in sent[1][1][1]["text"]["text"] and len(sent[1][1]) == 3, \
+            "a new hole gets its own message, the old one isn't repeated"
+        lineup.flag_holes(espn, True, 13, holes, HOLE_GAMES, HOLE_NOON, path)
+        assert len(sent) == 3, "a new week starts fresh"
+    finally:
+        lineup.mailer.send = real
+
+
+def test_a_message_that_didnt_go_out_is_tried_again():
+    import lineup
+    real = lineup.mailer.send
+    tries = []
+    lineup.mailer.send = lambda *args, **kwargs: tries.append(1) and False
+    try:
+        path = Path(tempfile.mkdtemp()) / "needs_you.json"
+        holes = holes_of(full_roster(te=player("TE", 6, 9.0, status="OUT")))
+        lineup.flag_holes(FakeFreeAgents(), True, 12, holes, HOLE_GAMES, HOLE_NOON, path)
+        lineup.flag_holes(FakeFreeAgents(), True, 12, holes, HOLE_GAMES, HOLE_NOON, path)
+        assert len(tries) == 2 and not path.exists()
+    finally:
+        lineup.mailer.send = real
+
+
 if __name__ == "__main__":
     tests = [(name, fn) for name, fn in sorted(globals().items()) if name.startswith("test_")]
     failures = 0

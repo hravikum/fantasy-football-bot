@@ -69,6 +69,9 @@ def waiver_report():
                                          "week 13: K short by 1 — available and playing that week: Jason Myers "
                                          "(SEA), Cairo Santos (CHI)"],
                "candidates": candidates, "advice": advice,
+               "results": [("won", "Won Chargers D/ST for $0 (nobody else claimed him); dropped Jets D/ST"),
+                           ("lost", "Lost Tyler Shipley to One Week of Puka: $14 against your $4")],
+               "record": (11, 17),
                "past_claims": {bids.IN_DEMAND: [8] * 12 + [18] * 6 + [31] * 5, bids.OTHER: [2] * 40 + [5] * 20 + [12] * 14,
                                bids.STREAMED: [1] * 33 + [4] * 20 + [7] * 13}}
     subject = f"Waivers week 12: {waivers.headline(candidates)}"
@@ -89,6 +92,17 @@ def lineup_message():
     subject = "Week 12: lineup updated"
     return subject, lineup.slack_layout(subject, players, target, moves, gain, broken, blocked, GAMES,
                                         [f"Applied and confirmed on ESPN: {len(moves)} move(s)."]), None
+
+
+def lineup_hole():
+    fannin = player("TE", 6, 9.0, status="OUT")
+    fannin.update(name="Harold Fannin Jr.", pro_team=CLE)
+    options = [player("TE", BENCH, 7.2), player("TE", BENCH, 5.9)]
+    options[0].update(name="Tyler Conklin", pro_team=LAC)
+    options[1].update(name="Jeremy Ruckert", pro_team=NYJ)
+    games = {team: (99, datetime(2026, 11, 29, 13)) for team in (CLE, LAC, NYJ)}
+    subject = "Week 13: a lineup spot nobody can fill"
+    return subject, lineup.hole_layout(subject, [lineup.hole_text(6, fannin, options, games)]), None
 
 
 def trade_offer():
@@ -153,7 +167,7 @@ if __name__ == "__main__":
     if "--bid-card" in sys.argv:
         bid_card(int(sys.argv[sys.argv.index("--bid-card") + 1]))
         sys.exit(0)
-    for build in (waiver_report, lineup_message, trade_offer, failure):
+    for build in (waiver_report, lineup_message, lineup_hole, trade_offer, failure):
         subject, blocks, thread = build()
         print(f"{build.__name__}: {check(blocks)}" + (f"; thread: {', '.join(check(t) for t in thread)}" if thread else ""))
         if "--post" in sys.argv:

@@ -371,6 +371,55 @@ def test_a_free_agent_coming_off_a_breakout_game_is_tagged():
         "a Monday morning sees Sunday"
 
 
+ME = 13
+MORNING = RUN + timedelta(hours=3, minutes=7)     # the 6:07 report after the 3am run
+NAMES = {7: "Germie Bernard", 8: "Chargers D/ST", 9: "Tyler Shipley", 10: "Rashee Rice", 1: "Jets D/ST"}
+TEAMS = {1: "One Week of Puka", 4: "Rival"}
+
+
+def test_last_night_says_how_each_of_your_bids_went():
+    field = [bid(ME, "EXECUTED", 0, player=8), bid(4, bids.OUTBID, 0, player=8),
+             bid(1, "EXECUTED", 14, player=9), bid(ME, bids.OUTBID, 4, player=9), bid(4, bids.OUTBID, 6, player=9),
+             bid(4, "EXECUTED", 5, player=10), bid(ME, bids.OUTBID, 5, player=10),
+             bid(ME, "FAILED_ROSTERLIMIT", 2, player=7), bid(1, "EXECUTED", 3, player=7)]
+    field[0]["drop_id"] = 1
+    found = bids.last_night(field, ME, MORNING)
+    assert [r["player_id"] for r in found] == [8, 10, 9, 7], "wins first, then the biggest bids"
+    lines = [bids.result_line(r, NAMES, TEAMS) for r in found]
+    assert lines[0] == ("won", "Won Chargers D/ST for $0 (next best bid $0); dropped Jets D/ST")
+    assert lines[1] == ("lost", "Lost Rashee Rice on a tie at $5: Rival was ahead in waiver order")
+    assert lines[2] == ("lost", "Lost Tyler Shipley to One Week of Puka: $14 against your $4")
+    assert lines[3] == ("failed", "Germie Bernard: your $2 claim didn't run: your roster was full")
+
+
+def test_a_win_nobody_contested():
+    found = bids.last_night([bid(ME, "EXECUTED", 3, player=8)], ME, MORNING)
+    assert bids.result_line(found[0], NAMES, TEAMS) == ("won", "Won Chargers D/ST for $3 (nobody else claimed him)")
+
+
+def test_only_the_latest_run_and_only_within_a_day():
+    older = bid(ME, "EXECUTED", 9, player=9, when=RUN - timedelta(days=1))
+    latest = bid(ME, "EXECUTED", 0, player=8)
+    assert [r["player_id"] for r in bids.last_night([older, latest], ME, MORNING)] == [8]
+    assert bids.last_night([older, latest], ME, MORNING + timedelta(days=1)) == [], "Tuesday has no run to report"
+    assert bids.last_night([bid(4, "EXECUTED", 9)], ME, MORNING) == [], "no bid of yours, nothing to say"
+    assert bids.last_night([bid(ME, "PENDING", 9, when=None)], ME, MORNING) == []
+
+
+def test_season_record_counts_bids_decided_on_price():
+    field = [bid(ME, "EXECUTED", 3), bid(ME, bids.OUTBID, 4, player=9), bid(ME, "FAILED_ROSTERLIMIT", 2, player=10),
+             bid(ME, "CANCELED", 0, player=11), bid(4, "EXECUTED", 5, player=12)]
+    assert bids.season_record(field, ME) == (1, 2)
+
+
+def test_all_bids_keeps_the_drop():
+    stamp = int(RUN.timestamp() * 1000)
+    claim = {"id": "a", "teamId": ME, "status": "EXECUTED", "bidAmount": 0, "processDate": stamp,
+             "items": [{"type": "ADD", "playerId": 8}, {"type": "DROP", "playerId": 1}]}
+    found = bids.all_bids(FakeAuctions({1: [claim]}), 1)
+    assert found[0]["drop_id"] == 1 and found[0]["player_id"] == 8
+
+
 def test_auctions_report_says_when_nothing_has_run():
     assert "No claims have processed yet" in auctions.report("League", 1, [], RUN)
 

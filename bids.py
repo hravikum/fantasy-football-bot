@@ -27,7 +27,7 @@ breakout game sets the price of a claim. It is not a reason to make one.
 """
 import json
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from espn import ESPNError, parse_roster_entry
 from values import games_played
@@ -59,11 +59,13 @@ def all_bids(espn, week):
                 continue
             seen.add(key)
             stamp = transaction.get("processDate")
+            drop = next((item.get("playerId") for item in transaction.get("items", []) if item.get("type") == "DROP"),
+                        None)
             for item in transaction.get("items", []):
                 if item.get("type") == "ADD":
                     bids.append({"week": played, "team_id": transaction.get("teamId"),
                                  "status": transaction.get("status"), "bid": transaction.get("bidAmount") or 0,
-                                 "player_id": item.get("playerId"),
+                                 "player_id": item.get("playerId"), "drop_id": drop,
                                  "processed": datetime.fromtimestamp(stamp / 1000) if stamp else None})
     return bids
 
@@ -90,6 +92,66 @@ def auctions(bids, me):
                       "runner_up": max(lost) if lost else None,
                       "your_bid": next((b["bid"] for b in field if b["team_id"] == me), None)})
     return sorted(found, key=lambda a: a["processed"])
+
+
+LAST_NIGHT = timedelta(hours=24)         # the morning report shows the run it follows, once
+WHY_NOT = {"FAILED_ROSTERLIMIT": "your roster was full",
+           "FAILED_AUCTIONBUDGETEXCEEDED": "the bid was more than your FAAB left",
+           "FAILED_PLAYERALREADYDROPPED": "the player you were dropping was already gone"}
+
+
+def last_night(bids, me, now):
+    """Your bids in the latest waiver run, if it ran within LAST_NIGHT: how each went, with the winner
+    and his price, how many teams claimed the player, and the best losing bid besides yours."""
+    done = [b for b in bids if b["processed"] and b["status"] not in NOT_BIDS]
+    if not done:
+        return []
+    latest = max(b["processed"] for b in done)
+    if now - latest > LAST_NIGHT:
+        return []
+    run = [b for b in done if b["processed"].date() == latest.date()]
+    found = []
+    for mine in (b for b in run if b["team_id"] == me):
+        field = [b for b in run if b["player_id"] == mine["player_id"]]
+        winner = next((b for b in field if b["status"] == "EXECUTED"), None)
+        others = [b["bid"] for b in field if b is not mine and b["status"] == OUTBID]
+        found.append({"player_id": mine["player_id"], "drop_id": mine.get("drop_id"), "bid": mine["bid"],
+                      "status": mine["status"], "won": mine["status"] == "EXECUTED",
+                      "winner": winner["team_id"] if winner else None, "price": winner["bid"] if winner else None,
+                      "teams": len({b["team_id"] for b in field}), "next_best": max(others) if others else None})
+    return sorted(found, key=lambda r: (not r["won"], -r["bid"]))
+
+
+def season_record(bids, me):
+    """(won, decided by price) over your bids this season. A claim that failed on its own terms, a
+    full roster or a drop already gone, never reached the auction and isn't counted."""
+    mine = [b for b in bids if b["team_id"] == me and b["status"] in ("EXECUTED", OUTBID)]
+    return sum(1 for b in mine if b["status"] == "EXECUTED"), len(mine)
+
+
+def result_line(result, players, teams):
+    """("won" | "lost" | "failed", one line on how a bid of yours went). players and teams map ids to names."""
+    name = players.get(result["player_id"], f"player {result['player_id']}")
+    if result["won"]:
+        if result["next_best"] is not None:
+            beaten = f"next best bid ${result['next_best']}"
+        elif result["teams"] > 1:
+            beaten = "the other claims failed on their own terms"
+        else:
+            beaten = "nobody else claimed him"
+        line = f"Won {name} for ${result['bid']} ({beaten})"
+        if result["drop_id"]:
+            line += f"; dropped {players.get(result['drop_id'], 'player ' + str(result['drop_id']))}"
+        return "won", line
+    if result["status"] == OUTBID:
+        if result["winner"] is None:
+            return "lost", f"Lost {name}: he went to another team before your claim ran"
+        team = teams.get(result["winner"], f"team {result['winner']}")
+        if result["price"] == result["bid"]:
+            return "lost", f"Lost {name} on a tie at ${result['price']}: {team} was ahead in waiver order"
+        return "lost", f"Lost {name} to {team}: ${result['price']} against your ${result['bid']}"
+    reason = WHY_NOT.get(result["status"], (result["status"] or "unknown").replace("FAILED_", "").lower())
+    return "failed", f"{name}: your ${result['bid']} claim didn't run: {reason}"
 
 
 def to_beat(auction, me):
