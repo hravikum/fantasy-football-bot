@@ -28,7 +28,7 @@ fi
 
 # Small files the bot reads back on its next run. players.csv and the snap counts are left out:
 # they are public downloads, fetched again in a second or two.
-KEPT=(cache/trades_seen.json cache/trades_failed_on.txt cache/kickoffs.json cache/needs_you.json)
+KEPT=(cache/trades_seen.json cache/trades_failed_on.txt cache/kickoffs.json cache/needs_you.json cache/season_over.json)
 STATE="${RUNNER_TEMP:-/tmp}/bot-state"
 rm -rf "$STATE"
 if git fetch -q --depth=1 origin bot-state 2>/dev/null; then
@@ -46,8 +46,24 @@ done
 LOG="logs/$(date +%Y-%m).log"
 BEFORE=0
 if [ -f "$LOG" ]; then BEFORE=$(wc -c <"$LOG"); fi
-PYTHON="${PYTHON:-python}" bash ./run.sh "${JOB[@]}"
-STATUS=$?
+# After the last week every job has nothing to do. season.py says so in Slack once and exits 3, and
+# from then on each run stops here until the timers are paused (timers.py --pause). It runs outside
+# run.sh, which would report exit 3 as a failure. A bid from Slack is left to claim.py's own checks.
+SEASON=0
+if [ "${JOB[0]}" != "claim.py" ]; then
+    SAID=$("${PYTHON:-python}" season.py 2>&1)
+    SEASON=$?
+    if [ -n "$SAID" ]; then
+        printf -- '--- %s season.py ---\n%s\nexit %s\n\n' "$(date '+%F %T')" "$SAID" "$SEASON" >>"$LOG"
+    fi
+fi
+if [ "$SEASON" -eq 3 ]; then
+    echo "The season is over, so ${JOB[0]} didn't run."
+    STATUS=0
+else
+    PYTHON="${PYTHON:-python}" bash ./run.sh "${JOB[@]}"
+    STATUS=$?
+fi
 # run.sh writes only to the log; this puts the same lines in GitHub's view of the run.
 if [ -f "$LOG" ]; then tail -c +"$((BEFORE + 1))" "$LOG"; fi
 # mailer.py prints this when a message reached neither Slack nor email. The job has done its work

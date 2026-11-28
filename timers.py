@@ -11,6 +11,12 @@ in place, and removes any it made that TIMERS no longer lists:
     .venv/bin/python3 timers.py --dry-run     # what it would send, with the GitHub token hidden
     .venv/bin/python3 timers.py
 
+Between seasons (season.py says when, in Slack), switch its jobs off and back on. Nothing else
+about them changes, and a plain run turns them on as well:
+
+    .venv/bin/python3 timers.py --pause
+    .venv/bin/python3 timers.py --resume
+
 It reads two keys, from .env or the environment:
     CRONJOB_API_KEY         cron-job.org > Console > Settings > API
     GITHUB_DISPATCH_TOKEN   a fine-grained GitHub token for this repository only, with Actions:
@@ -83,6 +89,22 @@ def check_token(token):
                  f"{REPO}, with Actions: read and write, and not expired?")
 
 
+def switch(enabled):
+    """Turn this script's jobs on or off, and only those."""
+    load_dotenv()
+    key = os.getenv("CRONJOB_API_KEY")
+    if not key:
+        sys.exit("Set CRONJOB_API_KEY in .env first.")
+    ours = [j for j in cronjob("GET", "/jobs", key)["jobs"] if j["title"].startswith(TITLE)]
+    if not ours:
+        sys.exit(f"No jobs titled '{TITLE}...' on cron-job.org: run timers.py with no flags to create them.")
+    for each in ours:
+        cronjob("PATCH", f"/jobs/{each['jobId']}", key, {"job": {"enabled": enabled}})
+        print(f"{'on ' if enabled else 'off'}  {each['title']}")
+    print("Runs start again at their usual times." if enabled
+          else "Nothing starts until timers.py --resume (or a plain timers.py).")
+
+
 def main(dry_run=False):
     load_dotenv()
     token, key = os.getenv("GITHUB_DISPATCH_TOKEN"), os.getenv("CRONJOB_API_KEY")
@@ -124,4 +146,11 @@ def main(dry_run=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Set up the cron-job.org timers that start the bot's GitHub runs.")
     parser.add_argument("--dry-run", action="store_true", help="print the jobs it would send, and change nothing")
-    main(parser.parse_args().dry_run)
+    which = parser.add_mutually_exclusive_group()
+    which.add_argument("--pause", action="store_true", help="switch the jobs off for the off-season")
+    which.add_argument("--resume", action="store_true", help="switch them back on")
+    args = parser.parse_args()
+    if args.pause or args.resume:
+        switch(enabled=args.resume)
+    else:
+        main(args.dry_run)

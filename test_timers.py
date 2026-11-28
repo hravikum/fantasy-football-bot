@@ -94,6 +94,46 @@ def test_without_keys_it_stops_before_calling_anyone():
         os.environ.update({k: v for k, v in saved[2].items() if v is not None})
 
 
+def _switch(enabled, existing, key="k"):
+    calls = []
+
+    def fake(method, path, key, body=None):
+        calls.append((method, path, body))
+        return {"jobs": existing} if method == "GET" else {}
+
+    saved = timers.cronjob, timers.load_dotenv, os.environ.get("CRONJOB_API_KEY")
+    timers.cronjob, timers.load_dotenv = fake, (lambda: None)
+    os.environ.pop("CRONJOB_API_KEY", None) if key is None else os.environ.update(CRONJOB_API_KEY=key)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            timers.switch(enabled)
+    finally:
+        timers.cronjob, timers.load_dotenv = saved[:2]
+        os.environ.pop("CRONJOB_API_KEY", None) if saved[2] is None else os.environ.update(CRONJOB_API_KEY=saved[2])
+    return calls, out.getvalue()
+
+
+def test_pause_and_resume_switch_only_our_jobs():
+    existing = [{"jobId": 1, "title": timers.TITLE + "waivers"}, {"jobId": 2, "title": timers.TITLE + "lineup"},
+                {"jobId": 3, "title": "Someone else's job"}]
+    calls, said = _switch(False, existing)
+    assert [c for c in calls if c[0] == "PATCH"] == [("PATCH", "/jobs/1", {"job": {"enabled": False}}),
+                                                     ("PATCH", "/jobs/2", {"job": {"enabled": False}})]
+    assert "timers.py --resume" in said
+    calls, _ = _switch(True, existing)
+    assert {c[2]["job"]["enabled"] for c in calls if c[0] == "PATCH"} == {True}
+    assert not any(path == "/jobs/3" for _, path, _ in calls), "someone else's job is never touched"
+
+
+def test_pause_says_so_when_there_is_nothing_to_pause():
+    for existing, key, expected in (([], "k", "run timers.py with no flags"), ([], None, "CRONJOB_API_KEY")):
+        try:
+            _switch(False, existing, key)
+            raise AssertionError("expected it to stop")
+        except SystemExit as stop:
+            assert expected in str(stop), stop
+
+
 if __name__ == "__main__":
     tests = [(name, fn) for name, fn in sorted(vars().items()) if name.startswith("test_")]
     failures = 0

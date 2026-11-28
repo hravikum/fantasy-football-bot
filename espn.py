@@ -29,6 +29,13 @@ PRO_TEAMS = {
 }
 
 
+def nfl_season(today):
+    """The season a date belongs to. Week 17 can fall in January (Jan 1-4, 2027 for 2026), and ESPN
+    files it under the year the season started; until the next season's August, a date belongs to
+    the last one, so an off-season run finds a finished league rather than one not made yet."""
+    return today.year if today.month >= 8 else today.year - 1
+
+
 class ESPNError(Exception):
     pass
 
@@ -45,7 +52,7 @@ class ESPNWriteRejected(ESPNError):
 class ESPN:
     def __init__(self, league_id, espn_s2, swid, season=None):
         self.league_id = league_id
-        self.season = season or date.today().year
+        self.season = season or nfl_season(date.today())
         self.swid = swid
         self.my_team_id = None
         self._schedule = None

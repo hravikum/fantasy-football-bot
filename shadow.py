@@ -26,7 +26,7 @@ import rates
 import values
 import waivers
 import wins
-from espn import BENCH, parse_roster_entry
+from espn import BENCH, nfl_season, parse_roster_entry
 from lineup import CANT_PLAY, plan
 from values import GAMES_PER_SEASON, season_pace
 
@@ -394,7 +394,7 @@ def as_html(text):
 def send(rows=None, by_player=None, season=None, send_mail=mailer.send):
     """Print the comparison and email it. Returns the subject."""
     if by_player is None:
-        by_player = rates.load(season or date.today().year)[0]
+        by_player = rates.load(season or nfl_season(date.today()))[0]
     subject, text = summary(read() if rows is None else rows, by_player)
     print(text)
     send_mail(subject, text, as_html(text))
@@ -409,4 +409,4 @@ if __name__ == "__main__":
     if "--email" in sys.argv:
         send()
     else:
-        print(summary(read(), rates.load(date.today().year)[0])[1])
+        print(summary(read(), rates.load(nfl_season(date.today()))[0])[1])

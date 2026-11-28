@@ -79,6 +79,7 @@ python3 test_wins.py                points-into-wins tests
 python3 test_odds.py                rest-of-season odds tests
 python3 test_keepers.py             keeper value tests
 python3 test_finder.py              trade finder tests
+python3 test_season.py              end-of-season check and season year tests
 python3 test_shadow.py              shadow comparison tests
 ```
 
@@ -271,6 +272,25 @@ cron-job.org keeps the GitHub token and emails you when a request fails and when
 The token can start and cancel this repository's runs, nothing else; it expires within a year,
 and an expired one shows up as those failure emails. They are the only schedule: `bot.yml` has no
 `schedule:` block, so GitHub's late runs can't double them.
+
+### Between seasons (Nov 28)
+
+Every run on GitHub first asks `season.py` whether the season is over: ESPN's current scoring
+period is past its last one (`finalScoringPeriod`), or the last game of that period kicked off
+more than 12 hours ago. Once it is, the job doesn't run. The first run to find it says so in Slack,
+once a season (remembered in `cache/season_over.json` on `bot-state`), with the commands below; a
+bid from Slack is left to `claim.py`'s own checks. Until the timers are paused, each run starts,
+finds the season over and stops, a GitHub minute each.
+
+```
+.venv/bin/python3 timers.py --pause       # after the last week: switch the jobs off
+.venv/bin/python3 timers.py --resume      # before the draft: switch them back on (a plain run does too)
+```
+
+The season a run looks up is the NFL's, not the calendar's (`espn.nfl_season`): week 17 of 2026
+is played Jan 1-4, 2027, and until August a date belongs to the season before. Before this fix,
+the bot asked ESPN for the 2027 league from New Year's Day, which doesn't exist until the new
+season is set up, and every run through week 17 would have failed.
 
 ## Tuning
 
