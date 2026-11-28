@@ -1,4 +1,5 @@
 """Tests for the waiver report. Run: python3 test_waivers.py"""
+import os
 import sys
 
 import bids
@@ -851,6 +852,28 @@ def test_report_reads_correctly_without_advice():
     assert "Waiver report" in report and "$20-35" in report
     assert "Place claims yourself" in report, "the report must never imply it bid for you"
     assert "No write-up" not in report, "with no API key, a report without a write-up is the normal one"
+
+
+def test_one_waiver_run_is_listed_once():
+    from datetime import datetime, timedelta
+    sat = datetime(2026, 11, 28, 3, 11, 2)
+    times = [sat, sat + timedelta(seconds=40), datetime(2026, 11, 26, 3, 52), sat + timedelta(minutes=3)]
+    runs = waivers.waiver_runs(times)
+    assert runs == [datetime(2026, 11, 26, 3, 52), sat], runs
+    report = waivers.build_report(_sample_context(last_runs=runs))
+    assert "Claims processed: Thu 3:52 AM, Sat 3:11 AM\n" in report
+
+
+def test_with_bid_buttons_the_footer_says_who_places_a_claim():
+    saved = os.environ.get("SLACK_BUTTONS")
+    os.environ["SLACK_BUTTONS"] = "true"
+    try:
+        text, html = waivers.build_report(_sample_context()), waivers.build_html(_sample_context())
+    finally:
+        os.environ.pop("SLACK_BUTTONS") if saved is None else os.environ.update(SLACK_BUTTONS=saved)
+    for report in (text, html):
+        assert "Bid on a player's card in Slack places a claim" in report and "never bids on its own" in report
+        assert "Bids are suggestions only" not in report
 
 
 def test_both_reports_say_so_when_the_write_up_failed():

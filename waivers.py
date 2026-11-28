@@ -726,6 +726,28 @@ def _level(player):
 RESULT_MARKS = {"won": ":white_check_mark:", "lost": ":x:", "failed": ":warning:"}
 
 
+RUN_GAP = 30 * 60    # seconds: claims in one waiver run are processed seconds to minutes apart
+
+
+def waiver_runs(times):
+    """One time a waiver run, its first claim's. Listing every distinct time printed "Sat 3:11 AM,
+    Sat 3:11 AM" for one run whose claims landed seconds apart."""
+    runs, last = [], None
+    for when in sorted(times):
+        if last is None or (when - last).total_seconds() > RUN_GAP:
+            runs.append(when)
+        last = when
+    return runs
+
+
+def bids_note():
+    """The footer's word on who places a claim: the same in every version of the report."""
+    if os.getenv("SLACK_BUTTONS") == "true":   # on once the Worker behind the Bid buttons is deployed
+        return ("Bid on a player's card in Slack places a claim in ESPN for the amount you type, or place "
+                "one yourself in ESPN. The bot never bids on its own.")
+    return "Bids are suggestions only. Place claims yourself in ESPN."
+
+
 def watch_text(player, context):
     """One keeper-watch line; an injured player can't be scored for the table, so it says so."""
     line = keepers.watch_line(player, context.get("keeper_best"))
@@ -810,7 +832,7 @@ def build_report(context):
     lines += ["", "WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's",
               "evidence (values.py), and it is what the weeks after this one are valued at. A dash means",
               "ESPN's season projection is used as it is: tight ends, kickers and defenses.",
-              "", "Bids are suggestions only. Place claims yourself in ESPN."]
+              "", bids_note()]
     return "\n".join(lines)
 
 
@@ -981,7 +1003,7 @@ def build_html(context):
             f'{holes}{table}{prices}'
             f'{advice}'
             f'<p style="color:#6b7280;font-size:12px;border-top:1px solid #e5e7eb;padding-top:10px">'
-            f'{free_note}Bids are suggestions only. Place claims yourself in ESPN.</p></div>')
+            f'{free_note}{html_escape.escape(bids_note(), quote=False)}</p></div>')
 
 
 CARDS = 10   # player cards in the channel; the table in the thread has every player
@@ -1246,7 +1268,7 @@ def gather(espn, rate_shadow=False):
                                 scored, shortlist))
         except Exception as problem:  # broad on purpose: a shadow must not stop the report
             print(f"(rate shadow failed: {type(problem).__name__}: {problem}); report continues without it")
-    runs = sorted({claim["processed"] for claim in claims if claim["processed"]})
+    runs = waiver_runs(claim["processed"] for claim in claims if claim["processed"])
 
     final_week = (league.get("status") or {}).get("finalScoringPeriod") or 0
     return {
