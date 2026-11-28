@@ -2619,3 +2619,64 @@ Already the best legal lineup. No moves.
 Locked, can't be moved: Kyle Monangai
 exit 0
 
+--- 2026-11-28 06:07:11 waivers.py --email --rate-shadow ---
+(rate shadow: 249 backs and receivers rated, expected points through week 12; 158 free agents logged; the top 8 by points agree on 6)
+Waiver report — Sat Nov 28, week 12
+
+Your FAAB: $55 of $100   (minimum bid $0)
+  $9 a week for the 6 weeks of waivers left, this one included; $4 a week spent so far
+Rivals with the most FAAB: $100, $95, $83
+Claims processed: Thu 3:52 AM, Sat 3:11 AM, Sat 3:11 AM
+
+Lineup holes in the next 4 weeks:
+  week 13: K short by 1 — available and playing that week: Jason Myers (SEA), Cairo Santos (CHI)
+  A kicker, defense or one-week fill-in is listed in the week you need him, not before.
+
+Next man up:
+  Will Shipley is next up behind Saquon Barkley, who left week 12 after 5 touches (usually 15). He had 11 carries and targets in week 12 (usually 1).
+  Backs flagged this way averaged 9.5 a game over their next 4 weeks in 2025-26. Just under
+  half reached 10 a game and a quarter stayed under 5. They are listed even with no lineup gain.
+
+PLAYER               POS   TEAM    OWN%    +/-   SNAP%    WK LEVEL   NOW   5WK  SEASON  BID     CALL      DROP FOR HIM
+Will Shipley         RB    PHI       3%   +0.0   36→83   4.2   1.5  +0.0  +0.0      +0  $8-18   bid $8    Emari Demercado
+    Barkley left with stinger but no multi-week report; bid low
+
+This week only: fills a hole or streams one game, adds nothing after:
+Josh Cameron         WR    JAX       8%   +7.3  39→out  10.1   3.7  +0.9  +0.9      +0  free    add       Quentin Johnston
+    Free agent; role growing with Washington out week-to-week
+
+What it has taken to win a claim in this league (bids.py):
+  Backs and receivers after a breakout game, and next men up (23 claims): $8 won half, $18 won three
+    in four, $31 won nine in ten
+  Everyone else at quarterback, back, receiver and tight end (76 claims): $2 won half, $5 won three
+    in four, $12 won nine in ten
+  Kickers and defenses (67 claims): $1 won half, $4 won three in four, $7 won nine in ten
+  For a player who would start for you, the range runs from the bid that won three in four to the
+    one that won nine in ten; for a stash, from half to three in four.
+  Priced as in demand today: Will Shipley (next man up)
+
+------------------------------------------------------------
+
+Shipley's news is mixed: Barkley left Thursday's game with a stinger and didn't return, he was ruled questionable to return to the Week 12 matchup, but there's no report of IR or a multi-week ruling — his prior stinger, in Week 2, he was able to check back in to the contest, and stingers of this type typically clear within days, not weeks. With no confirmed multi-week absence, treat Shipley as a speculative stash and bid the low end of the in-demand range: $8, dropping Emari Demercado (0.0 week projection, lowest on the roster) who was already the cheapest drop.
+
+Josh Cameron is a free agent — add him at no cost. His role is real: Cameron is in line to handle a larger role Sunday against the Titans… Cameron and Brian Thomas are the top candidates to absorb extra targets alongside Jakobi Meyers in Washington's absence, and Washington is considered week-to-week, so his absence could extend beyond Week 12. That modestly beats the data's "helps_only_this_week" tag, but since it's free there's no reason not to take the swing. Use Quentin Johnston as the drop (his 5.06 week projection is the second-weakest bench piece, keeping Bryce Young's stronger QB insurance intact).
+
+Nothing else to claim: the kicker hole is a Week 13 problem — leave Myers/Santos for next Tuesday's report per the hole rule.
+
+Sources:
+- Saquon Barkley injury update as Eagles RB leaves game vs. Cowboys
+  https://www.centraloregondaily.com/sports/saquon-barkley-injury-update-as-eagles-rb-leaves-game-vs-cowboys/article_b0a37739-cd8d-5267-a551-45bbf8ef750f.html
+- Saquon Barkley Injury: Sustains stinger in Week 12
+  https://www.rotowire.com/football/headlines/saquon-barkley-injury-sustains-stinger-in-week-12-649993
+- Josh Cameron News: Larger role likely in Washington's absence
+  https://www.rotowire.com/football/headlines/josh-cameron-news-larger-role-likely-in-washingtons-absence-650138
+
+"free": he has cleared waivers, so he costs nothing and goes to whoever adds him first. Everyone else is decided by bid at the next run.
+
+WK is ESPN's projection for this week. LEVEL is what he scores a game on this season's
+evidence (values.py), and it is what the weeks after this one are valued at. A dash means
+ESPN's season projection is used as it is: tight ends, kickers and defenses.
+
+Bids are suggestions only. Place claims yourself in ESPN.
+exit 0
+
