@@ -2684,3 +2684,17 @@ exit 0
 :white_check_mark: Bid $1 on *Will Shipley*, dropping *Emari Demercado* placed. It goes through at the next waiver run unless someone outbids you; change or cancel it in ESPN until then.
 exit 0
 
+--- 2026-11-28 09:05:27 lineup.py --live ---
+Week 12 lineup
+
+Current starters project 122.9
+Best legal lineup projects 122.9  (+0.0)
+
+  Keaton Mitchell             BE -> IR      0.0  [OUT]
+
+Locked, can't be moved: Kyle Monangai
+
+
+Applied and confirmed on ESPN: 1 move(s).
+exit 0
+
