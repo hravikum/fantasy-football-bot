@@ -412,6 +412,14 @@ the season, or is a next man up is never held. The
 is told the same: a hole in a later week is not a claim today, and a kicker or defense replaces
 the one you have and never costs a player at another position.
 
+Keeper watch (Nov 28): a free agent who would be a better keeper than your best one now
+(`keepers.py`: dynasty value against the 9th-round pick a keeper costs) is listed whatever he adds
+to your lineup, at most two a day, priced at stash odds, so he gets a card and a Bid button like
+anyone else. A "Keeper watch" section names them all, an injured one included (he can't be scored
+for the table, so bid on him in ESPN), and Claude's brief says why each is there. It costs one
+ESPN call for the draft (who can be kept) and DynastyProcess's two files, downloaded once a day.
+If any of that fails, the report goes out without it.
+
 ## One verdict: the table and the write-up agree (Nov 18)
 
 In week 11 the table led with two kickers while the write-up said to skip them, "no gain over

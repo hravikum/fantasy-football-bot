@@ -2,6 +2,7 @@
 import sys
 
 import bids
+import keepers
 import waivers
 from espn import BENCH, IR
 from test_lineup import GAMES, SLOTS, full_roster, player
@@ -487,6 +488,67 @@ def _sample_context(**overrides):
                "drops": [roster[-1]], "advice": None, "roster": roster, "target": target}
     context.update(overrides)
     return context
+
+
+def keeper(person, surplus, rank=40):
+    person["keeper"] = {"rank": rank, "value": 3000.0, "age": 22.0, "worth_round": 3, "cost_round": 9,
+                        "surplus": surplus}
+    return person
+
+
+def test_a_better_keeper_is_listed_whatever_he_adds():
+    roster = list(full_roster().values())          # weakest starter projects 10.0
+    rookie = keeper(free_agent("WR", 4.0, owned=2.0), 3000.0)
+    pool = [rookie, free_agent("WR", 4.0, owned=30.0)]
+    best, marked = keepers.watch(pool, roster)
+    assert best is None and marked == [rookie] and rookie["keeper_watch"] == 3000.0
+    scored = waivers.score_pool(roster, pool, SLOTS, GAMES)
+    listed = waivers.shortlist_from(scored)
+    assert [c["id"] for c in listed] == [rookie["id"]], "he adds nothing to your lineup, but he's listed"
+    assert waivers.bid_band(listed[0]) == 2, "priced at stash odds"
+    assert not waivers.held(listed[0]) and not waivers.this_week_only(listed[0])
+
+
+def test_only_a_free_agent_better_than_your_keeper_is_marked():
+    mine = keeper(player("WR", BENCH, 5.0), 2260.0)
+    better, worse = keeper(free_agent("WR", 4.0), 2500.0), keeper(free_agent("WR", 4.0), 2000.0)
+    best, marked = keepers.watch([better, worse], [mine])
+    assert best is mine and marked == [better] and round(better["keeper_watch"]) == 240
+    assert "keeper_watch" not in worse
+    assert keepers.watch_line(better, mine).endswith(f": a better keeper than {mine['name']} (+2260)")
+
+
+def test_keeper_watch_is_capped():
+    roster = list(full_roster().values())
+    pool = [keeper(free_agent("WR", 4.0, owned=1.0), 1000.0 + n) for n in range(4)]
+    keepers.watch(pool, roster)
+    listed = waivers.shortlist_from(waivers.score_pool(roster, pool, SLOTS, GAMES))
+    assert len(listed) == waivers.KEEPER_SLOTS and listed[0]["keeper_watch"] == 1003.0, "the best keepers first"
+
+
+def test_keeper_watch_in_every_version_of_the_report():
+    mine = keeper(player("WR", BENCH, 5.0), 2260.0)
+    rookie = keeper(free_agent("WR", 4.0), 3000.0)
+    hurt = keeper(free_agent("RB", 0.0, status="OUT"), 2600.0)
+    best, marked = keepers.watch([rookie, hurt], [mine])
+    context = _sample_context(keeper_best=best, keeper_watch=marked)
+    text = waivers.build_report(context)
+    assert "Keeper watch:\n  " + rookie["name"] in text and "a better keeper than" in text
+    assert "(out now, so not in the table; bid in ESPN)" in text, "an injured one can't be scored for the table"
+    assert "Keeper watch" in waivers.build_html(context)
+    blocks, _ = waivers.slack_layout(context, "Waivers week 3", text)
+    assert any("*Keeper watch*" in str(b) for b in blocks)
+    assert "Keeper watch" not in waivers.build_report(_sample_context()), "nothing to watch, no section"
+
+
+def test_claude_is_told_why_a_keeper_is_listed():
+    context = _sample_context()
+    keeper(context["candidates"][0], 3000.0)
+    context["candidates"][0]["keeper_watch"] = 3000.0
+    brief = waivers.brief_for_claude(context)
+    assert "a better keeper than anyone on your roster" in brief["available"][0]["keeper_watch"]
+    assert "keeper league" in brief["note_on_keepers"]
+    assert "keeper_watch" not in str(waivers.brief_for_claude(_sample_context())["available"][0]["keeper_watch"] or "")
 
 
 RESULTS = [("won", "Won Chargers D/ST for $0 (nobody else claimed him); dropped Jets D/ST"),

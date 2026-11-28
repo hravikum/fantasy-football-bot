@@ -115,6 +115,23 @@ def ordinal(n):
     return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
 
 
+def watch(pool, roster):
+    """Free agents who'd be better keepers than your best: (your best or None, them, best first).
+    Each is marked with "keeper_watch", how much better he'd be."""
+    mine, value = best(roster)
+    marked = []
+    for player in pool:
+        if surplus(player) > value:
+            player["keeper_watch"] = surplus(player) - value
+            marked.append(player)
+    return mine, sorted(marked, key=lambda p: -surplus(p))
+
+
+def watch_line(player, mine):
+    than = f"{mine['name']} ({surplus(mine):+.0f})" if mine else "anyone on your roster"
+    return f"{label(player)}, {surplus(player):+.0f}: a better keeper than {than}"
+
+
 def label(player):
     k = player["keeper"]
     age = f", {k['age']:.0f}" if k.get("age") else ""

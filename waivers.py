@@ -27,6 +27,7 @@ import requests
 from dotenv import load_dotenv
 
 import bids
+import keepers
 import mailer
 import roles
 import slack
@@ -49,6 +50,9 @@ POOL_SIZE = 200     # free agents to score, most widely rostered first. At 75 th
 SHORTLIST = 8       # how many make the report
 PER_POSITION = 2    # at most this many of any one position, so the list never becomes all QBs
 ROLE_SLOTS = 3      # next men up (roles.py) listed on top of that, whatever they add to your lineup
+KEEPER_SLOTS = 2    # and free agents who'd be better keepers than yours (keepers.py)
+KEEPER_NOTE = ("You keep one player, and anyone you pick up can be kept for a 9th-round pick. Listed even with "
+               "no lineup gain: FAAB buys nothing after the season.")
 LOOKAHEAD = 4          # weeks after this one that ranking, holes and drops plan for, byes included
 
 
@@ -163,7 +167,7 @@ def held(candidate):
     roster spot. So he is listed in that week and not before. A player who would also make your
     lineup better over the season is not a fill-in, and neither is a next man up.
     """
-    if candidate["gain"] > 0 or candidate.get("role"):
+    if candidate["gain"] > 0 or candidate.get("role") or candidate.get("keeper_watch"):
         return False
     later_fill_in = candidate.get("weeks_helped") == 1 and candidate["season_gain"] <= 0
     return candidate["position"] in STREAM_ONLY or later_fill_in
@@ -180,7 +184,8 @@ def shortlist_from(scored):
     """
     shortlist, seen = [], Counter()
     for candidate in scored:
-        if held(candidate) or bid_band(candidate) == 3:
+        plain = dict(candidate, keeper_watch=None)   # a better keeper only comes in through his own slots below
+        if held(plain) or bid_band(plain) == 3:
             continue
         if seen[candidate["position"]] < PER_POSITION:
             shortlist.append(candidate)
@@ -189,8 +194,11 @@ def shortlist_from(scored):
             break
     listed = {c["id"] for c in shortlist}
     stepping_in = sorted((c for c in scored if c.get("role") and c["id"] not in listed),
-                         key=lambda c: -c["role"]["touches"])
-    return shortlist + stepping_in[:ROLE_SLOTS]
+                         key=lambda c: -c["role"]["touches"])[:ROLE_SLOTS]
+    listed |= {c["id"] for c in stepping_in}
+    keeping = sorted((c for c in scored if c.get("keeper_watch") and c["id"] not in listed),
+                     key=lambda c: -c["keeper_watch"])[:KEEPER_SLOTS]
+    return shortlist + stepping_in + keeping
 
 
 def swap_value(roster, candidate, dropped, slot_counts, horizon, this_week, bases):
@@ -295,7 +303,7 @@ def percentile(values, fraction):
 def bid_band(candidate):
     """0 starter, 1 useful piece, 2 stash, 3 not worth money."""
     band = _projection_band(candidate)
-    if candidate.get("role"):
+    if candidate.get("role") or candidate.get("keeper_watch"):
         band = min(band, 2)   # worth a stash whatever your lineup says; who you bid against is bids.kind_of
     if candidate.get("position") in STREAM_ONLY:
         band = max(band, 2)   # there's always another one on the wire, so never real money
@@ -581,7 +589,7 @@ def this_week_only(candidate):
     and read as the pick of the day. He is listed under the players with more to offer.
     """
     return (candidate["gain"] > 0 and candidate.get("weeks_helped", 1) <= 1 and candidate["season_gain"] <= 0
-            and not candidate.get("role"))
+            and not candidate.get("role") and not candidate.get("keeper_watch"))
 
 
 def table_sections(candidates):
@@ -668,7 +676,7 @@ def headline(candidates):
         parts = [f"{said.count(call)} to {words}" for call, words in (("add", "add"), ("bid", "bid on"))
                  if said.count(call)]
         return ", ".join(parts) or "nothing to add or bid on"
-    worth_it = [c for c in candidates if c["gain"] > 0 or c.get("role")]
+    worth_it = [c for c in candidates if c["gain"] > 0 or c.get("role") or c.get("keeper_watch")]
     return f"{len(worth_it)} worth a claim" if worth_it else "nothing worth a claim"
 
 
@@ -718,6 +726,14 @@ def _level(player):
 RESULT_MARKS = {"won": ":white_check_mark:", "lost": ":x:", "failed": ":warning:"}
 
 
+def watch_text(player, context):
+    """One keeper-watch line; an injured player can't be scored for the table, so it says so."""
+    line = keepers.watch_line(player, context.get("keeper_best"))
+    if player["injury_status"] in CANT_PLAY:
+        line += f" ({player['injury_status'].replace('_', ' ').lower()} now, so not in the table; bid in ESPN)"
+    return line
+
+
 def record_line(context):
     won, decided = context.get("record") or (0, 0)
     return f"This season: {won} won of {decided} decided on price" if decided else ""
@@ -754,6 +770,9 @@ def build_report(context):
         lines += [f"  Backs flagged this way averaged {roles.FILL_IN} a game over their next {roles.FILL_IN_WEEKS} weeks "
                   f"in 2025-26. Just under", "  half reached 10 a game and a quarter stayed under 5. "
                   "They are listed even with no lineup gain.", ""]
+    if context.get("keeper_watch"):
+        lines += ["Keeper watch:"] + [f"  {watch_text(p, context)}" for p in context["keeper_watch"]]
+        lines += textwrap.wrap(KEEPER_NOTE, 98, initial_indent="  ", subsequent_indent="  ") + [""]
 
     header = (f"{'PLAYER':<20} {'POS':<5} {'TEAM':<5} {'OWN%':>6} {'+/-':>6} {'SNAP%':>7} {'WK':>5} {'LEVEL':>5} "
               f"{'NOW':>5} {str(LOOKAHEAD + 1) + 'WK':>5} {'SEASON':>7}")
@@ -920,6 +939,13 @@ def build_html(context):
                   f'{roles.FILL_IN} a game over their next {roles.FILL_IN_WEEKS} weeks in 2025-26. Just under half '
                   f'reached 10 a game and a quarter stayed under 5. Listed even with no lineup gain.'
                   f'</div></div>')
+    if context.get("keeper_watch"):
+        items = "".join(f'<li style="margin:2px 0">{html_escape.escape(watch_text(p, context))}</li>'
+                        for p in context["keeper_watch"])
+        holes += (f'<div style="background:#f0fdf4;border-left:3px solid #22c55e;padding:10px 14px;margin:18px 0">'
+                  f'<div style="font-weight:600;font-size:14px">Keeper watch</div>'
+                  f'<ul style="margin:6px 0 0;padding-left:18px;color:#374151;font-size:14px">{items}</ul>'
+                  f'<div style="color:#6b7280;font-size:12px;margin-top:6px">{KEEPER_NOTE}</div></div>')
 
     summary = (f'FAAB <strong>${context["budget_left"]}</strong> of ${context["budget"]} '
                f'&middot; minimum bid ${context["minimum_bid"]}')
@@ -996,6 +1022,10 @@ def slack_layout(context, subject, report):
         blocks.append(slack.context(f"Backs flagged this way averaged {roles.FILL_IN} a game over their next "
                                     f"{roles.FILL_IN_WEEKS} weeks in 2025-26; just under half reached 10 a game "
                                     "and a quarter stayed under 5."))
+    if context.get("keeper_watch"):
+        blocks.append(slack.section("*Keeper watch*\n" + "\n".join(f"• {esc(watch_text(p, context))}"
+                                                                  for p in context["keeper_watch"])))
+        blocks.append(slack.context(esc(KEEPER_NOTE)))
 
     blocks.append(slack.divider())
     shown = 0
@@ -1099,6 +1129,8 @@ def _card(candidate):
     lines = [top, " · ".join(worth)]
     if candidate.get("role"):
         lines.append("Next man up")
+    if candidate.get("keeper_watch"):
+        lines.append("Keeper watch")
     why = (candidate.get("call") or {}).get("why")
     if why:
         lines.append(f"_{esc(why)}_")
@@ -1174,6 +1206,16 @@ def gather(espn, rate_shadow=False):
             results = [bids.result_line(r, known, teams) for r in last]
         except Exception as problem:  # broad on purpose: a missing extra must not stop the report
             print(f"(last night's claims unavailable: {type(problem).__name__}: {problem}); report continues without them")
+    keeper_best, keeper_watch = None, []
+    try:
+        values_by_id = keepers.load()
+        draft = espn.league("mDraftDetail").get("draftDetail", {})
+        kept, drafted = keepers.kept_rounds(draft), keepers.drafted_rounds(draft)
+        for group in (roster, pool):
+            keepers.attach(group, values_by_id, kept, len(league["teams"]), drafted)
+        keeper_best, keeper_watch = keepers.watch(pool, roster)
+    except Exception as problem:  # broad on purpose: a missing extra must not stop the report
+        print(f"(keeper watch unavailable: {type(problem).__name__}: {problem}); report continues without it")
     team_weeks = roles.finished_weeks(week, byes, games, datetime.now())
     try:
         roles.mark(pool, roster + rival_backs, cards, espn.season, team_weeks)
@@ -1213,6 +1255,7 @@ def gather(espn, rate_shadow=False):
         "minimum_bid": acquisition.get("minimumBid", 0), "rivals": rivals,
         "last_runs": runs, "past_claims": past,
         "results": results, "record": bids.season_record(every_bid, team["id"]),
+        "keeper_best": keeper_best, "keeper_watch": keeper_watch,
         "holes_now": holes_now(roster, slot_counts, games, week),
         "gaps": bye_gaps(roster, slot_counts, horizon, week, scored),
         "candidates": shortlist,
@@ -1251,6 +1294,8 @@ def brief_for_claude(context):
                        "snap_share_pct_by_week": (c.get("snaps") or {}).get("by_week"),
                        "snap_trend": (c.get("snaps") or {}).get("trend"),
                        "next_man_up": roles.describe(c) if c.get("role") else None,
+                       "keeper_watch": (keepers.watch_line(c, context.get("keeper_best"))
+                                        if c.get("keeper_watch") else None),
                        "helps_only_this_week": this_week_only(c),
                        "availability": ("free agent: can be added today at no cost" if c.get("free_now")
                                         else "on waivers: goes to the highest bid at the next run"),
@@ -1268,6 +1313,12 @@ def brief_for_claude(context):
                                 f"is next in line behind a lead back who is ruled out. His lineup gains count him at "
                                 f"{roles.FILL_IN} points a game for {roles.FILL_IN_WEEKS} weeks, the average for backs "
                                 f"flagged this way; just under half reach 10 a game and a quarter stay under 5."),
+        "note_on_keepers": ("This is a keeper league: one player carries to next season. A player drafted in the "
+                            "9th round or later, or picked up during the season, can be kept for a 9th-round pick. "
+                            "A candidate with keeper_watch set would be a better keeper than the manager's best "
+                            "now, by dynasty value (DynastyProcess, which counts several seasons, so it rates "
+                            "young players a little high); he is listed for that, whatever his lineup gain, and "
+                            "FAAB left at the end of the season buys nothing."),
         "note_on_drops": ("Each candidate already has the drop that costs least, measured against the "
                           "best free agent at that player's own position. Use it unless you can say why not."),
     }
