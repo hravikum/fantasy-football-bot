@@ -50,6 +50,9 @@ python3 shadow.py [--email]         the rate and wins comparison from the log, p
 python3 trades.py --give "A" --get "B"   what a trade does to both lineups, read-only
 python3 trades.py --watch           email an analysis of each new proposal sent to you or by you
 python3 trade_probe.py              what ESPN sends for trades, schedule and draft, read-only
+python3 odds.py [--post]            chance of finishing last and of the playoffs, every team, rest of the regular season
+python3 keepers.py                  your keeper candidates and better ones on other teams (DynastyProcess values)
+python3 finder.py [--post]          trades a contender should want that leave you a better keeper, read-only
 python3 claims.py                   what waiver claims actually cost in your league
 python3 auctions.py                 each waiver auction: bidders, price, what the report saw, how its bids did
 python3 accuracy.py [season]        how good ESPN's projections have been, by position
@@ -73,6 +76,9 @@ python3 test_values.py              player level tests
 python3 test_roles.py               next-man-up tests
 python3 test_rates.py               rate tests
 python3 test_wins.py                points-into-wins tests
+python3 test_odds.py                rest-of-season odds tests
+python3 test_keepers.py             keeper value tests
+python3 test_finder.py              trade finder tests
 python3 test_shadow.py              shadow comparison tests
 ```
 
